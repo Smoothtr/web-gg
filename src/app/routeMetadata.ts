@@ -10,5 +10,7 @@ export async function generateCmsPageMetadata(id: string, lang: BrandLang, fallb
 
 export async function generateInsightMetadata(slug: string): Promise<Metadata> {
   const post = await getServerCmsInsight(slug)
-  return createMetadata(post?.meta, 'vi')
+  if (!post) return createMetadata(undefined, 'vi')
+  const coverImage = post.coverImageUrl || post.coverImage
+  return createMetadata({ ...post.meta, ogImage: post.meta.ogImage || coverImage }, 'vi')
 }
