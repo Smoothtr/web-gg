@@ -7,11 +7,20 @@ const defaultFooterNavLinks: CmsLink[] = [
   { label: 'Insights', href: '/insights' },
 ]
 
-function cloneLinks(items: CmsLink[] | undefined, fallback: CmsLink[]) {
+function isTemporarilyHiddenHeaderLink(item: CmsLink) {
+  const label = item.label.trim().toLowerCase()
+  const href = item.href.trim().toLowerCase()
+  return label === 'the one story' || href === '/about'
+}
+
+function cloneLinks(items: CmsLink[] | undefined, fallback: CmsLink[], options?: { hideTheOneStoryByDefault?: boolean }) {
   const source = items === undefined ? fallback : items
   return source.map((item) => ({
     label: item.label ?? '',
     href: item.href ?? '',
+    visible:
+      item.visible ??
+      (options?.hideTheOneStoryByDefault && isTemporarilyHiddenHeaderLink(item) ? false : true),
   }))
 }
 
@@ -26,7 +35,7 @@ function createDefaultLocale(lang: BrandLang): CmsLocalizedSiteSettings {
       brandName: 'The One',
       tagline: 'Golden Generation Company Ltd.',
       ctaLabel: 'Call Your Shot',
-      navLinks: cloneLinks(navItemsByLang[lang], navItemsByLang.en),
+      navLinks: cloneLinks(navItemsByLang[lang], navItemsByLang.en, { hideTheOneStoryByDefault: true }),
     },
     footer: {
       logoSrc: '/logo-gg.png',
@@ -75,7 +84,7 @@ function mergeLocale(
     header: {
       ...fallback.header,
       ...current?.header,
-      navLinks: cloneLinks(current?.header?.navLinks, fallback.header.navLinks),
+      navLinks: cloneLinks(current?.header?.navLinks, fallback.header.navLinks, { hideTheOneStoryByDefault: true }),
     },
     footer: {
       ...fallback.footer,

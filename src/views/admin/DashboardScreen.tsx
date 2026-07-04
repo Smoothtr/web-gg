@@ -1,10 +1,11 @@
 'use client'
 
 import Link from 'next/link'
-import { FileText, Settings2, Sparkles, UploadCloud } from 'lucide-react'
+import { AlertTriangle, FileText, Settings2, Sparkles, UploadCloud } from 'lucide-react'
 import { useAdminData } from '../../admin/AdminDataContext'
 import { Card, StatusBadge } from '../../admin/ui'
 import { pageGroups } from '../../cms/adminNav'
+import type { CmsInsightContent, CmsPageContent } from '../../cms/types'
 
 function formatDate(value?: string) {
   if (!value) return null
@@ -13,12 +14,74 @@ function formatDate(value?: string) {
   return date.toLocaleString('vi-VN', { dateStyle: 'medium', timeStyle: 'short' })
 }
 
+type ContentDebtItem = {
+  label: string
+  detail: string
+  href: string
+}
+
+function buildContentDebtItems(pages: CmsPageContent[], insights: CmsInsightContent[]) {
+  const items: ContentDebtItem[] = []
+  const theOnePage = pages.find((page) => page.id === 'the-one')
+  const storiesBlock = theOnePage?.blocks.find((block) => block.id === 'stories')
+
+  ;(storiesBlock?.items ?? []).forEach((story, index) => {
+    const label = story.title || story.displayName || story.id || `Story ${index + 1}`
+    if (!(story.videoUrl?.trim() || story.embedUrl?.trim())) {
+      items.push({
+        label: `${label}: preview video`,
+        detail: 'Missing MP4/WebM/OGG preview video for homepage hover/tap.',
+        href: '/admin/pages/the-one/sections/stories',
+      })
+    }
+    if (!(story.backgroundImages ?? []).some((url) => url.trim())) {
+      items.push({
+        label: `${label}: background carousel`,
+        detail: 'Missing carousel images for The One Stories post background.',
+        href: '/admin/pages/the-one/sections/stories',
+      })
+    }
+    const socialLinks = story.socialLinks ?? {}
+    const missingSocials = (['facebook', 'instagram', 'tiktok', 'website'] as const).filter((key) => !socialLinks[key]?.trim())
+    if (missingSocials.length) {
+      items.push({
+        label: `${label}: social links`,
+        detail: `Missing ${missingSocials.join(', ')}.`,
+        href: '/admin/pages/the-one/sections/stories',
+      })
+    }
+  })
+
+  const homepage = pages.find((page) => page.id === 'homepage')
+  const closingFaqCount =
+    homepage?.blocks.find((block) => block.id === 'closing')?.items?.filter((item) => item.title.trim() && item.body?.trim()).length ?? 0
+  if (closingFaqCount < 4) {
+    items.push({
+      label: 'Homepage Closing + FAQ',
+      detail: `Only ${closingFaqCount}/4 recommended FAQ items are ready.`,
+      href: '/admin/pages/homepage/sections/closing',
+    })
+  }
+
+  insights.forEach((post) => {
+    if (post.coverImageUrl?.trim() || post.coverImage?.trim()) return
+    items.push({
+      label: `${post.title}: insight cover`,
+      detail: 'Missing cover image for insight listing and social sharing.',
+      href: `/admin/insights/${post.slug}`,
+    })
+  })
+
+  return items
+}
+
 export default function DashboardScreen() {
   const { pages, insights, seed, saving, message } = useAdminData()
 
   const publishedPages = pages.filter((page) => page.status === 'published').length
   const draftPages = pages.length - publishedPages
   const publishedInsights = insights.filter((post) => post.status === 'published').length
+  const contentDebtItems = buildContentDebtItems(pages, insights)
 
   const recentlyUpdated = [...pages, ...insights]
     .filter((item) => item.updatedAt)
@@ -56,6 +119,36 @@ export default function DashboardScreen() {
           {message && <p className="mt-2 text-xs font-semibold text-green-700">{message}</p>}
         </Card>
       </div>
+
+      <Card
+        title="Cần hoàn thiện nội dung"
+        description="Các mục này không chặn code deploy, nhưng cần team nội dung cập nhật để live site khớp acceptance."
+        action={<AlertTriangle size={18} className={contentDebtItems.length ? 'text-primary' : 'text-green-700'} />}
+      >
+        {contentDebtItems.length === 0 ? (
+          <p className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-800">
+            Không thấy thiếu video, carousel, social link hoặc insight cover trong dữ liệu hiện tại.
+          </p>
+        ) : (
+          <div className="grid gap-2">
+            {contentDebtItems.slice(0, 12).map((item) => (
+              <Link
+                key={`${item.href}-${item.label}`}
+                href={item.href}
+                className="rounded-xl border border-outline-variant/45 bg-surface px-3 py-2.5 transition-colors hover:border-primary/50"
+              >
+                <span className="block text-sm font-extrabold text-on-surface">{item.label}</span>
+                <span className="mt-0.5 block text-xs font-semibold leading-relaxed text-on-surface-variant">{item.detail}</span>
+              </Link>
+            ))}
+            {contentDebtItems.length > 12 && (
+              <p className="px-1 text-xs font-semibold text-on-surface-variant">
+                +{contentDebtItems.length - 12} mục khác. Hoàn thiện các mục trên rồi refresh dashboard để xem tiếp.
+              </p>
+            )}
+          </div>
+        )}
+      </Card>
 
       <Card title="Trang web" description="Nhóm theo khu vực, giống cấu trúc menu trên web.">
         <div className="grid gap-4 md:grid-cols-2">

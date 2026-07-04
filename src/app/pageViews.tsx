@@ -20,6 +20,7 @@ import { InsightArticlePage, InsightsIndexPage } from '../views/InsightsPage'
 import { PackagePage } from '../views/PackagePage'
 import TheOnePage from '../views/TheOnePage'
 import { getServerCmsInsight, getServerCmsPage, getServerCmsSiteSettings, listServerCmsInsights } from '../cms/serverRepository'
+import { buildHomeFaqSchema } from '../cms/homeFaqSchema'
 import { buildInsightArticleSchema, buildInsightBreadcrumbSchema, buildInsightsIndexSchema } from './insightSchemas'
 import { JsonLd } from './seo'
 
@@ -27,7 +28,7 @@ export async function HomeView({ lang, pageId }: { lang: BrandLang; pageId: stri
   const [page, theOnePage, siteSettings] = await Promise.all([getServerCmsPage(pageId), getServerCmsPage('the-one'), getServerCmsSiteSettings()])
   return (
     <>
-      <JsonLd items={[organizationSchema, websiteSchema, homeWebPageSchema]} />
+      <JsonLd items={[organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(page)]} />
       <BrandHomePage lang={lang} cmsPage={page} theOnePage={theOnePage} siteSettings={siteSettings} />
     </>
   )

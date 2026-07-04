@@ -110,6 +110,7 @@ export type CmsInsightContent = {
 export type CmsLink = {
   label: string
   href: string
+  visible?: boolean
 }
 
 export type CmsLocalizedSiteSettings = {

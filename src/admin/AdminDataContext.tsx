@@ -18,6 +18,7 @@ import { mergeCmsSiteSettings } from '../cms/siteSettings'
 import { getCmsSiteSettings, listCmsInsights, listCmsPages, saveCmsInsight, saveCmsPage, saveCmsSiteSettings, seedDefaultContent } from '../cms/cmsRepository'
 import { getInsightRevalidatePaths, getPageRevalidatePaths, hiddenCmsPageIds, siteSettingsRevalidatePaths } from '../cms/adminNav'
 import type { CmsBlock, CmsBlockItem, CmsInsightContent, CmsPageContent, CmsSiteSettings, CmsStatus } from '../cms/types'
+import { isUnsupportedPreviewVideoUrl } from '../cms/videoValidation'
 
 type PageMetaKey = keyof CmsPageContent['meta']
 type InsightMetaKey = keyof CmsInsightContent['meta']
@@ -131,6 +132,34 @@ function validateTheOneStories(page: CmsPageContent) {
 
   return invalidStories.length
     ? `Không thể publish The One Stories: ${invalidStories.join('; ')}. Mỗi story cần đúng 10 metrics có nội dung và đúng 2 metrics Featured.`
+    : ''
+}
+
+function validatePreviewVideoUrls(page: CmsPageContent) {
+  const invalidItems = page.blocks.flatMap((block) =>
+    (block.items ?? []).flatMap((item) => {
+      const videoUrl = item.videoUrl?.trim()
+      const embedUrl = item.embedUrl?.trim()
+      if (!isUnsupportedPreviewVideoUrl(videoUrl) && !isUnsupportedPreviewVideoUrl(embedUrl)) return []
+      return `${block.heading || block.id}: ${item.title || item.id || item.href || 'Item'}`
+    }),
+  )
+
+  return invalidItems.length
+    ? `Khong the luu preview video YouTube: ${invalidItems.join('; ')}. Hay upload file MP4/WebM/OGG vao CMS.`
+    : ''
+}
+
+function validateBackgroundCarouselImages(page: CmsPageContent) {
+  if (page.id !== 'the-one') return ''
+  const storiesBlock = page.blocks.find((block) => block.id === 'stories')
+  const invalidStories = (storiesBlock?.items ?? []).flatMap((item) => {
+    const count = item.backgroundImages?.filter((url) => url.trim()).length ?? 0
+    return count > 5 ? `${item.title || item.id || 'Story'} (${count}/5 images)` : []
+  })
+
+  return invalidStories.length
+    ? `Khong the luu background carousel qua 5 anh: ${invalidStories.join('; ')}.`
     : ''
 }
 
@@ -390,6 +419,10 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     try {
       const validationError = validateTheOneStories(page)
       if (validationError) throw new Error(validationError)
+      const videoValidationError = validatePreviewVideoUrls(page)
+      if (videoValidationError) throw new Error(videoValidationError)
+      const carouselValidationError = validateBackgroundCarouselImages(page)
+      if (carouselValidationError) throw new Error(carouselValidationError)
       await saveCmsPage(page)
       await triggerRevalidate(getPageRevalidatePaths(id))
       setMessage(`Đã lưu trang "${page.title}" và cập nhật trên web.`)

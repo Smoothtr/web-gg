@@ -13,6 +13,7 @@ import { SeoHead } from '../components/SeoHead'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { whenIntroGone } from '../hooks/useIntroGate'
 import { getCmsBlock, splitCmsParagraphs } from '../cms/contentBlocks'
+import { buildHomeFaqSchema, getHomeClosingFaqItems } from '../cms/homeFaqSchema'
 import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
 import type { CaseStudy } from '../data/caseStudies'
@@ -54,6 +55,46 @@ function SectionHeader({ title, intro, dark = false }: { title: string; intro?: 
       <div data-reveal="line" className="home-gradient-underline mt-3" aria-hidden="true" />
       {intro && <p className={`mt-4 text-[15px] md:text-base leading-relaxed ${dark ? 'text-white/65' : 'text-on-surface-variant'}`}>{intro}</p>}
     </div>
+  )
+}
+
+function splitHeroWords(text: string) {
+  return text.trim().split(/\s+/).filter(Boolean)
+}
+
+function getHeroAnimationDelays(wordCount: number, showDivider: boolean) {
+  const lastWordDone = Math.max(0, wordCount - 1) * 70 + 450
+  const dividerDelay = lastWordDone + 150
+  return {
+    divider: dividerDelay,
+    subline: showDivider ? dividerDelay + 260 : lastWordDone + 150,
+    cta: showDivider ? dividerDelay + 430 : lastWordDone + 320,
+  }
+}
+
+function HeroWordTitle({
+  text,
+  className,
+  nowrap,
+}: {
+  text: string
+  className: string
+  nowrap: boolean
+}) {
+  const words = splitHeroWords(text)
+
+  return (
+    <h1 className={className}>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true" className={nowrap ? 'inline-block whitespace-nowrap' : 'inline'}>
+        {words.map((word, index) => (
+          <span key={`${word}-${index}`} className="hero-word inline-block whitespace-nowrap" style={{ '--wi': index } as CSSProperties}>
+            {word}
+            {index < words.length - 1 ? '\u00a0' : ''}
+          </span>
+        ))}
+      </span>
+    </h1>
   )
 }
 
@@ -226,20 +267,20 @@ function ExploreTile({
       <div className="home-explore-media relative min-h-0 flex-1 overflow-hidden">
         <div className={`absolute inset-0 bg-gradient-to-br ${backdrop}`} aria-hidden="true" />
         {directVideo && (
-            <video
-              ref={videoRef}
-              muted
-              playsInline
-              preload="none"
-              aria-hidden="true"
-              onEnded={deactivatePreview}
-              className={`relative h-full w-full object-cover transition duration-500 ${active ? 'opacity-100' : 'opacity-0'} group-hover:scale-105`}
-            />
+          <video
+            ref={videoRef}
+            muted
+            playsInline
+            preload="none"
+            aria-hidden="true"
+            onEnded={deactivatePreview}
+            className={`relative h-full w-full object-cover transition duration-500 ${active ? 'opacity-100' : 'opacity-0'} group-hover:scale-[1.04]`}
+          />
         )}
         <img
           src={posterUrl}
           alt=""
-          className={`pointer-events-none absolute inset-0 h-full w-full transition duration-200 ${
+          className={`pointer-events-none absolute inset-0 h-full w-full transition duration-500 group-hover:scale-[1.04] ${
             active ? 'opacity-0' : 'opacity-100'
           } ${posterIsLogo ? 'object-contain p-8' : 'object-cover'}`}
         />
@@ -251,7 +292,7 @@ function ExploreTile({
         )}
       </div>
       <div className={`${featured ? 'p-4 md:p-5' : 'p-3 md:p-3.5'} bg-white text-on-surface`}>
-        <h3 className={`${featured ? 'text-[20px] md:text-[24px]' : 'text-[15px] md:text-[16px]'} line-clamp-2 font-extrabold leading-tight text-on-surface`}>
+        <h3 className={`${featured ? 'text-[20px] md:text-[24px]' : 'text-[15px] md:text-[16px]'} line-clamp-2 font-extrabold leading-tight text-on-surface transition-colors group-hover:text-primary`}>
           {stage.label}
         </h3>
         {stage.detail && (
@@ -320,16 +361,17 @@ function SystemMap({ labels, lang, items, storyTargets }: { labels: string[]; la
 
   const visibleStages = expanded ? stages : stages.slice(0, 6)
   const canToggle = stages.length > 5
+  const revealOrderByIndex = [0, 1, 2, 4, 3, 5]
 
   return (
     <div className="space-y-5">
-      <div data-reveal="scale" className="home-explore-grid grid auto-rows-[minmax(120px,1fr)] grid-cols-2 gap-1 overflow-hidden rounded-[24px] bg-white p-1 shadow-[0_24px_70px_rgba(219,39,119,0.12)] md:grid-cols-3 md:auto-rows-[minmax(170px,1fr)]">
+      <div data-reveal="explore-frame" className="home-explore-grid grid auto-rows-[minmax(120px,1fr)] grid-cols-2 gap-1 overflow-hidden rounded-[24px] bg-white p-1 shadow-[0_24px_70px_rgba(219,39,119,0.12)] md:grid-cols-3 md:auto-rows-[minmax(170px,1fr)]">
         {visibleStages.map((stage, index) => (
           <div
             key={`${stage.label}-${index}`}
-            data-reveal="tile-in"
+            data-reveal="explore-tile"
             data-tile-direction={index === 0 ? 'center' : index === 1 || index === 2 ? 'right' : 'bottom'}
-            style={{ '--ri': index } as CSSProperties}
+            style={{ '--ri': revealOrderByIndex[index] ?? index } as CSSProperties}
             className={`h-full ${index === 0 ? 'md:col-span-2 md:row-span-2' : ''}`}
           >
             <ExploreTile
@@ -355,40 +397,33 @@ function SystemMap({ labels, lang, items, storyTargets }: { labels: string[]; la
   )
 }
 
-function memberRotation(index: number) {
-  return [-2.4, 1.7, -1.2, 2.5, -1.8, 1.1][index % 6]
-}
-
 function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
   const members = (block?.items ?? []).filter((item) => item.published !== false).slice(0, 6)
   if (!block || !members.length) return null
   const closingLine1 = block.closingLine1 || 'We quit our 9-5 and started our own business.'
   const closingLine2 = block.closingLine2 || "Isn't it your turn now?"
-  const revealOrder = [0, 2, 4, 1, 3, 5]
 
   return (
     <section className="px-5 py-12 md:py-16 lg:px-10">
       <div className="mx-auto max-w-6xl">
         <SectionHeader title={block.heading || 'The One People'} intro={block.body} />
-        <div className="people-polaroid-scroll -mx-5 flex snap-x gap-5 overflow-x-auto px-5 pb-5 md:mx-0 md:grid md:grid-cols-3 md:gap-7 md:overflow-visible md:px-0 md:pb-0">
+        <div className="people-card-scroll -mx-5 flex snap-x gap-5 overflow-x-auto px-5 pb-5 md:mx-0 md:grid md:grid-cols-3 md:gap-7 md:overflow-visible md:px-0 md:pb-0">
           {members.map((member, index) => {
-            const rotation = memberRotation(index)
-            const orderIndex = revealOrder.indexOf(index)
             return (
               <article
                 key={`${member.title}-${index}`}
-                data-reveal="photo-drop"
-                style={{ '--ri': orderIndex < 0 ? index : orderIndex, '--photo-rotation': `${rotation}deg` } as CSSProperties}
-                className="people-polaroid group min-w-[72%] snap-center bg-white p-3 shadow-[0_22px_48px_rgba(80,20,50,0.18)] transition duration-300 hover:-translate-y-1.5 hover:rotate-0 hover:scale-[1.03] md:min-w-0"
+                data-reveal="people-card"
+                style={{ '--ri': index } as CSSProperties}
+                className="people-card group min-w-[78%] snap-center overflow-hidden rounded-[28px] border border-white/70 bg-white/85 shadow-[0_22px_54px_rgba(80,20,50,0.12)] backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_rgba(219,39,119,0.18)] md:min-w-0"
               >
-                <div className="relative aspect-square overflow-hidden bg-surface-container-low">
+                <div className="relative aspect-[4/3] overflow-hidden bg-surface-container-low md:aspect-square">
                   <img src={member.imageUrl || member.photoUrl || '/logo-gg.png'} alt={member.imageAlt || member.title} className="h-full w-full object-cover transition duration-300 group-hover:opacity-0" />
                   <img src={member.funPhotoUrl || member.backgroundImageUrl || member.imageUrl || '/logo-gg.png'} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-300 group-hover:opacity-100" />
                 </div>
-                <div className="px-1 pb-2 pt-4 text-center">
-                  <h3 className="people-signature text-[24px] leading-none text-on-surface">{member.title}</h3>
+                <div className="p-5 text-left">
+                  <h3 className="text-[18px] font-extrabold leading-tight text-on-surface">{member.title}</h3>
                   {member.label && <p className="mt-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary">{member.label}</p>}
-                  {member.body && <p className="mt-2 line-clamp-2 text-[13px] font-semibold leading-relaxed text-on-surface-variant">{member.body}</p>}
+                  {member.body && <p className="mt-3 line-clamp-3 text-[13px] font-semibold leading-relaxed text-on-surface-variant md:text-[14px]">{member.body}</p>}
                 </div>
               </article>
             )
@@ -406,7 +441,16 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
   )
 }
 
-function ClosingBanner({ block, stories }: { block?: ReturnType<typeof getCmsBlock>; stories: CaseStudy[] }) {
+function ClosingBanner({
+  block,
+  stories,
+  faqItems,
+}: {
+  block?: ReturnType<typeof getCmsBlock>
+  stories: CaseStudy[]
+  faqItems: Array<{ question: string; answer: string }>
+}) {
+  const [openFaqIndex, setOpenFaqIndex] = useState(0)
   if (!block) return null
   const overlayValue = Number.parseFloat(block.backgroundOverlayOpacity ?? '0.62')
   const overlay = Number.isFinite(overlayValue) ? Math.min(0.85, Math.max(0.2, overlayValue)) : 0.62
@@ -421,19 +465,19 @@ function ClosingBanner({ block, stories }: { block?: ReturnType<typeof getCmsBlo
   const logos = stories.map(getStoryLogoForHome).filter(Boolean)
 
   return (
-    <section className="px-0 py-10 md:py-14">
-      <div className="closing-banner relative flex min-h-[360px] items-center overflow-hidden px-5 py-16 text-center md:min-h-[460px] lg:px-10" style={style}>
+    <section className="closing-section px-0 py-0">
+      <div className="closing-banner relative flex min-h-[420px] items-center overflow-hidden px-5 py-16 text-center md:min-h-[540px] lg:px-10" style={style}>
         <div className="absolute inset-0 closing-banner-bg" aria-hidden="true" />
         {logos.length > 0 && (
-          <div className="absolute inset-x-0 top-8 overflow-hidden opacity-60">
+          <div className="closing-logo-rail absolute inset-x-0 top-7 h-12 overflow-hidden opacity-70">
             <div className="closing-logo-marquee flex w-max items-center gap-12">
               {[...logos, ...logos].map((logo, index) => (
-                <img key={`${logo}-${index}`} src={logo} alt="" aria-hidden="true" className="h-10 w-auto max-w-[120px] object-contain brightness-0 invert opacity-60" />
+                <img key={`${logo}-${index}`} src={logo} alt="" aria-hidden="true" className="h-8 w-auto max-w-[128px] object-contain brightness-0 invert opacity-70" />
               ))}
             </div>
           </div>
         )}
-        <div className="relative mx-auto max-w-4xl" data-reveal="scale">
+        <div className="relative mx-auto w-full max-w-[1200px]" data-reveal="scale">
           <h2 className="home-hero-title-serif text-[34px] font-semibold leading-tight text-white md:text-[44px]">{block.heading || 'So, ready to be our plus one?'}</h2>
           {block.subtitle && <p className="mx-auto mt-4 max-w-2xl text-base font-semibold leading-relaxed text-white/82 md:text-lg">{block.subtitle}</p>}
           <button
@@ -443,6 +487,31 @@ function ClosingBanner({ block, stories }: { block?: ReturnType<typeof getCmsBlo
           >
             {resolvePrimaryBookingCtaLabel(block.ctaLabel)}
           </button>
+          {faqItems.length > 0 && (
+            <div className="closing-faq mx-auto mt-9 grid max-w-3xl gap-3 text-left">
+              {faqItems.map((item, index) => {
+                const open = openFaqIndex === index
+                return (
+                  <div key={`${item.question}-${index}`} className="overflow-hidden rounded-2xl border border-white/22 bg-white/14 text-white shadow-[0_18px_46px_rgba(0,0,0,0.12)] backdrop-blur-xl">
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaqIndex(open ? -1 : index)}
+                      className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-[15px] font-extrabold leading-snug md:text-[16px]"
+                      aria-expanded={open}
+                    >
+                      <span>{item.question}</span>
+                      <span className={`closing-faq-plus flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/18 text-xl leading-none transition-transform ${open ? 'rotate-45' : ''}`}>+</span>
+                    </button>
+                    <div className={`closing-faq-answer grid transition-[grid-template-rows] duration-300 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                      <div className="overflow-hidden">
+                        <p className="px-4 pb-4 text-sm font-semibold leading-relaxed text-white/78">{item.answer}</p>
+                      </div>
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          )}
         </div>
       </div>
     </section>
@@ -478,6 +547,10 @@ export default function BrandHomePage({
   const isDefaultHeroTitle = heroLineOne.toLowerCase() === 'the one by gg99'
   const heroTextMode = heroBlock?.textColor ?? 'light'
   const showHeroDivider = heroBlock?.dividerShow !== false
+  const heroWordCount = splitHeroWords(heroLineOne).length
+  const heroDelays = getHeroAnimationDelays(heroWordCount, showHeroDivider)
+  const closingFaqItems = getHomeClosingFaqItems(cmsPage)
+  const homeSchemas = [organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(cmsPage)].filter(Boolean)
   const packageItems: CmsBlockItem[] = packagesBlock?.items?.length
     ? packagesBlock.items
     : c.packages.map((item, index) => ({
@@ -492,33 +565,37 @@ export default function BrandHomePage({
   }, [])
 
   return (
-    <BrandLayout lang={lang} siteSettings={siteSettings} hideHeaderCta flushTop>
-      <SeoHead meta={homeMeta} schema={[organizationSchema, websiteSchema, homeWebPageSchema]} lang={lang} />
+    <BrandLayout
+      lang={lang}
+      siteSettings={siteSettings}
+      hideHeaderCta
+      flushTop
+      resolveNavHref={(href, label) => (href === '/packages' || label.toLowerCase().includes('packages') ? '#packages' : href)}
+    >
+      <SeoHead meta={homeMeta} schema={homeSchemas} lang={lang} />
 
       <section className={`home-hero relative flex min-h-[52vh] items-center overflow-hidden md:min-h-[58vh] ${heroReady ? 'is-ready' : ''}`} style={heroBackgroundStyle(heroBlock)}>
         <div className="absolute inset-0 tech-grid opacity-35 pointer-events-none" aria-hidden="true" />
         <div className="noise-overlay" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-surface-container" aria-hidden="true" />
         <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-5 pb-10 pt-28 text-center lg:px-10">
-          <h1
-            style={{ '--hero-delay': '0ms' } as CSSProperties}
+          <HeroWordTitle
+            text={heroLineOne}
+            nowrap={isDefaultHeroTitle}
             className={[
-              'home-hero-item home-hero-title-serif gg-hero-title text-[clamp(36px,10vw,48px)] font-semibold not-italic leading-[1.08] md:text-[clamp(48px,6vw,80px)]',
+              'hero-word-title home-hero-title-serif gg-hero-title text-[clamp(36px,10vw,48px)] font-semibold not-italic leading-[1.08] md:text-[clamp(48px,6vw,80px)]',
               heroTextMode === 'gradient' ? 'gg-grad-text' : heroTextMode === 'dark' ? 'text-on-surface' : 'text-white',
-              isDefaultHeroTitle ? 'md:whitespace-nowrap' : '',
             ].join(' ')}
-          >
-            {heroLineOne}
-          </h1>
+          />
           {showHeroDivider && (
             <div
-              className="home-hero-item mt-5 h-px w-36 bg-white/45"
-              style={{ '--hero-delay': '140ms' } as CSSProperties}
+              className="home-hero-divider mt-5 h-px bg-white/45"
+              style={{ '--hero-delay': `${heroDelays.divider}ms` } as CSSProperties}
               aria-hidden="true"
             />
           )}
           <p
-            style={{ '--hero-delay': showHeroDivider ? '280ms' : '140ms' } as CSSProperties}
+            style={{ '--hero-delay': `${heroDelays.subline}ms` } as CSSProperties}
             className={[
               'home-hero-item mt-6 max-w-2xl text-[15px] font-medium leading-relaxed md:text-[20px]',
               heroTextMode === 'dark' ? 'text-on-surface-variant' : 'text-white/90',
@@ -529,7 +606,7 @@ export default function BrandHomePage({
           <button
             type="button"
             onClick={openBookingModal}
-            style={{ '--hero-delay': showHeroDivider ? '420ms' : '280ms' } as CSSProperties}
+            style={{ '--hero-delay': `${heroDelays.cta}ms` } as CSSProperties}
             className="btn-shine cta-idle mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-7 py-3.5 font-bold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] hover:opacity-95"
           >
             {resolvePrimaryBookingCtaLabel(heroBlock?.ctaLabel)}
@@ -559,7 +636,7 @@ export default function BrandHomePage({
       </section>
 
       <PeopleSection block={peopleBlock} />
-      <ClosingBanner block={closingBlock} stories={storyTargets} />
+      <ClosingBanner block={closingBlock} stories={storyTargets} faqItems={closingFaqItems} />
     </BrandLayout>
   )
 }

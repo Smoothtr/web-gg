@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, type DragEvent } from 'react'
 import { useRouter } from 'next/navigation'
-import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, ChevronRight, ImageIcon, Plus, Save, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, ChevronDown, ChevronLeft, ChevronRight, ImageIcon, Plus, Save, Trash2, UploadCloud } from 'lucide-react'
 import { useAdminData } from '../../admin/AdminDataContext'
 import {
   BackLink,
@@ -18,7 +18,10 @@ import {
   VideoUploadButton,
 } from '../../admin/ui'
 import { CmsIcon } from '../../components/CmsIcon'
+import { getAdminSectionLabel } from '../../cms/adminSectionLabels'
+import { uploadCmsAsset } from '../../cms/mediaRepository'
 import type { CmsBlockItem } from '../../cms/types'
+import { getUnsupportedPreviewVideoMessage } from '../../cms/videoValidation'
 
 type UpdateBlockItem = (pageId: string, blockId: string, itemIndex: number, patch: Partial<CmsBlockItem>) => void
 
@@ -34,6 +37,142 @@ function textToDraftList(value: string) {
 
 function getMetric(item: CmsBlockItem, index: number) {
   return item.keyMetrics?.[index] ?? { value: '', label: '', featured: false }
+}
+
+function moveUrl(items: string[], fromIndex: number, toIndex: number) {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0 || fromIndex >= items.length || toIndex >= items.length) return items
+  const next = [...items]
+  const [item] = next.splice(fromIndex, 1)
+  next.splice(toIndex, 0, item)
+  return next
+}
+
+function BackgroundCarouselUploader({
+  urls,
+  onChange,
+  folder,
+  onUploadError,
+  max = 5,
+}: {
+  urls: string[]
+  onChange: (urls: string[]) => void
+  folder: string
+  onUploadError: (message: string) => void
+  max?: number
+}) {
+  const [uploading, setUploading] = useState(false)
+  const [dragIndex, setDragIndex] = useState<number | null>(null)
+  const remainingSlots = Math.max(0, max - urls.length)
+
+  async function uploadFiles(files: FileList | null) {
+    const selected = Array.from(files ?? []).filter((file) => file.type.startsWith('image/'))
+    if (!selected.length) return
+    if (!remainingSlots) {
+      onUploadError(`Background carousel chi toi da ${max} anh.`)
+      return
+    }
+
+    const limited = selected.slice(0, remainingSlots)
+    if (limited.length < selected.length) onUploadError(`Chi upload them duoc ${remainingSlots} anh de giu toi da ${max} anh.`)
+    else onUploadError('')
+
+    setUploading(true)
+    try {
+      const uploaded: string[] = []
+      for (const file of limited) {
+        uploaded.push(await uploadCmsAsset(file, folder, 'image'))
+      }
+      onChange([...urls, ...uploaded].slice(0, max))
+    } catch (uploadError) {
+      onUploadError(uploadError instanceof Error ? uploadError.message : 'Khong upload duoc anh carousel.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  function handleDrop(event: DragEvent<HTMLDivElement>, targetIndex: number) {
+    event.preventDefault()
+    if (dragIndex === null) return
+    onChange(moveUrl(urls, dragIndex, targetIndex))
+    setDragIndex(null)
+  }
+
+  return (
+    <div className="grid gap-3">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        {urls.map((url, imageIndex) => (
+          <div
+            key={`${url}-${imageIndex}`}
+            draggable
+            onDragStart={() => setDragIndex(imageIndex)}
+            onDragOver={(event) => event.preventDefault()}
+            onDrop={(event) => handleDrop(event, imageIndex)}
+            onDragEnd={() => setDragIndex(null)}
+            className="group overflow-hidden rounded-xl border border-outline-variant/45 bg-surface shadow-sm"
+          >
+            <div className="aspect-[4/5] bg-surface-container-low">
+              <img src={url} alt={`Carousel image ${imageIndex + 1}`} className="h-full w-full object-cover" />
+            </div>
+            <div className="grid gap-2 p-2">
+              <p className="truncate text-[11px] font-bold text-on-surface-variant">{imageIndex + 1}. {url}</p>
+              <div className="flex items-center gap-1">
+                <button
+                  type="button"
+                  onClick={() => onChange(moveUrl(urls, imageIndex, imageIndex - 1))}
+                  disabled={imageIndex === 0}
+                  className="rounded-lg border border-outline-variant px-2 py-1.5 text-on-surface-variant disabled:opacity-40"
+                  aria-label="Move image up"
+                >
+                  <ArrowUp size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(moveUrl(urls, imageIndex, imageIndex + 1))}
+                  disabled={imageIndex === urls.length - 1}
+                  className="rounded-lg border border-outline-variant px-2 py-1.5 text-on-surface-variant disabled:opacity-40"
+                  aria-label="Move image down"
+                >
+                  <ArrowDown size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(urls.filter((_, index) => index !== imageIndex))}
+                  className="ml-auto rounded-lg border border-red-200 px-2 py-1.5 text-red-700"
+                  aria-label="Remove carousel image"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+        {urls.length === 0 && (
+          <div className="flex aspect-[4/5] items-center justify-center rounded-xl border border-dashed border-outline-variant/60 bg-surface text-center text-xs font-bold text-on-surface-variant">
+            No carousel images yet
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <label className={`inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-outline-variant px-3 text-xs font-extrabold text-primary transition-colors hover:bg-primary/10 ${remainingSlots ? 'cursor-pointer' : 'cursor-not-allowed opacity-50'}`}>
+          <UploadCloud size={15} />
+          {uploading ? 'Uploading...' : `Upload images (${urls.length}/${max})`}
+          <input
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={uploading || !remainingSlots}
+            className="sr-only"
+            onChange={(event) => {
+              void uploadFiles(event.target.files)
+              event.currentTarget.value = ''
+            }}
+          />
+        </label>
+        <p className="text-xs font-semibold text-on-surface-variant">Drag thumbnails to reorder. Recommended 1080x1350, max {max} images.</p>
+      </div>
+    </div>
+  )
 }
 
 function StoryItemEditor({
@@ -92,9 +231,9 @@ function StoryItemEditor({
     updateBackgroundImageUrl(url)
   }
 
-  function updateBackgroundImages(value: string) {
+  function updateBackgroundImages(urls: string[]) {
     updateBlockItem(pageId, blockId, index, {
-      backgroundImages: value.split('\n').map((url) => url.trim()).filter(Boolean),
+      backgroundImages: urls.map((url) => url.trim()).filter(Boolean).slice(0, 5),
     })
   }
 
@@ -259,12 +398,17 @@ function StoryItemEditor({
             />
             Show on homepage
           </label>
-          <Field label="Preview video URL" hint="MP4/WebM/OGG Cloudinary URL. Homepage hover/tap will autoplay muted once.">
+          <Field label="Preview video URL" hint="MP4/WebM/OGG Cloudinary URL. YouTube links are blocked because the homepage preview uses an HTML video player.">
             <div className="grid gap-2">
-              <TextInput value={item.videoUrl ?? item.embedUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { videoUrl: value })} />
+              <TextInput value={item.videoUrl ?? item.embedUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { videoUrl: value, embedUrl: '' })} />
+              {getUnsupportedPreviewVideoMessage(item.videoUrl ?? item.embedUrl) && (
+                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+                  {getUnsupportedPreviewVideoMessage(item.videoUrl ?? item.embedUrl)}
+                </p>
+              )}
               <VideoUploadButton
                 folder={`cms/pages/${pageId}/${blockId}/previews`}
-                onUploaded={(url) => updateBlockItem(pageId, blockId, index, { videoUrl: url })}
+                onUploaded={(url) => updateBlockItem(pageId, blockId, index, { videoUrl: url, embedUrl: '' })}
                 onError={onUploadError}
               />
             </div>
@@ -329,11 +473,12 @@ function StoryItemEditor({
               />
             </div>
           </Field>
-          <Field label="Background carousel images" hint="One image URL per line.">
-            <TextArea
-              value={(item.backgroundImages ?? []).join('\n')}
+          <Field label="Background carousel images" hint="Upload 1080x1350 images. Max 5. Drag thumbnails to reorder.">
+            <BackgroundCarouselUploader
+              urls={item.backgroundImages ?? []}
               onChange={updateBackgroundImages}
-              minHeight={96}
+              folder={`cms/pages/${pageId}/${blockId}/background-carousel`}
+              onUploadError={onUploadError}
             />
           </Field>
         </div>
@@ -395,6 +540,7 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
 
   const prevBlock = blockIndex > 0 ? page.blocks[blockIndex - 1] : undefined
   const nextBlock = blockIndex < page.blocks.length - 1 ? page.blocks[blockIndex + 1] : undefined
+  const adminSectionLabel = getAdminSectionLabel(pageId, block, blockIndex)
   const isStoryBlock = pageId === 'the-one' && block.id === 'stories'
   const canEditBlockMedia = !isStoryBlock && Boolean(block.icon || block.imageUrl || block.imageAlt || ['hero', 'intro', 'closing', 'people'].includes(block.id))
   const canEditItemMedia = !isStoryBlock && Boolean((block.items ?? []).some((item) => item.icon || item.imageUrl || item.imageAlt))
@@ -416,14 +562,14 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
         items={[
           { label: 'Pages', href: '/admin/pages' },
           { label: page.title, href: `/admin/pages/${pageId}` },
-          { label: block.heading || block.id },
+          { label: adminSectionLabel },
         ]}
       />
 
       <div className="flex flex-col gap-3 rounded-2xl border border-outline-variant/45 bg-surface/90 p-4 shadow-sm md:flex-row md:items-center md:justify-between">
         <div>
           <p className="text-xs font-extrabold uppercase tracking-widest text-primary">Section {blockIndex + 1}/{page.blocks.length}</p>
-          <h1 className="text-2xl font-extrabold text-on-surface">{block.heading || block.id}</h1>
+          <h1 className="text-2xl font-extrabold text-on-surface">{adminSectionLabel}</h1>
         </div>
         <div className="flex flex-wrap items-center gap-2">
           <button
@@ -480,6 +626,22 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
           <Field label="Body / mô tả">
             <TextArea value={block.body} onChange={(value) => updateBlock(pageId, blockId, { body: value })} minHeight={130} />
           </Field>
+
+          {pageId === 'homepage' && block.id === 'what-is' && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-on-surface-variant">
+              Media for these Explore tiles is paired with the same brand items in{' '}
+              <a href="/admin/pages/the-one/sections/stories" className="font-extrabold text-primary underline underline-offset-4">
+                The One Stories - Story order
+              </a>
+              . Keep each Explore item href equal to the story id, then edit video, thumbnail, carousel and social links in that story item.
+            </div>
+          )}
+
+          {pageId === 'homepage' && block.id === 'closing' && (
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-on-surface-variant">
+              Items in this Closing section are rendered as homepage FAQ. Use item title as the question and item body as the answer.
+            </div>
+          )}
 
           {canEditBlockMedia && (
           <div className="grid gap-4 lg:grid-cols-[1fr_260px]">
@@ -661,12 +823,17 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                         </Field>
                         {canEditItemMedia && (
                           <>
-                            <Field label="Video preview URL" hint="MP4/WebM/OGG Cloudinary URL. Homepage hover/tap preview plays muted once.">
+                            <Field label="Video preview URL" hint="MP4/WebM/OGG Cloudinary URL. YouTube links are blocked because the homepage preview uses an HTML video player.">
                               <div className="grid gap-2">
-                                <TextInput value={item.videoUrl ?? item.embedUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { videoUrl: value })} />
+                                <TextInput value={item.videoUrl ?? item.embedUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { videoUrl: value, embedUrl: '' })} />
+                                {getUnsupportedPreviewVideoMessage(item.videoUrl ?? item.embedUrl) && (
+                                  <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+                                    {getUnsupportedPreviewVideoMessage(item.videoUrl ?? item.embedUrl)}
+                                  </p>
+                                )}
                                 <VideoUploadButton
                                   folder={`cms/pages/${pageId}/${blockId}/items/previews`}
-                                  onUploaded={(url) => updateBlockItem(pageId, blockId, index, { videoUrl: url })}
+                                  onUploaded={(url) => updateBlockItem(pageId, blockId, index, { videoUrl: url, embedUrl: '' })}
                                   onError={setUploadError}
                                 />
                               </div>

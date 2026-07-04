@@ -14,8 +14,8 @@ function isContactHref(href: string) {
 
 export function BrandFooter({ lang = 'vi', siteSettings }: { lang?: BrandLang; siteSettings?: CmsSiteSettings | null }) {
   const footer = getLocalizedSiteSettings(siteSettings, lang).footer
-  const solutionLinks = footer.solutionLinks.filter((item) => item.label.trim() && item.href.trim())
-  const navLinks = footer.navigationLinks.filter((item) => item.label.trim() && item.href.trim())
+  const solutionLinks = footer.solutionLinks.filter((item) => item.visible !== false && item.label.trim() && item.href.trim())
+  const navLinks = footer.navigationLinks.filter((item) => item.visible !== false && item.label.trim() && item.href.trim())
   const hasLegalLinks =
     Boolean(footer.privacyLabel.trim() && footer.privacyHref.trim()) ||
     Boolean(footer.termsLabel.trim() && footer.termsHref.trim())

@@ -212,7 +212,7 @@ function StoriesBar({
     <section className={`ig-stories-bar sticky top-[88px] z-30 border-y border-white/65 bg-white/[0.72] px-4 shadow-[0_14px_40px_rgba(219,39,119,0.08)] backdrop-blur-xl ${compact ? 'is-compact' : ''} ${mobile ? 'is-mobile' : ''}`}>
       <div className="mx-auto max-w-[900px]">
         {!mobile && <h1 className="ig-stories-title ig-script-title text-center text-[46px] leading-none text-on-surface md:text-[58px]">{heading}</h1>}
-        <div className="ig-stories-row flex gap-4 overflow-x-auto pb-1">
+        <div className="ig-stories-row flex max-w-full gap-4 overflow-x-auto overscroll-x-contain pb-1">
           <YourStoryRing compact={compact} />
           {stories.map((story) => (
             <StoryRing key={story.id} story={story} viewed={viewedStories.has(story.id)} compact={compact} onClick={onStoryClick} />
@@ -248,6 +248,7 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
   const [activeImage, setActiveImage] = useState(0)
   const [inView, setInView] = useState(true)
   const [reducedMotion, setReducedMotion] = useState(false)
+  const [pausedUntil, setPausedUntil] = useState(0)
   const fallbackStyle: CSSProperties = {
     backgroundImage: story.screenBackground?.gradient || 'linear-gradient(145deg,#7f1d1d 0%,#db2777 48%,#f59e0b 100%)',
   }
@@ -271,14 +272,20 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
 
   useEffect(() => {
     if (images.length <= 1 || !inView || reducedMotion) return
-    const timer = window.setInterval(() => {
+    const delay = Math.max(4500, pausedUntil - Date.now())
+    const timer = window.setTimeout(() => {
       setActiveImage((current) => (current + 1) % images.length)
-    }, 4500)
-    return () => window.clearInterval(timer)
-  }, [images.length, inView, reducedMotion])
+    }, delay)
+    return () => window.clearTimeout(timer)
+  }, [activeImage, images.length, inView, pausedUntil, reducedMotion])
 
-  function goTo(delta: number) {
+  function pauseAutoplay() {
+    setPausedUntil(Date.now() + 8000)
+  }
+
+  function goTo(delta: number, pause = true) {
     if (images.length <= 1) return
+    if (pause) pauseAutoplay()
     setActiveImage((current) => (current + delta + images.length) % images.length)
   }
 
@@ -294,24 +301,31 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
   }
 
   return (
-    <div data-reveal="scale">
+    <div data-reveal="scale" className="w-full min-w-0">
     <div
       ref={frameRef}
-      className="story-media-frame relative aspect-[4/5] overflow-hidden bg-cover bg-center"
+      className="story-media-frame relative aspect-[4/5] max-w-full overflow-hidden bg-cover bg-center"
       style={images.length ? undefined : fallbackStyle}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {images.map((image, imageIndex) => (
-        <img
-          key={`${story.id}-bg-${image}`}
-          src={image}
-          alt=""
+      {images.length > 0 && (
+        <div
+          className="absolute inset-0 flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
+          style={{ transform: `translateX(-${activeImage * 100}%)` }}
           aria-hidden="true"
-          className={`absolute inset-0 h-full w-full object-cover transition duration-500 ${imageIndex === activeImage ? 'opacity-100' : 'opacity-0'}`}
-          loading={index === 0 ? 'eager' : 'lazy'}
-        />
-      ))}
+        >
+          {images.map((image) => (
+            <img
+              key={`${story.id}-bg-${image}`}
+              src={image}
+              alt=""
+              className="h-full w-full shrink-0 object-cover"
+              loading={index === 0 ? 'eager' : 'lazy'}
+            />
+          ))}
+        </div>
+      )}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,8,16,0.42),rgba(20,8,16,0.14)_42%,rgba(20,8,16,0.72))]" aria-hidden="true" />
 
       {images.length > 1 && (
@@ -330,7 +344,10 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
               <button
                 type="button"
                 key={`${image}-dot`}
-                onClick={() => setActiveImage(imageIndex)}
+                onClick={() => {
+                  pauseAutoplay()
+                  setActiveImage(imageIndex)
+                }}
                 aria-label={`Show background ${imageIndex + 1}`}
                 className={`h-1.5 rounded-full transition-all ${imageIndex === activeImage ? 'w-6 bg-white' : 'w-1.5 bg-white/48'}`}
               />
@@ -339,16 +356,16 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
         </>
       )}
 
-      <div className="relative z-10 grid h-full grid-cols-4 grid-rows-6 gap-2 p-3 sm:p-4">
-        <div className="story-bento-grid col-span-4 row-span-4 grid grid-cols-4 grid-rows-4 gap-2">
+      <div className="relative z-10 grid h-full min-w-0 grid-cols-[repeat(4,minmax(0,1fr))] grid-rows-6 gap-1.5 p-2 sm:gap-2 sm:p-4">
+        <div className="story-bento-grid col-span-4 row-span-4 grid min-w-0 grid-cols-[repeat(4,minmax(0,1fr))] grid-rows-4 gap-1.5 sm:gap-2">
           {metricTiles.map((metric, metricIndex) => (
             <div
               key={`${story.id}-metric-${metricIndex}`}
               className={`story-glass-tile ${metric.className} ${metric.featured ? 'is-featured' : ''}`}
               style={{ '--ri': metricIndex } as CSSProperties}
             >
-              <span className="block text-[clamp(16px,2.2vw,30px)] font-extrabold leading-none text-white">{metric.value || initials(metric.label)}</span>
-              <span className="mt-1 block text-[10px] font-bold leading-tight text-white/78 sm:text-[11px]">{metric.label}</span>
+              <span className="block break-words text-[clamp(14px,2.2vw,30px)] font-extrabold leading-none text-white">{metric.value || initials(metric.label)}</span>
+              <span className="mt-1 block overflow-wrap-anywhere text-[10px] font-bold leading-tight text-white/78 sm:text-[11px]">{metric.label}</span>
             </div>
           ))}
         </div>
@@ -373,39 +390,36 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
 
 function PostSocialLinks({ story }: { story: CaseStudy }) {
   const links = socialPlatforms.map((platform) => ({ ...platform, href: story.socialLinks?.[platform.key]?.trim() || '' }))
+  const websiteLink = links.find((link) => link.key === 'website')
+  const actionLinks = links.filter((link) => link.key !== 'website')
+
+  function renderSocialAction({ key, label, href, Icon }: (typeof links)[number], extraClass = '') {
+    const className = `story-social-icon inline-flex h-8 w-8 items-center justify-center text-[#262626] transition hover:scale-[1.15] hover:text-primary ${extraClass}`
+    if (href) {
+      return (
+        <a key={key} href={href} target="_blank" rel="noreferrer" aria-label={label} title={label} className={className}>
+          <Icon size={24} strokeWidth={2.1} />
+        </a>
+      )
+    }
+    return (
+      <button
+        key={key}
+        type="button"
+        onClick={() => openBookingModal('social-missing')}
+        aria-label={`${label} link pending - open booking`}
+        title={`${label} link pending`}
+        className={className}
+      >
+        <Icon size={24} strokeWidth={2.1} />
+      </button>
+    )
+  }
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      {links.map(({ key, label, href, Icon }) => {
-        const className = 'inline-flex h-9 w-9 items-center justify-center rounded-full border border-outline-variant/55 text-on-surface transition-colors hover:border-primary/45 hover:bg-primary/10 hover:text-primary'
-        if (href) {
-          return (
-            <a
-              key={key}
-              href={href}
-              target="_blank"
-              rel="noreferrer"
-              aria-label={label}
-              title={label}
-              className={className}
-            >
-              <Icon size={18} />
-            </a>
-          )
-        }
-        return (
-          <button
-            key={key}
-            type="button"
-            onClick={() => openBookingModal('social-missing')}
-            aria-label={`${label} link pending - open booking`}
-            title={`${label} link pending`}
-            className={className}
-          >
-            <Icon size={18} />
-          </button>
-        )
-      })}
+    <div className="story-social-row flex w-full items-center gap-4">
+      {actionLinks.map((link) => renderSocialAction(link))}
+      {websiteLink && renderSocialAction(websiteLink, 'ml-auto')}
     </div>
   )
 }
@@ -427,7 +441,7 @@ function InstagramPost({
     <div data-reveal="scale" style={{ '--ri': index } as CSSProperties}>
     <article
       id={story.id}
-      className={`story-post scroll-mt-40 overflow-hidden rounded-[28px] border bg-white shadow-[0_24px_70px_rgba(219,39,119,0.12)] transition duration-500 ${highlighted ? 'is-highlighted' : ''}`}
+      className={`story-post w-full max-w-full scroll-mt-40 overflow-hidden rounded-[28px] border bg-white shadow-[0_24px_70px_rgba(219,39,119,0.12)] transition duration-500 ${highlighted ? 'is-highlighted' : ''}`}
     >
       <header className="flex items-center gap-3 border-b border-outline-variant/35 px-4 py-3">
         <img src={getStoryLogo(story)} alt={getDisplayName(story)} className="h-11 w-11 rounded-full border border-outline-variant/45 object-contain" />
@@ -626,7 +640,7 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
     <BrandLayout lang={lang} siteSettings={siteSettings} flushTop mobileHeaderTitle={isMobileStories ? storyHeading : undefined}>
       <SeoHead meta={cmsPage?.meta ?? c.meta} schema={[organizationSchema, websiteSchema]} lang={lang} />
 
-      <article className="min-h-screen bg-[linear-gradient(180deg,#fff5f7_0%,#ffe4ec_35%,#fff1c8_100%)] pb-16 pt-24">
+      <article className="the-one-page min-h-screen overflow-x-clip bg-[linear-gradient(180deg,#fff5f7_0%,#ffe4ec_35%,#fff1c8_100%)] pb-16 pt-24">
         <StoriesBar
           heading={storyHeading}
           compact={compactStories}
@@ -636,8 +650,8 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
           onStoryClick={handleStoryClick}
         />
 
-        <section className="mx-auto mt-8 grid max-w-[1180px] gap-8 px-3 sm:px-5 xl:grid-cols-[minmax(0,860px)_280px]">
-          <div className="mx-auto grid w-full max-w-[860px] gap-7">
+        <section className="mx-auto mt-8 grid w-full max-w-[1180px] min-w-0 grid-cols-[minmax(0,1fr)] gap-8 px-3 sm:px-5 xl:grid-cols-[minmax(0,860px)_280px]">
+          <div className="mx-auto grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] gap-7 sm:max-w-[860px]">
             {orderedCaseStudies.map((story, index) => (
               <InstagramPost
                 key={story.id}

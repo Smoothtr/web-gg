@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { ChevronRight, Layers3, Plus, Save, Search, Trash2, Type } from 'lucide-react'
 import { useAdminData } from '../../admin/AdminDataContext'
 import { BackLink, Breadcrumbs, Card, EmptyState, Field, StatusBadge, StatusSelect, TextArea, TextInput } from '../../admin/ui'
+import { getAdminSectionLabel } from '../../cms/adminSectionLabels'
 
 export default function PageEditorScreen({ pageId }: { pageId: string }) {
   const router = useRouter()
@@ -113,7 +114,7 @@ export default function PageEditorScreen({ pageId }: { pageId: string }) {
                     {String(index + 1).padStart(2, '0')}
                   </span>
                   <span className="min-w-0">
-                    <span className="block truncate text-sm font-extrabold text-on-surface">{block.heading || 'Untitled section'}</span>
+                    <span className="block truncate text-sm font-extrabold text-on-surface">{getAdminSectionLabel(pageId, block, index)}</span>
                     <span className="flex items-center gap-2 text-xs font-semibold text-on-surface-variant">
                       <Layers3 size={11} /> {block.id}
                       {block.items?.length ? ` · ${block.items.length} items` : ''}

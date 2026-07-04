@@ -32,7 +32,7 @@ export const footerCopy = {
 
 export const navItems = [
   { label: 'The One Packages', href: '/packages' },
-  { label: 'The One Story', href: '/about' },
+  { label: 'The One Story', href: '/about', visible: false },
   { label: 'The One Stories', href: '/the-one' },
 ]
 

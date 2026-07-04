@@ -59,6 +59,15 @@ function LinkListEditor({
             <TextInput value={item.label} onChange={(value) => onChange(setAt(items, index, { ...item, label: value }))} placeholder="Label" />
             <TextInput value={item.href} onChange={(value) => onChange(setAt(items, index, { ...item, href: value }))} placeholder="/path" />
             <div className="flex items-center gap-1">
+              <label className="inline-flex h-9 items-center gap-2 rounded-lg border border-outline-variant px-2.5 text-xs font-extrabold text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={item.visible !== false}
+                  onChange={(event) => onChange(setAt(items, index, { ...item, visible: event.target.checked }))}
+                  className="h-4 w-4 accent-primary"
+                />
+                Show
+              </label>
               <button
                 type="button"
                 onClick={() => onChange(moveItem(items, index, -1))}

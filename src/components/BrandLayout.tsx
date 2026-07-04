@@ -13,6 +13,7 @@ type BrandLayoutProps = {
   hideHeaderCta?: boolean
   flushTop?: boolean
   mobileHeaderTitle?: string
+  resolveNavHref?: (href: string, label: string) => string
 }
 
 function resolveHeaderCtaLabel(label: string) {
@@ -23,18 +24,23 @@ function resolveHeaderCtaLabel(label: string) {
     : trimmed
 }
 
-export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta = false, flushTop = false, mobileHeaderTitle }: BrandLayoutProps) {
+export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta = false, flushTop = false, mobileHeaderTitle, resolveNavHref }: BrandLayoutProps) {
   const [bookingOpen, setBookingOpen] = useState(false)
   const [showTop, setShowTop] = useState(false)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   const localizedSettings = getLocalizedSiteSettings(siteSettings, lang)
   const header = localizedSettings.header
-  const navItems = header.navLinks.filter((item) => item.label.trim() && item.href.trim())
+  const navItems = header.navLinks.filter((item) => item.visible !== false && item.label.trim() && item.href.trim())
   const homeHref = localizedPath(lang, '/')
   const headerCtaLabel = resolveHeaderCtaLabel(header.ctaLabel)
   const showHeaderCopy = Boolean(header.brandName.trim() || header.tagline.trim())
   const showHeaderCta = !hideHeaderCta
+
+  function getNavHref(href: string, label: string) {
+    const resolved = resolveNavHref?.(href, label) ?? href
+    return localizedPath(lang, resolved)
+  }
 
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 400)
@@ -73,14 +79,9 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
       <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang={lang === 'vi' ? 'vi' : 'en'} />
 
       <header className="fixed inset-x-0 top-4 z-50 px-3 sm:px-5">
-        <nav className="mx-auto flex h-16 max-w-[1200px] items-center gap-6 rounded-full border border-white/70 bg-white/[0.82] px-4 shadow-[0_18px_48px_rgba(219,39,119,0.12)] backdrop-blur-xl sm:px-6 lg:px-8">
+        <nav className="relative mx-auto flex h-16 max-w-[1200px] items-center gap-6 rounded-full border border-white/70 bg-white/[0.82] px-4 shadow-[0_18px_48px_rgba(219,39,119,0.12)] backdrop-blur-xl sm:px-6 lg:px-8">
           <a href={homeHref} className="flex min-w-0 items-center gap-2.5">
             {header.logoSrc && <img src={header.logoSrc} alt={header.logoAlt || header.brandName} className="h-12 w-auto shrink-0" />}
-            {mobileHeaderTitle && (
-              <div className="min-w-0 sm:hidden">
-                <div className="ig-script-title truncate text-[24px] leading-none text-primary">{mobileHeaderTitle}</div>
-              </div>
-            )}
             {showHeaderCopy && (
               <div className="hidden min-w-0 sm:block">
                 {header.brandName && <div className="truncate text-base font-extrabold leading-tight text-primary">{header.brandName}</div>}
@@ -92,13 +93,18 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
               </div>
             )}
           </a>
+          {mobileHeaderTitle && (
+            <div className="pointer-events-none absolute left-1/2 max-w-[calc(100vw-156px)] -translate-x-1/2 sm:hidden">
+              <div className="ig-script-title truncate text-center text-[clamp(26px,8vw,30px)] leading-none text-primary">{mobileHeaderTitle}</div>
+            </div>
+          )}
 
           {isDesktop && (
           <div className="items-center gap-7 lg:flex">
             {navItems.map((item) => (
               <a
                 key={item.href}
-                href={localizedPath(lang, item.href)}
+                href={getNavHref(item.href, item.label)}
                 className="text-sm font-medium text-on-surface-variant transition-colors hover:text-primary"
               >
                 {item.label}
@@ -136,7 +142,7 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
             {navItems.map((item) => (
               <a
                 key={item.href}
-                href={localizedPath(lang, item.href)}
+                href={getNavHref(item.href, item.label)}
                 onClick={() => setMenuOpen(false)}
                 className="rounded-2xl px-4 py-3 text-sm font-bold text-on-surface-variant transition-colors hover:bg-primary/10 hover:text-primary"
               >

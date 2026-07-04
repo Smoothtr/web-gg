@@ -161,7 +161,28 @@ export const defaultCmsPages: CmsPageContent[] = [
         backgroundGradient: 'linear-gradient(135deg,#db2777 0%,#ef4444 48%,#f59e0b 100%)',
         backgroundOverlayOpacity: '0.62',
         ctaLabel: 'Call Your Shot',
-        items: [],
+        items: [
+          {
+            title: 'What does The One help with first?',
+            body: 'We start by clarifying your growth stage, then connect brand, website, content, CRM, automation and performance into one operating system.',
+          },
+          {
+            title: 'Can GG99 work with an existing team?',
+            body: 'Yes. The One can plug into your current team as strategy, execution, system setup or performance support depending on what is missing.',
+          },
+          {
+            title: 'How fast can a project start?',
+            body: 'Most projects begin with a short audit and kickoff. Scope, assets and access decide how quickly production and launch work can begin.',
+          },
+          {
+            title: 'Which package should we choose?',
+            body: 'Start is for early setup, System is for stable growth operations, and Scale is for larger campaigns, expansion or custom targets.',
+          },
+          {
+            title: 'What should we prepare before booking?',
+            body: 'Bring your current website, channels, goals, constraints and any performance data. The first call is designed to map the next practical step.',
+          },
+        ],
       },
     ],
   },
