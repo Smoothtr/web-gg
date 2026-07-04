@@ -36,6 +36,7 @@ export type CmsBlockItem = {
   }
   href?: string
   label?: string
+  caseStudyLabel?: string
   period?: string
   shortDescription?: string
   services?: string[]
@@ -92,6 +93,7 @@ export type CmsInsightContent = {
   excerpt: string
   category: string
   coverImage: string
+  coverImageUrl?: string
   coverAlt: string
   datePublished: string
   dateModified: string

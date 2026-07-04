@@ -216,7 +216,7 @@ export function PackageCards({
                   href={caseStudyLink}
                   className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 px-4 py-2.5 text-sm font-extrabold text-primary transition-colors hover:bg-primary/10"
                 >
-                  {caseStudyLabel}
+                  {item.caseStudyLabel || caseStudyLabel}
                   <ArrowRight size={15} />
                 </a>
               )}

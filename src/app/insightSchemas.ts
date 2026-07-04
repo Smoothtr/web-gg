@@ -19,13 +19,15 @@ export function buildInsightsIndexSchema(posts: ServerInsightPost[]) {
 }
 
 export function buildInsightArticleSchema(post: ServerInsightPost) {
+  const coverImage = post.coverImageUrl || post.coverImage
+
   return {
     '@context': 'https://schema.org',
     '@type': 'BlogPosting',
     '@id': `${siteUrl}/insights/${post.slug}#article`,
     headline: post.title,
     description: post.excerpt,
-    image: post.coverImage.startsWith('http') ? post.coverImage : `${siteUrl}${post.coverImage}`,
+    image: coverImage.startsWith('http') ? coverImage : `${siteUrl}${coverImage}`,
     datePublished: post.datePublished,
     dateModified: post.dateModified,
     author: {

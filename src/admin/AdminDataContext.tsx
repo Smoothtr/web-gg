@@ -119,6 +119,21 @@ function getAuthErrorMessage(error: unknown) {
   }
 }
 
+function validateTheOneStories(page: CmsPageContent) {
+  if (page.id !== 'the-one' || page.status !== 'published') return ''
+  const storiesBlock = page.blocks.find((block) => block.id === 'stories')
+  const invalidStories = (storiesBlock?.items ?? []).flatMap((item) => {
+    const metrics = (item.keyMetrics ?? []).filter((metric) => metric.value.trim() || metric.label.trim())
+    const featured = metrics.filter((metric) => metric.featured)
+    if (metrics.length === 10 && featured.length === 2) return []
+    return `${item.title || item.id || 'Story'} (${metrics.length}/10 metrics, ${featured.length}/2 featured)`
+  })
+
+  return invalidStories.length
+    ? `Không thể publish The One Stories: ${invalidStories.join('; ')}. Mỗi story cần đúng 10 metrics có nội dung và đúng 2 metrics Featured.`
+    : ''
+}
+
 type AdminDataValue = {
   configured: boolean
   canUseAdmin: boolean
@@ -373,6 +388,8 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     clearFeedback()
     setSaving(true)
     try {
+      const validationError = validateTheOneStories(page)
+      if (validationError) throw new Error(validationError)
       await saveCmsPage(page)
       await triggerRevalidate(getPageRevalidatePaths(id))
       setMessage(`Đã lưu trang "${page.title}" và cập nhật trên web.`)

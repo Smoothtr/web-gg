@@ -1,3 +1,3 @@
-export function openBookingModal() {
-  window.dispatchEvent(new Event('gg99:open-booking'))
+export function openBookingModal(source?: unknown) {
+  window.dispatchEvent(new CustomEvent('gg99:open-booking', { detail: { source: typeof source === 'string' ? source : undefined } }))
 }

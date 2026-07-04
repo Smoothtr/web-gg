@@ -22,7 +22,13 @@ import type { CmsSiteSettings } from '../cms/types'
 
 type RenderableInsightPost = InsightPost | ServerInsightPost
 
+function getInsightCoverImage(post: RenderableInsightPost) {
+  return 'coverImageUrl' in post && post.coverImageUrl ? post.coverImageUrl : post.coverImage
+}
+
 function ArticleCard({ post, featured = false }: { post: RenderableInsightPost; featured?: boolean }) {
+  const coverImage = getInsightCoverImage(post)
+
   return (
     <a
       href={post.path}
@@ -33,7 +39,7 @@ function ArticleCard({ post, featured = false }: { post: RenderableInsightPost; 
     >
       <div className={featured ? 'min-h-[280px]' : 'aspect-[1200/630]'}>
         <img
-          src={post.coverImage}
+          src={coverImage}
           width={1200}
           height={630}
           alt={post.coverAlt}
@@ -105,7 +111,7 @@ export function InsightsIndexPage({ posts = insightPosts, siteSettings }: { post
             <div className="mt-6 flex flex-wrap justify-center gap-3">
               <button
                 type="button"
-                onClick={openBookingModal}
+                onClick={() => openBookingModal('insight')}
                 className="inline-flex items-center gap-2 rounded-xl bg-surface px-5 py-3 text-sm font-extrabold text-primary transition-transform hover:-translate-y-0.5"
               >
                 Call Your Shot <ArrowRight size={16} />
@@ -210,7 +216,7 @@ export function InsightArticlePage({
 
         <section className="px-5 pb-12 lg:px-10">
           <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-outline-variant/40 bg-surface shadow-xl">
-            <img src={post.coverImage} width={1200} height={630} alt={post.coverAlt} className="aspect-[1200/630] w-full object-cover" />
+            <img src={getInsightCoverImage(post)} width={1200} height={630} alt={post.coverAlt} className="aspect-[1200/630] w-full object-cover" />
           </div>
         </section>
 
@@ -236,7 +242,7 @@ export function InsightArticlePage({
                   Continue from this article into The One system to choose the right implementation direction for your business.
                 </p>
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <button type="button" onClick={openBookingModal} className="inline-flex items-center gap-2 rounded-xl bg-surface px-5 py-3 text-sm font-extrabold text-primary">
+                  <button type="button" onClick={() => openBookingModal('insight')} className="inline-flex items-center gap-2 rounded-xl bg-surface px-5 py-3 text-sm font-extrabold text-primary">
                     {post.ctaLabel || 'Call Your Shot'} <ArrowRight size={16} />
                   </button>
                   <a href={post.ctaHref} className="inline-flex items-center gap-2 rounded-xl border border-white/35 px-5 py-3 text-sm font-extrabold text-white hover:bg-white/12">

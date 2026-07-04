@@ -240,6 +240,9 @@ function StoryItemEditor({
       <Field label="Case study link">
         <TextInput value={item.caseStudyLink ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { caseStudyLink: value })} placeholder="/the-one#curnon" />
       </Field>
+      <Field label="Case study label">
+        <TextInput value={item.caseStudyLabel ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { caseStudyLabel: value })} placeholder="See case studies" />
+      </Field>
 
       <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
         <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Homepage / media</p>
@@ -638,6 +641,9 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                       </Field>
                       <Field label="Case study link">
                         <TextInput value={item.caseStudyLink ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { caseStudyLink: value })} placeholder="/the-one#curnon" />
+                      </Field>
+                      <Field label="Case study label">
+                        <TextInput value={item.caseStudyLabel ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { caseStudyLabel: value })} placeholder="See case studies" />
                       </Field>
                       <Field label="Label phụ">
                         <TextInput value={item.label ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { label: value })} />

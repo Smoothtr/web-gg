@@ -63,6 +63,13 @@ export default function InsightEditorScreen({ slug }: { slug: string }) {
     removeInsightSection(slug, index)
   }
 
+  const coverImage = post.coverImageUrl || post.coverImage
+
+  function updateCoverImage(url: string) {
+    updateInsightField(slug, 'coverImageUrl', url)
+    updateInsightField(slug, 'coverImage', url)
+  }
+
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: 'Insights', href: '/admin/insights' }, { label: post.title }]} />
@@ -116,12 +123,12 @@ export default function InsightEditorScreen({ slug }: { slug: string }) {
       <Card title="Cover image" action={<ImageIcon size={18} className="text-primary" />}>
         <div className="grid gap-4 md:grid-cols-[1fr_260px]">
           <div className="grid gap-4">
-            <Field label="Cover URL">
+            <Field label="Cover image URL" hint="Round 3 CMS field: coverImageUrl. Legacy coverImage is synced automatically.">
               <div className="grid gap-2">
-                <TextInput value={post.coverImage} onChange={(value) => updateInsightField(slug, 'coverImage', value)} />
+                <TextInput value={coverImage} onChange={updateCoverImage} />
                 <ImageUploadButton
                   folder={`cms/insights/${slug}`}
-                  onUploaded={(url) => updateInsightField(slug, 'coverImage', url)}
+                  onUploaded={updateCoverImage}
                   onError={setUploadError}
                 />
               </div>
@@ -139,7 +146,7 @@ export default function InsightEditorScreen({ slug }: { slug: string }) {
             </div>
             {uploadError && <p className="text-xs font-bold text-red-700">{uploadError}</p>}
           </div>
-          <MediaPreview url={post.coverImage} alt={post.coverAlt} />
+          <MediaPreview url={coverImage} alt={post.coverAlt} />
         </div>
       </Card>
 

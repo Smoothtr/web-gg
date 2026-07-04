@@ -276,6 +276,7 @@ export const defaultCmsInsights: CmsInsightContent[] = insightPosts.map((post) =
   excerpt: post.excerpt,
   category: post.category,
   coverImage: post.coverImage,
+  coverImageUrl: post.coverImage,
   coverAlt: post.coverAlt,
   datePublished: post.datePublished,
   dateModified: post.dateModified,

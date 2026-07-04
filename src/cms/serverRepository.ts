@@ -61,8 +61,11 @@ function normalizePage(id: string, data: FirebaseFirestore.DocumentData): CmsPag
 
 function normalizeInsight(slug: string, data: FirebaseFirestore.DocumentData): ServerInsightPost {
   const post = stripServerFields(data as Record<string, unknown>) as CmsInsightContent
+  const coverImage = post.coverImageUrl || post.coverImage
   return {
     ...post,
+    coverImage,
+    coverImageUrl: post.coverImageUrl || coverImage,
     slug: post.slug || slug,
     path: `/insights/${post.slug || slug}`,
     updatedAt: timestampToIso(data.updatedAt) ?? post.updatedAt,
@@ -74,8 +77,11 @@ function normalizeSiteSettings(data: FirebaseFirestore.DocumentData): CmsSiteSet
 }
 
 function fallbackInsight(post: CmsInsightContent): ServerInsightPost {
+  const coverImage = post.coverImageUrl || post.coverImage
   return {
     ...post,
+    coverImage,
+    coverImageUrl: post.coverImageUrl || coverImage,
     path: `/insights/${post.slug}`,
   }
 }

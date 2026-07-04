@@ -323,7 +323,7 @@ function SystemMap({ labels, lang, items, storyTargets }: { labels: string[]; la
 
   return (
     <div className="space-y-5">
-      <div className="home-explore-grid grid auto-rows-[minmax(120px,1fr)] grid-cols-2 gap-1 overflow-hidden rounded-[24px] bg-white p-1 shadow-[0_24px_70px_rgba(219,39,119,0.12)] md:grid-cols-3 md:auto-rows-[minmax(170px,1fr)]">
+      <div data-reveal="scale" className="home-explore-grid grid auto-rows-[minmax(120px,1fr)] grid-cols-2 gap-1 overflow-hidden rounded-[24px] bg-white p-1 shadow-[0_24px_70px_rgba(219,39,119,0.12)] md:grid-cols-3 md:auto-rows-[minmax(170px,1fr)]">
         {visibleStages.map((stage, index) => (
           <div
             key={`${stage.label}-${index}`}
@@ -438,7 +438,7 @@ function ClosingBanner({ block, stories }: { block?: ReturnType<typeof getCmsBlo
           {block.subtitle && <p className="mx-auto mt-4 max-w-2xl text-base font-semibold leading-relaxed text-white/82 md:text-lg">{block.subtitle}</p>}
           <button
             type="button"
-            onClick={openBookingModal}
+            onClick={() => openBookingModal('closing-banner')}
             className="mt-8 inline-flex items-center justify-center rounded-full bg-white px-10 py-4 text-base font-extrabold text-primary shadow-[0_20px_50px_rgba(0,0,0,0.18)] transition hover:scale-105 hover:shadow-[0_24px_70px_rgba(0,0,0,0.25)]"
           >
             {resolvePrimaryBookingCtaLabel(block.ctaLabel)}

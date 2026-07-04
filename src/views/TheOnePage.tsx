@@ -175,7 +175,7 @@ function StoryRing({
 
 function YourStoryRing({ compact }: { compact: boolean }) {
   return (
-    <button type="button" onClick={openBookingModal} className="ig-story-button group text-center">
+    <button type="button" onClick={() => openBookingModal('your-story')} className="ig-story-button group text-center">
       <span className="ig-story-ring is-your-story mx-auto">
         <span className="ig-story-ring-inner relative">
           <img src="/logo-gg.png" alt="GG99" className="h-full w-full rounded-full object-contain opacity-45" />
@@ -360,7 +360,7 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
 
         <button
           type="button"
-          onClick={openBookingModal}
+          onClick={() => openBookingModal('story-media')}
           className="col-span-4 row-span-1 self-end rounded-full border border-white/38 bg-white/20 px-4 py-3 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(0,0,0,0.18)] backdrop-blur-xl transition hover:bg-white/28"
         >
           About this story
@@ -397,7 +397,7 @@ function PostSocialLinks({ story }: { story: CaseStudy }) {
           <button
             key={key}
             type="button"
-            onClick={openBookingModal}
+            onClick={() => openBookingModal('social-missing')}
             aria-label={`${label} link pending - open booking`}
             title={`${label} link pending`}
             className={className}
@@ -481,7 +481,7 @@ function StickyStoryRail({
           </div>
           <button
             type="button"
-            onClick={openBookingModal}
+            onClick={() => openBookingModal('story-rail')}
             className="btn-shine mt-4 w-full rounded-full bg-primary px-4 py-2.5 text-sm font-extrabold text-on-primary gg-btn-primary"
           >
             Start your story
@@ -518,7 +518,7 @@ function FinalStoryCta({ label }: { label: string }) {
     <div data-reveal="scale">
     <button
       type="button"
-      onClick={openBookingModal}
+      onClick={() => openBookingModal('story-final')}
       className="story-post group w-full overflow-hidden rounded-[28px] border border-white/75 bg-white/[0.82] p-6 text-left shadow-[0_24px_70px_rgba(219,39,119,0.12)] backdrop-blur transition hover:-translate-y-1 hover:border-primary/45 md:p-8"
     >
       <span className="text-[11px] font-extrabold uppercase tracking-[0.12em] text-primary">The One - GG99</span>
