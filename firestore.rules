@@ -1,0 +1,28 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function isAdmin() {
+      return request.auth != null
+        && request.auth.token.email in [
+          // Replace with the same emails used in VITE_ADMIN_EMAILS.
+          "admin@gg99.vn"
+        ];
+    }
+
+    match /sitePages/{pageId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /insights/{slug} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /siteSettings/{settingId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+  }
+}

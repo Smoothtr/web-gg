@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/png" sizes="192x192" href="/logo-gg.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/logo-gg.png" />
+    <link rel="shortcut icon" href="/logo-gg.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="/logo-gg.png" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      document.documentElement.classList.add('gg99-preboot');
+    </script>
+    <style data-gg99-preboot>
+      #gg99-preboot {
+        display: none;
+      }
+
+      html.gg99-preboot body {
+        margin: 0;
+        background: #f8d6dc;
+      }
+
+      html.gg99-preboot #root {
+        visibility: hidden;
+      }
+
+      html.gg99-preboot #gg99-preboot {
+        position: fixed;
+        inset: 0;
+        z-index: 10000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+        background:
+          radial-gradient(85% 70% at 50% 42%, #fff4f7 0%, #f8d6dc 34%, #f5c2cb 62%, #e9aab8 100%),
+          linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(178, 58, 82, 0.08));
+        color: #6e2431;
+        font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      }
+
+      html.gg99-preboot #gg99-preboot::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(128, 36, 58, 0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(128, 36, 58, 0.06) 1px, transparent 1px);
+        background-size: 56px 56px;
+        mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 75%);
+        -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 75%);
+        opacity: 0.55;
+      }
+
+      .gg99-preboot__inner {
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 18px;
+        text-align: center;
+      }
+
+      .gg99-preboot__logo {
+        width: 170px;
+        height: 170px;
+        object-fit: contain;
+        filter: drop-shadow(0 0 22px rgba(166, 48, 70, 0.22));
+      }
+
+      .gg99-preboot__brand {
+        font-size: 20px;
+        font-weight: 800;
+        letter-spacing: 8px;
+      }
+
+      .gg99-preboot__tagline {
+        margin-top: -10px;
+        font-size: 10px;
+        letter-spacing: 4px;
+        text-transform: uppercase;
+        color: rgba(110, 36, 49, 0.58);
+      }
+
+      .gg99-preboot__bar {
+        width: 210px;
+        height: 2px;
+        overflow: hidden;
+        border-radius: 999px;
+        background: rgba(110, 36, 49, 0.16);
+      }
+
+      .gg99-preboot__bar::after {
+        content: '';
+        display: block;
+        width: 45%;
+        height: 100%;
+        border-radius: inherit;
+        background: linear-gradient(90deg, transparent 0%, #b23a52 35%, #fff1f4 100%);
+        animation: gg99-preboot-slide 900ms ease-in-out infinite alternate;
+      }
+
+      @keyframes gg99-preboot-slide {
+        from {
+          transform: translateX(-80%);
+        }
+        to {
+          transform: translateX(220%);
+        }
+      }
+    </style>
+    <!-- Theme init: set .dark before render to avoid FOUC. -->
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem('gg99-theme');
+          if (t === 'dark') document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
+    <title>GG99 — The One | Business Operation & Growth Partner</title>
+    <meta name="description" content="GG99 is The One — a business operation and growth partner helping brands build marketing systems, CRM, e-commerce growth, content engines and AI-ready business infrastructure." />
+    <link rel="canonical" href="https://www.gg99.vn/" />
+    <meta property="og:title" content="GG99 — The One | Business Operation & Growth Partner" />
+    <meta property="og:description" content="GG99 is The One — a business operation and growth partner helping brands build marketing systems, CRM, e-commerce growth, content engines and AI-ready business infrastructure." />
+    <meta property="og:image" content="https://www.gg99.vn/logo-gg.png" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://www.gg99.vn/" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="GG99 — The One | Business Operation & Growth Partner" />
+    <meta name="twitter:description" content="GG99 is The One — a business operation and growth partner helping brands build marketing systems, CRM, e-commerce growth, content engines and AI-ready business infrastructure." />
+    <meta name="robots" content="index, follow" />
+    <script type="application/ld+json" data-gg99-schema="true">
+      {"@context":"https://schema.org","@type":"Organization","@id":"https://www.gg99.vn/#organization","name":"GG99","legalName":"Golden Generation","alternateName":["GG99 The One","The One by GG99","Golden Generation"],"slogan":"The One","description":"GG99 is The One — a business operation and growth partner helping businesses build marketing systems, CRM, e-commerce growth, content engines and AI-ready business infrastructure.","url":"https://www.gg99.vn/","logo":"https://www.gg99.vn/logo-gg.png","sameAs":["https://zalo.me/0965650416"]}
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div id="gg99-preboot" aria-hidden="true" role="presentation">
+      <div class="gg99-preboot__inner">
+        <img class="gg99-preboot__logo" src="/logo-gg.png" alt="" />
+        <div class="gg99-preboot__brand">GG99</div>
+        <div class="gg99-preboot__tagline">Golden Generation</div>
+        <div class="gg99-preboot__bar"></div>
+      </div>
+    </div>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>

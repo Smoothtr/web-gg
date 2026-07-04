@@ -1,0 +1,381 @@
+/* ============================================================
+   IntroLoader — The One - GG99
+   Style KBTG:
+     1) luồng sáng chạy dọc viền vàng (2 ring), xuất phát từ chỗ hở đỉnh
+     2) zoom vào chữ GG -> màu cam tràn full màn hình
+     3) màn cam mờ đi để lộ website
+   Chỉnh nhanh:
+     --intro-duration : tổng thời gian loader
+     --intro-fadeout  : thời gian zoom + flood cam + reveal
+     --intro-sweep    : thời gian luồng sáng chạy dọc viền
+     --intro-flood    : màu cam tràn màn hình (màu GG)
+     --intro-bg-*     : tone nền
+   ============================================================ */
+
+.intro-loader {
+  --intro-duration: 5700ms;
+  --intro-fadeout: 2200ms;
+  --intro-sweep: 3000ms;
+
+  --intro-bg-1: #f8d6dc;
+  --intro-bg-2: #f5c2cb;
+  --intro-bg-3: #e9aab8;
+
+  --intro-accent-1: #ffb347;
+  --intro-accent-2: #ffd86b;
+  --intro-accent-3: #ff7a18;
+  --intro-glow: rgba(174, 55, 77, 0.24);
+  --intro-ink: #6e2431;
+  --intro-muted: rgba(110, 36, 49, 0.58);
+
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background:
+    radial-gradient(
+      85% 70% at 50% 42%,
+      #fff4f7 0%,
+      var(--intro-bg-1) 34%,
+      var(--intro-bg-2) 62%,
+      var(--intro-bg-3) 100%
+    ),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.16), rgba(178, 58, 82, 0.08));
+  color: var(--intro-ink);
+  font-family: Inter, system-ui, -apple-system, sans-serif;
+  isolation: isolate;
+  opacity: 1;
+}
+
+.intro-loader[data-state='done'] {
+  pointer-events: none;
+  /* Nền tối mờ dần ở cuối để lộ web (sau khi màn cam đã mở) */
+  animation: intro-bg-out var(--intro-fadeout) ease forwards;
+}
+
+/* Background tech */
+.intro-loader__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(128, 36, 58, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(128, 36, 58, 0.06) 1px, transparent 1px);
+  background-size: 56px 56px;
+  mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 75%);
+  -webkit-mask-image: radial-gradient(circle at 50% 50%, #000 0%, transparent 75%);
+  opacity: 0.55;
+  animation: intro-grid-in 900ms ease-out both;
+}
+
+.intro-loader__sweep {
+  position: absolute;
+  inset: -20% -20%;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    rgba(255, 255, 255, 0.22) 60deg,
+    transparent 130deg,
+    rgba(180, 55, 84, 0.11) 220deg,
+    transparent 300deg
+  );
+  filter: blur(40px);
+  animation: intro-sweep 6s linear infinite;
+  opacity: 0.7;
+}
+
+/* Khối nội dung */
+.intro-loader__inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 28px;
+  padding: 32px;
+}
+
+/* Glow sau logo */
+.intro-loader__glow {
+  position: absolute;
+  top: 34%;
+  left: 50%;
+  width: 360px;
+  height: 360px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: radial-gradient(circle, var(--intro-glow) 0%, transparent 65%);
+  filter: blur(20px);
+  z-index: 0;
+  animation: intro-glow-pulse 2.6s ease-in-out infinite;
+}
+
+/* Logo */
+.intro-loader__logo-wrap {
+  position: relative;
+  z-index: 1;
+  width: 220px;
+  height: 220px;
+  opacity: 0;
+  transform: scale(1);
+  animation: intro-logo-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) 150ms forwards;
+  /* Zoom vào CHÍNH GIỮA logo khi thoát. */
+  transform-origin: 50% 50%;
+  will-change: transform;
+}
+
+/* 2 nửa logo (clip-path) chồng khít -> trông như 1 logo nguyên vẹn.
+   Khi thoát: nửa trái trượt sang trái, nửa phải trượt sang phải (tách 2 số 9). */
+.intro-loader__logo {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: drop-shadow(0 0 22px rgba(166, 48, 70, 0.22));
+}
+.intro-loader__logo--left {
+  clip-path: inset(0 50% 0 0);
+  z-index: 1;
+}
+.intro-loader__logo--right {
+  clip-path: inset(0 0 0 50%);
+  z-index: 1;
+}
+
+/* SVG overlay 2 ring — phủ khớp lên logo */
+.intro-loader__rings {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 2;
+  overflow: visible;
+  pointer-events: none;
+  mix-blend-mode: screen;
+}
+
+/* 1 luồng sáng (beam) chạy dọc viền vàng — bắt đầu ở chỗ hở (điểm U trên đỉnh),
+   chạy quanh ring trái rồi ring phải, 1 vòng trong suốt thời gian sweep. */
+.intro-loader__ring {
+  fill: none;
+  stroke: url(#ggRingLight);
+  stroke-width: 36;
+  stroke-linecap: round;
+  /* beam dài ~16% tổng path (≈1/3 một ring), còn lại trong suốt */
+  stroke-dasharray: 16 84;
+  stroke-dashoffset: 0;
+  opacity: 0;
+  filter: drop-shadow(0 0 6px rgba(255, 214, 120, 0.95))
+    drop-shadow(0 0 16px rgba(255, 150, 50, 0.6));
+  animation: intro-ring-run var(--intro-sweep) cubic-bezier(0.4, 0, 0.6, 1)
+    400ms forwards;
+}
+
+/* Wordmark */
+.intro-loader__wordmark {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  opacity: 0;
+  animation: intro-fade-up 700ms ease-out 650ms forwards;
+}
+
+.intro-loader__brand {
+  font-size: 20px;
+  font-weight: 800;
+  letter-spacing: 1.6px;
+  background: linear-gradient(90deg, #6e2431 0%, #b23a52 50%, #6e2431 100%);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: intro-shine 3s linear infinite;
+}
+
+.intro-loader__tagline {
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 4px;
+  text-transform: uppercase;
+  color: var(--intro-muted);
+}
+
+/* Loading line */
+.intro-loader__bar {
+  position: relative;
+  z-index: 1;
+  width: 240px;
+  height: 2px;
+  background: rgba(110, 36, 49, 0.16);
+  border-radius: 2px;
+  overflow: hidden;
+  opacity: 0;
+  animation: intro-fade-up 600ms ease-out 750ms forwards;
+}
+
+.intro-loader__bar::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  width: 0%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    #b23a52 30%,
+    #df7285 60%,
+    #fff1f4 100%
+  );
+  border-radius: 2px;
+  box-shadow: 0 0 10px rgba(178, 58, 82, 0.45);
+  animation: intro-bar-fill var(--intro-sweep) cubic-bezier(0.45, 0, 0.55, 1)
+    400ms forwards;
+}
+
+/* ============ Trạng thái thoát: zoom HẾT CỠ vào SỐ 9 -> lộ web ============ */
+
+/* Thoát: ZOOM HẾT CỠ vào chính giữa rồi TÁCH 2 số 9 ra 2 bên để lộ web.
+   cubic-bezier ease-in (0.55, 0, 0.85, 0.4) -> camera tăng tốc mượt liên tục,
+   không vấp ở các keyframe trung gian. */
+.intro-loader[data-state='done'] .intro-loader__logo-wrap {
+  opacity: 1;
+  animation: intro-zoom-center var(--intro-fadeout)
+    cubic-bezier(0.55, 0, 0.85, 0.4) forwards !important;
+}
+.intro-loader[data-state='done'] .intro-loader__logo--left {
+  animation: intro-split-left var(--intro-fadeout) cubic-bezier(0.5, 0, 0.2, 1)
+    forwards !important;
+}
+.intro-loader[data-state='done'] .intro-loader__logo--right {
+  animation: intro-split-right var(--intro-fadeout) cubic-bezier(0.5, 0, 0.2, 1)
+    forwards !important;
+}
+/* Ẩn vòng sáng khi tách */
+.intro-loader[data-state='done'] .intro-loader__rings {
+  opacity: 0;
+}
+
+/* Ẩn chữ + line + nền tech ngay khi bắt đầu zoom.
+   animation:none để tắt animation entrance (forwards) đang giữ opacity. */
+.intro-loader[data-state='done'] .intro-loader__wordmark,
+.intro-loader[data-state='done'] .intro-loader__bar,
+.intro-loader[data-state='done'] .intro-loader__glow,
+.intro-loader[data-state='done'] .intro-loader__grid,
+.intro-loader[data-state='done'] .intro-loader__sweep {
+  animation: none !important;
+  opacity: 0;
+  transition: opacity 280ms ease;
+}
+
+/* ===================== Animations ===================== */
+
+@keyframes intro-logo-in {
+  0%   { opacity: 0; transform: scale(0.92); filter: blur(6px); }
+  60%  { opacity: 1; filter: blur(0); }
+  100% { opacity: 1; transform: scale(1); filter: blur(0); }
+}
+
+/* 1 beam chạy dọc viền — dashoffset di chuyển đoạn sáng quanh toàn bộ path 1 vòng. */
+@keyframes intro-ring-run {
+  0%   { opacity: 0; stroke-dashoffset: 0; }
+  8%   { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { opacity: 0; stroke-dashoffset: -100; }
+}
+
+@keyframes intro-glow-pulse {
+  0%, 100% { opacity: 0.55; }
+  50%      { opacity: 0.9; }
+}
+
+@keyframes intro-fade-up {
+  0%   { opacity: 0; transform: translateY(10px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes intro-bar-fill {
+  0%   { width: 0%; }
+  100% { width: 100%; }
+}
+
+@keyframes intro-shine {
+  0%   { background-position: 0% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+@keyframes intro-grid-in {
+  0%   { opacity: 0; transform: scale(1.04); }
+  100% { opacity: 0.55; transform: scale(1); }
+}
+
+@keyframes intro-sweep {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Zoom HẾT CỠ vào chính giữa — chỉ 2 mốc, browser dùng cubic-bezier
+   nội suy mượt liên tục (không vấp ở keyframe trung gian). */
+@keyframes intro-zoom-center {
+  0%   { transform: scale(1); }
+  100% { transform: scale(36); }
+}
+/* Nửa trái: giữ yên trong lúc zoom hết cỡ, gần cuối mới trượt sang trái lộ web. */
+@keyframes intro-split-left {
+  0%, 75%  { transform: translateX(0); opacity: 1; }
+  100%     { transform: translateX(-100%); opacity: 0; }
+}
+/* Nửa phải: trượt sang phải. */
+@keyframes intro-split-right {
+  0%, 75%  { transform: translateX(0); opacity: 1; }
+  100%     { transform: translateX(100%); opacity: 0; }
+}
+
+/* Loader mờ dần khi 2 nửa tách ra -> lộ website qua khe giữa mở rộng. */
+@keyframes intro-bg-out {
+  0%   { opacity: 1; }
+  50%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ===================== Responsive ===================== */
+
+@media (max-width: 640px) {
+  .intro-loader__glow      { width: 260px; height: 260px; }
+  .intro-loader__logo-wrap { width: 168px; height: 168px; }
+  .intro-loader__brand     { font-size: 17px; letter-spacing: 1.1px; }
+  .intro-loader__tagline   { font-size: 10px; letter-spacing: 3px; }
+  .intro-loader__bar       { width: 190px; }
+}
+
+/* ===================== Reduced motion ===================== */
+
+@media (prefers-reduced-motion: reduce) {
+  .intro-loader,
+  .intro-loader * {
+    animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
+    transition-duration: 0.001ms !important;
+  }
+  .intro-loader[data-state='done'] {
+    animation: intro-bg-out 300ms ease forwards;
+  }
+  .intro-loader__logo-wrap,
+  .intro-loader__wordmark,
+  .intro-loader__bar {
+    opacity: 1;
+    transform: none;
+  }
+  .intro-loader__ring { opacity: 0; }
+  .intro-loader__bar::after { width: 100%; }
+  /* Không zoom / không tách khi reduced motion — chỉ fade nền lộ web */
+  .intro-loader[data-state='done'] .intro-loader__logo-wrap,
+  .intro-loader[data-state='done'] .intro-loader__logo--left,
+  .intro-loader[data-state='done'] .intro-loader__logo--right {
+    animation: none !important;
+    transform: none;
+  }
+}

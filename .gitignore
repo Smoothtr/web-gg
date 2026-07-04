@@ -1,0 +1,15 @@
+.env*.local
+.env
+.tmp_key
+*firebase-adminsdk*.json
+.next
+.npm-cache
+.npm-cache-deploy-*
+.agents
+.claude
+.vercel
+.vercel-local-cache
+dist
+node_modules
+test-results
+animation-*.md

@@ -1,0 +1,380 @@
+﻿<!DOCTYPE html>
+<html class="light" lang="vi">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>The One - GG99 — Giải pháp vận hành & tăng trưởng toàn diện cho doanh nghiệp</title>
+<meta name="description" content="The One - GG99 giúp doanh nghiệp xây hệ thống vận hành gọn, rõ và đo lường được — từ ecommerce, marketing, nhân sự, chi phí đến dashboard quản trị."/>
+<meta property="og:title" content="The One - GG99 — Vận hành & Tăng trưởng Toàn diện"/>
+<meta property="og:description" content="Từ website, ecommerce, social commerce, marketing đến nhân sự, quy trình, chi phí và dashboard quản trị — The One - GG99 giúp doanh nghiệp vận hành gọn, rõ, đo được."/>
+<meta property="og:image" content="/logo.png"/>
+<meta property="og:type" content="website"/>
+<meta name="robots" content="index, follow"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Sora:wght@800&display=swap" rel="stylesheet"/>
+<style>
+  * { font-family: Inter, sans-serif; }
+  h1, h2, h3, h4, h5, h6 { font-family: 'Sora', sans-serif; font-weight: 800; }
+  .glass-card { background: rgba(255,255,255,0.72); backdrop-filter: blur(10px); border: 1px solid rgba(226,191,176,0.35); }
+  .glow-orange { box-shadow: 0 8px 24px -8px rgba(160,65,0,0.35); }
+  .mesh { background: radial-gradient(circle at 10% 20%, rgba(255,219,204,0.45) 0%, transparent 50%), radial-gradient(circle at 90% 80%, rgba(255,222,165,0.4) 0%, transparent 50%); }
+  .badge { display:inline-block; padding:3px 12px; background:rgba(255,198,80,0.25); color:#7b5800; border-radius:99px; font-size:11px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; }
+</style>
+<script>
+  tailwind.config = {
+    theme: { extend: {
+      colors: {
+        "background":"#fff8f6","surface":"#fff8f6","surface-container-low":"#fff1eb",
+        "surface-container":"#ffeae1","surface-container-high":"#fee3d8",
+        "surface-variant":"#f8ddd2","surface-dim":"#efd5ca",
+        "on-surface":"#261812","on-surface-variant":"#5a4136",
+        "outline-variant":"#e2bfb0","outline":"#8e7164",
+        "primary":"#a04100","on-primary":"#ffffff","primary-fixed":"#ffdbcc","primary-fixed-dim":"#ffb693",
+        "secondary":"#7b5800","secondary-container":"#ffc650","on-secondary-container":"#261900",
+        "tertiary":"#ba1a20","inverse-surface":"#3d2d26",
+      },
+    }}
+  }
+</script>
+</head>
+<body class="bg-background text-on-surface">
+
+<!-- Navbar -->
+<header class="fixed w-full top-0 z-50 bg-white/85 backdrop-blur-md border-b border-outline-variant/25 shadow-sm">
+  <nav class="flex justify-between items-center px-5 lg:px-10 max-w-6xl mx-auto h-14">
+    <a href="#" class="flex items-center gap-2.5">
+      <img src="/logo.png" alt="The One - GG99" class="h-9 w-auto"/>
+      <div class="hidden sm:block">
+        <div class="font-extrabold text-base text-primary leading-tight">The One - GG99</div>
+        <div class="text-[10px] text-on-surface-variant tracking-wider uppercase opacity-70">Business Operation & Growth Partner</div>
+      </div>
+    </a>
+    <div class="hidden md:flex items-center gap-7">
+      <a class="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="#solutions">Giải pháp</a>
+      <a class="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="#how">Cách làm việc</a>
+      <a class="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="#whyus">Vì sao chọn GG</a>
+      <a class="text-on-surface-variant text-sm font-medium hover:text-primary transition-colors" href="#contact">Liên hệ</a>
+    </div>
+    <a href="mailto:smooth@gg99.vn" class="bg-primary text-white text-sm px-4 py-2 rounded-lg font-bold glow-orange hover:opacity-90 transition-opacity">
+      Nhận tư vấn
+    </a>
+  </nav>
+</header>
+
+<main class="pt-14 mesh">
+
+  <!-- Hero -->
+  <section class="py-8 md:py-12 px-5 lg:px-10 max-w-6xl mx-auto">
+    <div class="grid lg:grid-cols-2 gap-10 items-center">
+      <div>
+        <span class="badge mb-4 block w-fit">Business Operation & Growth Partner</span>
+        <h1 class="text-[32px] md:text-[42px] font-extrabold leading-tight text-on-surface mb-4">
+          Giải pháp vận hành & tăng trưởng<br/>
+          <span class="text-primary">toàn diện cho doanh nghiệp</span>
+        </h1>
+        <p class="text-base text-on-surface-variant mb-5 max-w-lg leading-relaxed">
+          Từ website, ecommerce, social commerce, marketing đến nhân sự, quy trình, chi phí và dashboard quản trị — The One - GG99 giúp doanh nghiệp xây hệ thống vận hành gọn, rõ và đo lường được.
+        </p>
+        <div class="flex flex-wrap gap-3 mb-5">
+          <a href="mailto:smooth@gg99.vn" class="px-6 py-3 bg-primary text-white rounded-xl font-bold glow-orange hover:opacity-90 transition-opacity">Nhận tư vấn mô hình vận hành →</a>
+          <a href="#solutions" class="px-6 py-3 border-2 border-outline-variant text-on-surface-variant rounded-xl font-bold hover:bg-surface-container-low transition-colors">Xem giải pháp</a>
+        </div>
+        <div class="flex gap-8">
+          <div><div class="text-2xl font-extrabold text-primary">50+</div><div class="text-xs text-on-surface-variant mt-0.5">Dự án triển khai</div></div>
+          <div><div class="text-2xl font-extrabold text-primary">30+</div><div class="text-xs text-on-surface-variant mt-0.5">Doanh nghiệp</div></div>
+          <div><div class="text-2xl font-extrabold text-primary">6 lĩnh vực</div><div class="text-xs text-on-surface-variant mt-0.5">Vận hành</div></div>
+        </div>
+      </div>
+
+      <div class="relative">
+        <div class="glass-card p-5 rounded-2xl shadow-xl border-2 border-white/60">
+          <div class="bg-surface-container rounded-lg px-3 py-1.5 mb-4 flex items-center gap-2">
+            <div class="flex gap-1.5"><div class="w-2.5 h-2.5 rounded-full bg-tertiary/50"></div><div class="w-2.5 h-2.5 rounded-full bg-secondary/50"></div><div class="w-2.5 h-2.5 rounded-full bg-primary/50"></div></div>
+            <div class="flex-1 text-center text-[11px] text-on-surface-variant">goldengeneration.vn — Operations HQ</div>
+          </div>
+          <div class="grid grid-cols-3 gap-2 mb-3">
+            <div class="bg-primary-fixed rounded-xl p-2.5 text-center"><div class="text-base mb-1">🏢</div><div class="text-[10px] font-bold text-on-surface">Operation</div></div>
+            <div class="bg-surface-variant rounded-xl p-2.5 text-center"><div class="text-base mb-1">🏪</div><div class="text-[10px] font-bold text-on-surface">Ecommerce</div></div>
+            <div class="bg-primary-fixed rounded-xl p-2.5 text-center"><div class="text-base mb-1">📢</div><div class="text-[10px] font-bold text-on-surface">Marketing</div></div>
+            <div class="bg-surface-variant rounded-xl p-2.5 text-center"><div class="text-base mb-1">👥</div><div class="text-[10px] font-bold text-on-surface">HR</div></div>
+            <div class="bg-primary-fixed rounded-xl p-2.5 text-center"><div class="text-base mb-1">💰</div><div class="text-[10px] font-bold text-on-surface">Finance</div></div>
+            <div class="bg-surface-variant rounded-xl p-2.5 text-center"><div class="text-base mb-1">📊</div><div class="text-[10px] font-bold text-on-surface">Dashboard</div></div>
+          </div>
+          <div class="grid grid-cols-4 gap-2">
+            <div class="bg-white rounded-lg p-2 text-center border border-outline-variant/30"><div class="text-[10px] text-on-surface-variant">Doanh thu</div><div class="text-xs font-bold">₫682M</div><div class="text-[10px] text-green-600">↑18%</div></div>
+            <div class="bg-white rounded-lg p-2 text-center border border-outline-variant/30"><div class="text-[10px] text-on-surface-variant">Đơn hàng</div><div class="text-xs font-bold">2,481</div><div class="text-[10px] text-green-600">↑24%</div></div>
+            <div class="bg-white rounded-lg p-2 text-center border border-outline-variant/30"><div class="text-[10px] text-on-surface-variant">ROAS</div><div class="text-xs font-bold">4.2x</div><div class="text-[10px] text-green-600">↑</div></div>
+            <div class="bg-white rounded-lg p-2 text-center border border-outline-variant/30"><div class="text-[10px] text-on-surface-variant">Chi phí</div><div class="text-xs font-bold">↓12%</div><div class="text-[10px] text-green-600">✓</div></div>
+          </div>
+        </div>
+        <div class="absolute -top-2 -right-2 bg-white px-3 py-1.5 rounded-lg shadow-md border border-outline-variant/30 flex items-center gap-1.5 text-xs font-semibold">
+          <span class="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse"></span> Realtime
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Fit Section -->
+  <section class="py-6 md:py-7 px-5 lg:px-10 bg-surface-container-low">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-4">
+        <span class="badge mb-2 block w-fit mx-auto">Phù hợp với doanh nghiệp đang muốn</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="glass-card px-4 py-3 rounded-xl flex items-center gap-3">
+          <span class="text-primary font-bold text-base flex-shrink-0">✓</span>
+          <p class="text-sm text-on-surface">Xây hệ thống vận hành bài bản hơn</p>
+        </div>
+        <div class="glass-card px-4 py-3 rounded-xl flex items-center gap-3">
+          <span class="text-primary font-bold text-base flex-shrink-0">✓</span>
+          <p class="text-sm text-on-surface">Chuẩn hóa quy trình giữa các phòng ban</p>
+        </div>
+        <div class="glass-card px-4 py-3 rounded-xl flex items-center gap-3">
+          <span class="text-primary font-bold text-base flex-shrink-0">✓</span>
+          <p class="text-sm text-on-surface">Theo dõi doanh thu, chi phí, nhân sự và KPI rõ ràng</p>
+        </div>
+        <div class="glass-card px-4 py-3 rounded-xl flex items-center gap-3">
+          <span class="text-primary font-bold text-base flex-shrink-0">✓</span>
+          <p class="text-sm text-on-surface">Tối ưu bán hàng online trên website, Shopee, TikTok Shop</p>
+        </div>
+        <div class="glass-card px-4 py-3 rounded-xl flex items-center gap-3">
+          <span class="text-primary font-bold text-base flex-shrink-0">✓</span>
+          <p class="text-sm text-on-surface">Quản lý công việc, tiến độ và hiệu suất đội ngũ</p>
+        </div>
+        <div class="glass-card px-4 py-3 rounded-xl flex items-center gap-3">
+          <span class="text-primary font-bold text-base flex-shrink-0">✓</span>
+          <p class="text-sm text-on-surface">Có dashboard để chủ doanh nghiệp kiểm soát tình hình hằng ngày</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Solutions -->
+  <section id="solutions" class="py-6 md:py-9 bg-inverse-surface relative overflow-hidden">
+    <div class="absolute inset-0 opacity-[0.04]" style="background-image: radial-gradient(circle at 2px 2px, white 1px, transparent 0); background-size: 36px 36px;"></div>
+    <div class="max-w-6xl mx-auto px-5 lg:px-10 relative z-10">
+      <div class="text-center mb-6">
+        <span class="badge mb-3 block w-fit mx-auto" style="background:rgba(255,255,255,0.15);color:#ffb693;">6 trụ cột vận hành</span>
+        <h2 class="text-[26px] md:text-[30px] font-bold text-white mb-1">Hệ thống vận hành toàn diện cho doanh nghiệp</h2>
+        <p class="text-sm text-white/55 max-w-xl mx-auto">Không phải từng dịch vụ rời rạc — mà là một hệ thống được thiết kế để kết nối và hỗ trợ lẫn nhau.</p>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="bg-white/6 backdrop-blur-sm p-5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-lg">🏢</div>
+            <div>
+              <div class="text-[10px] text-primary-fixed-dim font-bold uppercase tracking-wide">01</div>
+              <h4 class="font-bold text-white text-sm leading-tight">Business Operation</h4>
+            </div>
+          </div>
+          <p class="text-xs text-white/55 leading-relaxed">Quy trình nội bộ, phân công công việc, thiết kế cách vận hành và nhịp độ tổ chức.</p>
+        </div>
+        <div class="bg-white/6 backdrop-blur-sm p-5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-lg">🛒</div>
+            <div>
+              <div class="text-[10px] text-primary-fixed-dim font-bold uppercase tracking-wide">02</div>
+              <h4 class="font-bold text-white text-sm leading-tight">Ecommerce & Sales Operation</h4>
+            </div>
+          </div>
+          <p class="text-xs text-white/55 leading-relaxed">Shopee, TikTok Shop, website, chuẩn hóa sản phẩm, chương trình bán hàng, luồng đơn hàng và KPI bán hàng.</p>
+        </div>
+        <div class="bg-white/6 backdrop-blur-sm p-5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-lg">📢</div>
+            <div>
+              <div class="text-[10px] text-primary-fixed-dim font-bold uppercase tracking-wide">03</div>
+              <h4 class="font-bold text-white text-sm leading-tight">Marketing & Growth</h4>
+            </div>
+          </div>
+          <p class="text-xs text-white/55 leading-relaxed">Social content, quảng cáo chuyển đổi, livestream, video ngắn, lập kế hoạch campaign và tối ưu tăng trưởng.</p>
+        </div>
+        <div class="bg-white/6 backdrop-blur-sm p-5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-lg">👥</div>
+            <div>
+              <div class="text-[10px] text-primary-fixed-dim font-bold uppercase tracking-wide">04</div>
+              <h4 class="font-bold text-white text-sm leading-tight">HR & Team Operation</h4>
+            </div>
+          </div>
+          <p class="text-xs text-white/55 leading-relaxed">Cơ cấu đội ngũ, quy trình tuyển dụng, onboarding, theo dõi KPI và báo cáo hiệu suất nhân sự.</p>
+        </div>
+        <div class="bg-white/6 backdrop-blur-sm p-5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-lg">💰</div>
+            <div>
+              <div class="text-[10px] text-primary-fixed-dim font-bold uppercase tracking-wide">05</div>
+              <h4 class="font-bold text-white text-sm leading-tight">Finance & Cost Control</h4>
+            </div>
+          </div>
+          <p class="text-xs text-white/55 leading-relaxed">Theo dõi chi phí, lập ngân sách, chi phí vận hành, hiệu quả bán hàng và hiển thị lợi nhuận rõ ràng.</p>
+        </div>
+        <div class="bg-white/6 backdrop-blur-sm p-5 rounded-xl border border-white/10 hover:bg-white/10 transition-all">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-9 h-9 rounded-lg bg-white/10 flex items-center justify-center text-lg">📊</div>
+            <div>
+              <div class="text-[10px] text-primary-fixed-dim font-bold uppercase tracking-wide">06</div>
+              <h4 class="font-bold text-white text-sm leading-tight">Data Dashboard & Management System</h4>
+            </div>
+          </div>
+          <p class="text-xs text-white/55 leading-relaxed">Dashboard quản trị cho doanh thu, đơn hàng, chi phí, nhân sự, công việc, marketing và KPI toàn doanh nghiệp.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How We Work -->
+  <section id="how" class="py-6 md:py-9 px-5 lg:px-10 max-w-6xl mx-auto">
+    <div class="grid md:grid-cols-2 gap-8 items-center">
+      <div>
+        <span class="badge mb-3 block w-fit">Cách tiếp cận</span>
+        <h2 class="text-[26px] md:text-[30px] font-bold text-on-surface mb-3">The One - GG99 giúp doanh nghiệp vận hành tốt hơn như thế nào?</h2>
+        <p class="text-sm text-on-surface-variant leading-relaxed mb-4">
+          Chúng tôi không triển khai từng dịch vụ rời rạc. The One - GG99 nhìn doanh nghiệp như một hệ thống vận hành hoàn chỉnh: bán hàng, marketing, nhân sự, chi phí, quy trình và dữ liệu. Từ đó, chúng tôi giúp doanh nghiệp chuẩn hóa cách làm việc, giảm thất thoát, tăng hiệu suất đội ngũ và ra quyết định dựa trên số liệu.
+        </p>
+        <a href="mailto:smooth@gg99.vn" class="inline-flex items-center gap-2 bg-primary text-white px-6 py-3 rounded-xl font-bold glow-orange hover:opacity-90 transition-opacity text-sm">
+          Nhận tư vấn mô hình vận hành →
+        </a>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-2xl mb-2">🔍</div>
+          <h4 class="font-bold text-sm mb-1">Phân tích hiện trạng</h4>
+          <p class="text-xs text-on-surface-variant">Xem toàn bộ vận hành, kênh bán và điểm thất thoát.</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-2xl mb-2">🔧</div>
+          <h4 class="font-bold text-sm mb-1">Xây hệ thống</h4>
+          <p class="text-xs text-on-surface-variant">Thiết kế quy trình, nền tảng và dashboard phù hợp.</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-2xl mb-2">⚙️</div>
+          <h4 class="font-bold text-sm mb-1">Vận hành cùng</h4>
+          <p class="text-xs text-on-surface-variant">Đồng hành triển khai, đào tạo và tối ưu hàng tháng.</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-2xl mb-2">📈</div>
+          <h4 class="font-bold text-sm mb-1">Đo lường & Scale</h4>
+          <p class="text-xs text-on-surface-variant">Theo dõi KPI, giảm chi phí và mở rộng quy mô.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Why Us -->
+  <section id="whyus" class="py-6 md:py-8 px-5 lg:px-10 bg-surface-container-low">
+    <div class="max-w-6xl mx-auto">
+      <div class="text-center mb-4">
+        <span class="badge mb-3 block w-fit mx-auto">Vì sao chọn chúng tôi</span>
+        <h2 class="text-[26px] md:text-[30px] font-bold text-on-surface">Vì sao doanh nghiệp chọn The One - GG99?</h2>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3 mb-5">
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-xl mb-2">🧠</div>
+          <h3 class="font-bold text-sm mb-1">Tư duy vận hành tổng thể</h3>
+          <p class="text-on-surface-variant text-xs">Nhìn doanh nghiệp như một hệ thống, không phải từng phần rời rạc.</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-xl mb-2">🔗</div>
+          <h3 class="font-bold text-sm mb-1">Không bán dịch vụ rời rạc</h3>
+          <p class="text-on-surface-variant text-xs">Bán hàng, marketing, nhân sự và dữ liệu được kết nối với nhau.</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl border-primary/20 border-2">
+          <div class="text-xl mb-2">🔄</div>
+          <h3 class="font-bold text-sm mb-1">Kết nối bán hàng, marketing, nhân sự và dữ liệu</h3>
+          <p class="text-on-surface-variant text-xs">Các bộ phận đồng bộ, không hoạt động độc lập.</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-xl mb-2">📊</div>
+          <h3 class="font-bold text-sm mb-1">Tối ưu theo KPI và chi phí thực tế</h3>
+          <p class="text-on-surface-variant text-xs">Mọi quyết định dựa trên số liệu, không phỏng đoán.</p>
+        </div>
+        <div class="glass-card p-4 rounded-xl">
+          <div class="text-xl mb-2">📅</div>
+          <h3 class="font-bold text-sm mb-1">Đồng hành triển khai theo tháng</h3>
+          <p class="text-on-surface-variant text-xs">Không bàn giao rồi biến mất — cải thiện liên tục mỗi tháng.</p>
+        </div>
+      </div>
+      <div class="grid grid-cols-3 gap-3 max-w-md mx-auto text-center">
+        <div class="glass-card p-3 rounded-xl"><div class="text-lg font-extrabold text-primary">50+</div><div class="text-xs text-on-surface-variant mt-0.5">Dự án</div></div>
+        <div class="glass-card p-3 rounded-xl"><div class="text-lg font-extrabold text-primary">6 lĩnh vực</div><div class="text-xs text-on-surface-variant mt-0.5">Vận hành</div></div>
+        <div class="glass-card p-3 rounded-xl"><div class="text-lg font-extrabold text-primary">Theo tháng</div><div class="text-xs text-on-surface-variant mt-0.5">Đồng hành</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CTA -->
+  <section id="contact" class="py-6 md:py-8 px-5 lg:px-10">
+    <div class="max-w-6xl mx-auto bg-primary rounded-2xl p-8 md:p-10 text-center relative overflow-hidden">
+      <div class="absolute inset-0 opacity-[0.07]" style="background-image: radial-gradient(circle at center, white 2px, transparent 0); background-size: 20px 20px;"></div>
+      <div class="relative z-10">
+        <h2 class="text-[26px] md:text-[34px] font-extrabold text-white mb-3">Sẵn sàng xây hệ thống vận hành bài bản hơn?</h2>
+        <p class="text-white/75 text-sm max-w-lg mx-auto mb-5">Chia sẻ tình trạng doanh nghiệp — The One - GG99 sẽ đề xuất lộ trình phù hợp để chuẩn hóa vận hành, tăng hiệu suất và ra quyết định dựa trên dữ liệu.</p>
+        <a href="mailto:smooth@gg99.vn" class="inline-flex items-center gap-2 bg-white text-primary px-8 py-3 rounded-xl font-bold hover:bg-surface-container-low transition-colors">
+          Nhận tư vấn mô hình vận hành →
+        </a>
+        <div class="flex justify-center gap-6 mt-5">
+          <a href="mailto:smooth@gg99.vn" class="text-white/60 hover:text-white text-xs transition-colors">✉️ smooth@gg99.vn</a>
+          <a href="https://zalo.me/smoothgg" class="text-white/60 hover:text-white text-xs transition-colors">💬 Zalo</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<!-- Footer -->
+<footer class="bg-surface-container-low border-t border-outline-variant/30">
+  <div class="max-w-6xl mx-auto px-5 lg:px-10 py-7">
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-5">
+      <div class="col-span-2 md:col-span-1">
+        <div class="flex items-center gap-2 mb-3">
+          <img src="/logo.png" alt="The One - GG99" class="h-10 w-auto"/>
+          <div>
+            <div class="font-extrabold text-sm text-primary leading-tight">The One - GG99</div>
+            <div class="text-[10px] text-on-surface-variant">Business Operation & Growth Partner</div>
+          </div>
+        </div>
+        <p class="text-xs text-on-surface-variant leading-relaxed">Giúp doanh nghiệp xây hệ thống vận hành gọn, rõ và đo lường được.</p>
+      </div>
+      <div>
+        <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface-variant mb-3">Giải pháp</h4>
+        <ul class="space-y-2 text-xs text-on-surface-variant">
+          <li>Business Operation</li>
+          <li>Ecommerce & Sales</li>
+          <li>Marketing & Growth</li>
+          <li>HR & Team Operation</li>
+          <li>Finance & Cost Control</li>
+          <li>Dashboard & Management</li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface-variant mb-3">Điều hướng</h4>
+        <ul class="space-y-2 text-sm text-on-surface-variant">
+          <li><a href="#solutions" class="hover:text-primary transition-colors">Giải pháp</a></li>
+          <li><a href="#how" class="hover:text-primary transition-colors">Cách làm việc</a></li>
+          <li><a href="#whyus" class="hover:text-primary transition-colors">Vì sao chọn GG</a></li>
+          <li><a href="#contact" class="hover:text-primary transition-colors">Liên hệ</a></li>
+        </ul>
+      </div>
+      <div>
+        <h4 class="font-bold text-xs uppercase tracking-wider text-on-surface-variant mb-3">Liên hệ</h4>
+        <ul class="space-y-2 text-sm text-on-surface-variant">
+          <li><a href="mailto:smooth@gg99.vn" class="hover:text-primary transition-colors">✉️ smooth@gg99.vn</a></li>
+          <li><a href="https://zalo.me/smoothgg" class="hover:text-primary transition-colors">💬 Zalo</a></li>
+          <li>📍 Hà Nội, Việt Nam</li>
+        </ul>
+      </div>
+    </div>
+    <div class="border-t border-outline-variant/30 pt-5 flex flex-col md:flex-row justify-between items-center gap-3">
+      <p class="text-xs text-on-surface-variant opacity-70">© 2026 The One - GG99. Tất cả quyền được bảo lưu.</p>
+      <div class="flex gap-5 text-xs text-on-surface-variant">
+        <span class="hover:text-primary cursor-pointer transition-colors">Chính sách bảo mật</span>
+        <span class="hover:text-primary cursor-pointer transition-colors">Điều khoản dịch vụ</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
