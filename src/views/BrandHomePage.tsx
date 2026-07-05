@@ -37,6 +37,7 @@ const storyLogoById: Record<string, string> = {
   inkaholic: '/logo-inkaholic.png',
   'qanda-books': '/logo-qandabook.png',
   curnon: '/logo-curnon.png',
+  'annita-studios': '/logo-annita.png',
 }
 
 function getStoryLogoForHome(story: Pick<CaseStudy, 'id' | 'logoUrl'>) {

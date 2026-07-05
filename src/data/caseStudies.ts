@@ -209,4 +209,53 @@ export const caseStudies: CaseStudy[] = [
     },
     ctaText: 'Read story',
   },
+  {
+    id: 'annita-studios',
+    accountName: 'annita.studios',
+    displayName: 'ANNITA',
+    logoUrl: '/logo-annita.png',
+    verified: true,
+    brandName: 'ANNITA STUDIOS',
+    category: 'Designer eveningwear / Social commerce operating system',
+    period: '02/2023 - 05/2025',
+    headline: "Building a designer eveningwear brand's online business in Laos",
+    shortDescription:
+      'ANNITA STUDIOS launched as a local fashion startup in Vientiane with no online sales system, no operating data and no proven e-commerce playbook. The One built the strategy, reporting rhythm, Meta Ads engine, livestream workflow and handover system that the local team could keep running independently.',
+    caption:
+      'From launch to a self-sustaining social commerce system: ROAS x12, CIR down 92%, peak revenue x11 and 50K+ followers across three active channels.',
+    likesSeed: '50000',
+    services: ['Online Business Strategy', 'Meta Ads', 'Social Commerce', 'Livestream Operations'],
+    keyMetrics: [
+      { value: 'x12', label: 'monthly ROAS lift from 1.5x to 18.3x peak', featured: true },
+      { value: '-92%', label: 'CIR reduction from about 68% to 5.5%', featured: true },
+      { value: '6.4x', label: 'blended ROAS across the first 12 months' },
+      { value: '11x+', label: 'ROAS sustained through the Q4 peak season' },
+      { value: 'x12', label: 'message-to-order CVR lift from 1.6% to 19.2%' },
+      { value: 'x11', label: 'peak monthly revenue vs first ad-sales month' },
+      { value: '2.8M+', label: '12-month cumulative page reach' },
+      { value: '5,900+', label: 'ad-generated message conversations' },
+      { value: '~50%', label: 'annual ad revenue from the Q4 party season' },
+      { value: '50K+', label: 'followers across Facebook, Instagram and TikTok' },
+    ],
+    storyDetail: {
+      challenge:
+        'The brand started from zero in a niche Laos market: no fanpage data, no customer base, no online closing process and a limited startup budget where every ad dollar had to be accountable.',
+      solution:
+        'The One built an operating system around pricing, promotions, SKU planning, Meta Engagement and Message campaigns, livestream reporting, sales logs, customer database, KOL/KOC tracking and a full-funnel monthly dashboard.',
+      result:
+        'Within the first 12 months, monthly ROAS grew from 1.5x to an 18.3x peak, CIR fell from about 68% to 5.5%, message-to-order CVR reached 19.2% and peak monthly revenue grew 11x. After handover, the local team continued operating the system in Lao.',
+    },
+    thumbnailUrl: '/logo-annita.png',
+    screenBackground: {
+      gradient: 'linear-gradient(145deg,#120305 0%,#4f0b11 44%,#d21f2b 100%)',
+    },
+    showOnHomepage: true,
+    homepageOrder: '5',
+    socialLinks: {
+      facebook: 'https://facebook.com/Annita.studio',
+      instagram: 'https://instagram.com/annita.studios',
+      tiktok: 'https://www.tiktok.com/@annita.studios',
+    },
+    ctaText: 'Read story',
+  },
 ]

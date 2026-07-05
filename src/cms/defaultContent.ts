@@ -93,7 +93,7 @@ const theOneStoryItems: CmsBlockItem[] = caseStudies.map((story) => ({
   embedUrl: '',
   thumbnailUrl: story.thumbnailUrl,
   homepageGalleryImages: story.homepageGalleryImages,
-  backgroundImageUrl: '',
+  backgroundImageUrl: story.backgroundImageUrl ?? '',
   backgroundImages: story.backgroundImages,
   screenBackground: story.screenBackground,
   socialLinks: {

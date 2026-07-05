@@ -38,6 +38,7 @@ const storyLogoById: Record<string, string> = {
   inkaholic: '/logo-inkaholic.png',
   'qanda-books': '/logo-qandabook.png',
   curnon: '/logo-curnon.png',
+  'annita-studios': '/logo-annita.png',
 }
 
 const metricLayouts: string[][] = [
@@ -65,7 +66,109 @@ const metricLayouts: string[][] = [
     'col-start-3 row-start-4',
     'col-start-4 row-start-4',
   ],
+  [
+    'col-start-1 row-start-1 col-span-2 row-span-2',
+    'col-start-3 row-start-3 col-span-2 row-span-2',
+    'col-start-3 row-start-1',
+    'col-start-4 row-start-1',
+    'col-start-3 row-start-2',
+    'col-start-4 row-start-2',
+    'col-start-1 row-start-3',
+    'col-start-2 row-start-3',
+    'col-start-1 row-start-4',
+    'col-start-2 row-start-4',
+  ],
+  [
+    'col-start-2 row-start-1 col-span-2 row-span-2',
+    'col-start-1 row-start-3 col-span-2 row-span-2',
+    'col-start-1 row-start-1',
+    'col-start-4 row-start-1',
+    'col-start-1 row-start-2',
+    'col-start-4 row-start-2',
+    'col-start-3 row-start-3',
+    'col-start-4 row-start-3',
+    'col-start-3 row-start-4',
+    'col-start-4 row-start-4',
+  ],
+  [
+    'col-start-1 row-start-2 col-span-2 row-span-2',
+    'col-start-3 row-start-1 col-span-2 row-span-2',
+    'col-start-1 row-start-1',
+    'col-start-2 row-start-1',
+    'col-start-3 row-start-3',
+    'col-start-4 row-start-3',
+    'col-start-1 row-start-4',
+    'col-start-2 row-start-4',
+    'col-start-3 row-start-4',
+    'col-start-4 row-start-4',
+  ],
+  [
+    'col-start-1 row-start-1 col-span-2 row-span-2',
+    'col-start-3 row-start-1 col-span-2 row-span-2',
+    'col-start-1 row-start-3',
+    'col-start-2 row-start-3',
+    'col-start-3 row-start-3',
+    'col-start-4 row-start-3',
+    'col-start-1 row-start-4',
+    'col-start-2 row-start-4',
+    'col-start-3 row-start-4',
+    'col-start-4 row-start-4',
+  ],
 ]
+
+const storyLayoutById: Record<string, number> = {
+  phinoi: 0,
+  'cota-cuti': 1,
+  inkaholic: 2,
+  'qanda-books': 3,
+  curnon: 4,
+  'annita-studios': 5,
+}
+
+const storyThemesById: Record<string, { gradient: string; accent: string; accentSoft: string; tile: string; featured: string }> = {
+  phinoi: {
+    gradient: 'linear-gradient(145deg,#1a0e06 0%,#91581f 45%,#f0b45c 100%)',
+    accent: '#f0b45c',
+    accentSoft: 'rgba(240,180,92,0.32)',
+    tile: 'rgba(54,30,12,0.36)',
+    featured: 'rgba(240,180,92,0.28)',
+  },
+  'cota-cuti': {
+    gradient: 'linear-gradient(145deg,#fff0f6 0%,#ff78aa 44%,#ef476f 100%)',
+    accent: '#ff78aa',
+    accentSoft: 'rgba(255,120,170,0.34)',
+    tile: 'rgba(94,28,58,0.34)',
+    featured: 'rgba(255,255,255,0.28)',
+  },
+  inkaholic: {
+    gradient: 'linear-gradient(145deg,#0f0f12 0%,#342331 45%,#9f1239 100%)',
+    accent: '#f43f5e',
+    accentSoft: 'rgba(244,63,94,0.34)',
+    tile: 'rgba(18,18,22,0.42)',
+    featured: 'rgba(244,63,94,0.28)',
+  },
+  'qanda-books': {
+    gradient: 'linear-gradient(145deg,#130b07 0%,#7c2d12 42%,#fb923c 100%)',
+    accent: '#fb923c',
+    accentSoft: 'rgba(251,146,60,0.34)',
+    tile: 'rgba(64,30,12,0.38)',
+    featured: 'rgba(251,146,60,0.28)',
+  },
+  curnon: {
+    gradient: 'linear-gradient(145deg,#f7f1e8 0%,#75512a 45%,#111827 100%)',
+    accent: '#d6a35f',
+    accentSoft: 'rgba(214,163,95,0.34)',
+    tile: 'rgba(30,22,16,0.4)',
+    featured: 'rgba(214,163,95,0.28)',
+  },
+  'annita-studios': {
+    gradient: 'linear-gradient(145deg,#120305 0%,#4f0b11 44%,#d21f2b 100%)',
+    accent: '#ef2f39',
+    accentSoft: 'rgba(239,47,57,0.34)',
+    tile: 'rgba(20,3,7,0.46)',
+    featured: 'rgba(239,47,57,0.32)',
+  },
+}
 
 function getStoryLogo(story: CaseStudy) {
   return story.logoUrl || storyLogoById[story.id] || '/logo-gg.png'
@@ -101,6 +204,15 @@ function metricKey(metric: CaseStudyMetric) {
   return `${metric.value.trim().toLowerCase()}::${metric.label.trim().toLowerCase()}`
 }
 
+function getStoryLayoutIndex(story: CaseStudy, storyIndex: number) {
+  return storyLayoutById[story.id] ?? storyIndex % metricLayouts.length
+}
+
+function getStoryTheme(story: CaseStudy, storyIndex: number) {
+  const fallbackThemes = Object.values(storyThemesById)
+  return storyThemesById[story.id] ?? fallbackThemes[storyIndex % fallbackThemes.length]
+}
+
 function buildMetricTiles(story: CaseStudy, storyIndex: number) {
   const metricItems = story.keyMetrics.filter((metric) => metric.value.trim() || metric.label.trim())
   const serviceItems: CaseStudyMetric[] = story.services.map((service) => ({ value: initials(service), label: service }))
@@ -125,7 +237,7 @@ function buildMetricTiles(story: CaseStudy, storyIndex: number) {
 
   const featuredMetrics = uniqueMetrics.filter((metric) => metric.featured).slice(0, 2)
   const ordered = [...featuredMetrics, ...uniqueMetrics.filter((metric) => !featuredMetrics.includes(metric))].slice(0, 10)
-  const layout = metricLayouts[storyIndex % metricLayouts.length]
+  const layout = metricLayouts[getStoryLayoutIndex(story, storyIndex)] ?? metricLayouts[storyIndex % metricLayouts.length]
 
   return ordered.map((metric, index) => ({
     ...metric,
@@ -245,12 +357,17 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
   const touchStartX = useRef(0)
   const images = useMemo(() => carouselImagesForStory(story), [story])
   const metricTiles = useMemo(() => buildMetricTiles(story, index), [index, story])
+  const theme = useMemo(() => getStoryTheme(story, index), [index, story])
   const [activeImage, setActiveImage] = useState(0)
   const [inView, setInView] = useState(true)
   const [reducedMotion, setReducedMotion] = useState(false)
   const [pausedUntil, setPausedUntil] = useState(0)
-  const fallbackStyle: CSSProperties = {
-    backgroundImage: story.screenBackground?.gradient || 'linear-gradient(145deg,#7f1d1d 0%,#db2777 48%,#f59e0b 100%)',
+  const frameStyle = {
+    '--story-accent': theme.accent,
+    '--story-accent-soft': theme.accentSoft,
+    '--story-tile-bg': theme.tile,
+    '--story-featured-bg': theme.featured,
+    backgroundImage: images.length ? undefined : story.screenBackground?.gradient || theme.gradient,
   }
 
   useEffect(() => {
@@ -305,7 +422,7 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
     <div
       ref={frameRef}
       className="story-media-frame relative aspect-[4/5] max-w-full overflow-hidden bg-cover bg-center"
-      style={images.length ? undefined : fallbackStyle}
+      style={frameStyle as CSSProperties}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
@@ -325,6 +442,14 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
             />
           ))}
         </div>
+      )}
+      {images.length === 0 && (
+        <img
+          src={getStoryLogo(story)}
+          alt=""
+          aria-hidden="true"
+          className="absolute inset-0 h-full w-full object-contain p-12 opacity-[0.14] mix-blend-screen sm:p-16"
+        />
       )}
       <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,8,16,0.42),rgba(20,8,16,0.14)_42%,rgba(20,8,16,0.72))]" aria-hidden="true" />
 
@@ -364,8 +489,8 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
               className={`story-glass-tile ${metric.className} ${metric.featured ? 'is-featured' : ''}`}
               style={{ '--ri': metricIndex } as CSSProperties}
             >
-              <span className="block break-words text-[clamp(14px,2.2vw,30px)] font-extrabold leading-none text-white">{metric.value || initials(metric.label)}</span>
-              <span className="mt-1 block overflow-wrap-anywhere text-[10px] font-bold leading-tight text-white/78 sm:text-[11px]">{metric.label}</span>
+              <span className={`story-metric-value ${metric.featured ? 'is-featured' : ''}`}>{metric.value || initials(metric.label)}</span>
+              <span className="story-metric-label">{metric.label}</span>
             </div>
           ))}
         </div>
@@ -441,7 +566,7 @@ function InstagramPost({
     <div data-reveal="scale" style={{ '--ri': index } as CSSProperties}>
     <article
       id={story.id}
-      className={`story-post w-full max-w-full scroll-mt-40 overflow-hidden rounded-[28px] border bg-white shadow-[0_24px_70px_rgba(219,39,119,0.12)] transition duration-500 ${highlighted ? 'is-highlighted' : ''}`}
+      className={`story-post w-full max-w-full scroll-mt-56 overflow-hidden rounded-[28px] border bg-white shadow-[0_24px_70px_rgba(219,39,119,0.12)] transition duration-500 ${highlighted ? 'is-highlighted' : ''}`}
     >
       <header className="flex items-center gap-3 border-b border-outline-variant/35 px-4 py-3">
         <img src={getStoryLogo(story)} alt={getDisplayName(story)} className="h-11 w-11 rounded-full border border-outline-variant/45 object-contain" />
