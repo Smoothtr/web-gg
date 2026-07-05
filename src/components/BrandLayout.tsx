@@ -78,8 +78,17 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
     <>
       <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang={lang === 'vi' ? 'vi' : 'en'} />
 
-      <header className="fixed inset-x-0 top-4 z-50 px-3 sm:px-5">
-        <nav className="relative mx-auto flex h-16 max-w-[1200px] items-center gap-6 rounded-full border border-white/70 bg-white/[0.82] px-4 shadow-[0_18px_48px_rgba(219,39,119,0.12)] backdrop-blur-xl sm:px-6 lg:px-8">
+      {showHeaderCta && (
+        <button
+          onClick={() => setBookingOpen(true)}
+          className="header-floating-cta btn-shine z-[60] hidden rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-on-primary shadow-[0_18px_48px_rgba(219,39,119,0.18)] transition hover:opacity-90 gg-btn-primary glow-orange lg:inline-flex"
+        >
+          {headerCtaLabel}
+        </button>
+      )}
+
+      <header className="fixed inset-x-0 top-4 z-50 px-3 sm:px-5 lg:absolute">
+        <nav className="relative mx-auto flex h-16 max-w-[1200px] items-center gap-6 rounded-full border border-white/70 bg-white/[0.82] px-4 shadow-[0_18px_48px_rgba(219,39,119,0.12)] backdrop-blur-xl sm:px-6 lg:px-8 lg:pr-48">
           <a href={homeHref} className="flex min-w-0 items-center gap-2.5">
             {header.logoSrc && <img src={header.logoSrc} alt={header.logoAlt || header.brandName} className="h-12 w-auto shrink-0" />}
             {showHeaderCopy && (
@@ -113,15 +122,7 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
           </div>
           )}
 
-          <div className="ml-auto flex items-center gap-2">
-            {showHeaderCta && (
-              <button
-                onClick={() => setBookingOpen(true)}
-                className="btn-shine hidden rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-on-primary gg-btn-primary glow-orange hover:opacity-90 lg:inline-flex"
-              >
-                {headerCtaLabel}
-              </button>
-            )}
+          <div className="ml-auto flex items-center gap-2 lg:hidden">
             {!isDesktop && (
             <button
               type="button"

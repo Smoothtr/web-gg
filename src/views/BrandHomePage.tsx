@@ -661,7 +661,6 @@ export default function BrandHomePage({
     <BrandLayout
       lang={lang}
       siteSettings={siteSettings}
-      hideHeaderCta
       flushTop
       resolveNavHref={(href, label) => (href === '/packages' || label.toLowerCase().includes('packages') ? '#packages' : href)}
     >

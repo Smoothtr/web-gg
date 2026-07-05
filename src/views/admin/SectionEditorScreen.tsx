@@ -691,7 +691,7 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
         </div>
 
         <div className="grid gap-5">
-          <div className="grid gap-4 md:grid-cols-2">
+          <div className="grid gap-4 md:grid-cols-3">
             <Field label="Block ID" hint="Giữ đúng ID để trang public render đúng vị trí.">
               <TextInput value={idDraft} onChange={setIdDraft} placeholder={block.id} />
               {idDraft !== blockId && (
@@ -703,6 +703,11 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
             {!isStoryBlock && (
               <Field label="CTA link">
                 <TextInput value={block.ctaHref ?? ''} onChange={(value) => updateBlock(pageId, blockId, { ctaHref: value })} placeholder="/contact" />
+              </Field>
+            )}
+            {!isStoryBlock && (
+              <Field label="CTA button text" hint="Text hiển thị trên button, ví dụ: Call Your Shot.">
+                <TextInput value={block.ctaLabel ?? ''} onChange={(value) => updateBlock(pageId, blockId, { ctaLabel: value })} placeholder="Call Your Shot" />
               </Field>
             )}
           </div>
@@ -795,9 +800,6 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                   </Field>
                 </div>
               )}
-              <Field label="CTA label">
-                <TextInput value={block.ctaLabel ?? ''} onChange={(value) => updateBlock(pageId, blockId, { ctaLabel: value })} />
-              </Field>
             </div>
             <div className="space-y-3">
               <MediaPreview url={block.imageUrl} alt={block.imageAlt} />

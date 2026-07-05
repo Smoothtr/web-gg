@@ -12,8 +12,8 @@ interface BookingModalProps {
 const STR = {
   vi: {
     locale: 'vi-VN',
-    title: 'Đặt lịch tư vấn miễn phí',
-    subtitle: 'Đăng ký lịch tư vấn · The One - GG99',
+    title: 'Congratulations - almost there darling!',
+    subtitle: 'Schedule your first date with The One.',
     intro: 'Chọn ngày và khung thời gian bạn mong muốn. The One - GG99 sẽ liên hệ để xác nhận lịch tư vấn phù hợp.',
     frameLabel: 'Khung thời gian mong muốn',
     checking: 'Đang kiểm tra lịch…',
@@ -58,8 +58,8 @@ const STR = {
   },
   en: {
     locale: 'en-US',
-    title: 'Book a free consultation',
-    subtitle: 'Schedule a consultation · The One - GG99',
+    title: 'Congratulations - almost there darling!',
+    subtitle: 'Schedule your first date with The One.',
     intro: 'Choose your preferred date and time. The One - GG99 will reach out to confirm a suitable consultation slot.',
     frameLabel: 'Preferred time slot',
     checking: 'Checking availability…',
@@ -104,8 +104,8 @@ const STR = {
   },
   ko: {
     locale: 'ko-KR',
-    title: '무료 상담 예약',
-    subtitle: '상담 신청 · The One - GG99',
+    title: 'Congratulations - almost there darling!',
+    subtitle: 'Schedule your first date with The One.',
     intro: '원하시는 날짜와 시간대를 선택하세요. The One - GG99이 적합한 상담 일정을 확인하기 위해 연락드립니다.',
     frameLabel: '희망 시간대',
     checking: '예약 가능 여부 확인 중…',

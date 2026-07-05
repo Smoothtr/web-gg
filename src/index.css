@@ -509,6 +509,12 @@
 }
 
 /* idle glow pulse rất chậm cho primary CTA chính (không nhấp nháy) */
+.header-floating-cta {
+  position: fixed !important;
+  top: 1.75rem;
+  right: max(2rem, calc((100vw - 1200px) / 2 + 2rem));
+}
+
 .cta-idle { animation: ctaIdle 4.6s ease-in-out infinite; }
 .cta-idle:hover { animation: none; }
 @keyframes ctaIdle {
