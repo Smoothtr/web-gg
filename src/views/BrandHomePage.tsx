@@ -20,6 +20,8 @@ import type { CaseStudy } from '../data/caseStudies'
 
 const primaryBookingCtaLabel = 'Call Your Shot'
 const defaultHeroGradient = 'linear-gradient(180deg,#FF7AA8 0%,#FF4D7D 45%,#FFB199 100%)'
+const heroWordStepMs = 300
+const heroWordDurationMs = 640
 
 function resolvePrimaryBookingCtaLabel(label?: string) {
   const trimmed = label?.trim() ?? ''
@@ -66,8 +68,12 @@ function countStaggerCharacters(text: string) {
   return splitWords(text).reduce((total, word) => total + word.length, 0)
 }
 
-function getHeroAnimationDelays(characterCount: number, showDivider: boolean) {
-  const lastWordDone = Math.max(0, characterCount - 1) * 34 + 520
+function countStaggerWords(text: string) {
+  return splitWords(text).length
+}
+
+function getHeroAnimationDelays(wordCount: number, showDivider: boolean) {
+  const lastWordDone = Math.max(0, wordCount - 1) * heroWordStepMs + heroWordDurationMs
   const dividerDelay = lastWordDone + 150
   return {
     divider: dividerDelay,
@@ -106,6 +112,32 @@ function StaggeredText({
               )
             })}
             {wordIndex < words.length - 1 ? <span className="stagger-space" aria-hidden="true">&nbsp;</span> : null}
+          </span>
+        ))}
+      </span>
+    </span>
+  )
+}
+
+function HeroWordTitle({
+  text,
+  className,
+  nowrap,
+}: {
+  text: string
+  className: string
+  nowrap: boolean
+}) {
+  const words = splitWords(text)
+
+  return (
+    <span className={className}>
+      <span className="sr-only">{text}</span>
+      <span aria-hidden="true" className={nowrap ? 'inline-block whitespace-nowrap' : 'inline'}>
+        {words.map((word, index) => (
+          <span key={`${word}-${index}`} className="stagger-word hero-stagger-word" style={{ '--hero-word-delay': `${index * heroWordStepMs}ms` } as CSSProperties}>
+            {word}
+            {index < words.length - 1 ? <span className="stagger-space" aria-hidden="true">&nbsp;</span> : null}
           </span>
         ))}
       </span>
@@ -579,8 +611,8 @@ export default function BrandHomePage({
   const isDefaultHeroTitle = heroLineOne.toLowerCase() === 'the one by gg99'
   const heroTextMode = heroBlock?.textColor ?? 'light'
   const showHeroDivider = heroBlock?.dividerShow !== false
-  const heroCharacterCount = countStaggerCharacters(heroLineOne)
-  const heroDelays = getHeroAnimationDelays(heroCharacterCount, showHeroDivider)
+  const heroWordCount = countStaggerWords(heroLineOne)
+  const heroDelays = getHeroAnimationDelays(heroWordCount, showHeroDivider)
   const closingFaqItems = getHomeClosingFaqItems(cmsPage)
   const homeSchemas = [organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(cmsPage)].filter(Boolean)
   const packageItems: CmsBlockItem[] = packagesBlock?.items?.length
@@ -617,7 +649,7 @@ export default function BrandHomePage({
               heroTextMode === 'gradient' ? 'gg-grad-text' : heroTextMode === 'dark' ? 'text-on-surface' : 'text-white',
             ].join(' ')}
           >
-            <StaggeredText text={heroLineOne} className="inline" charClassName="hero-char" nowrap={isDefaultHeroTitle} />
+            <HeroWordTitle text={heroLineOne} className="inline" nowrap={isDefaultHeroTitle} />
           </h1>
           {showHeroDivider && (
             <div
@@ -639,7 +671,7 @@ export default function BrandHomePage({
             type="button"
             onClick={openBookingModal}
             style={{ '--hero-delay': `${heroDelays.cta}ms` } as CSSProperties}
-            className="btn-shine cta-idle mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-7 py-3.5 font-bold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] hover:opacity-95"
+            className="home-hero-item btn-shine cta-idle mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-7 py-3.5 font-bold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] hover:opacity-95"
           >
             {resolvePrimaryBookingCtaLabel(heroBlock?.ctaLabel)}
           </button>
