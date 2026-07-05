@@ -124,6 +124,19 @@ export type CmsLocalizedSiteSettings = {
     ctaLabel: string
     navLinks: CmsLink[]
   }
+  booking: {
+    title: string
+    subtitle: string
+    intro: string
+    frameLabel: string
+    continueLabel: string
+    continueDisabledLabel: string
+    submitLabel: string
+    successTitle: string
+    successMessage: string
+    successFollowup: string
+    needs: string[]
+  }
   footer: {
     logoSrc: string
     logoAlt: string

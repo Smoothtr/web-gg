@@ -27,6 +27,25 @@ function cloneLinks(items: CmsLink[] | undefined, fallback: CmsLink[], options?:
 function createDefaultLocale(lang: BrandLang): CmsLocalizedSiteSettings {
   const footerCopy = footerCopyByLang[lang]
   const isVi = lang === 'vi'
+  const bookingNeeds = isVi
+    ? [
+      'Tư vấn tổng quát',
+      'Ecommerce Operation (Shopee, TikTok Shop...)',
+      'Social & Growth (TikTok, Content, KOC)',
+      'Business Operation (Process, HR)',
+      'Website & Digital System',
+      'Data Management & Dashboard',
+      'Other',
+    ]
+    : [
+      'General consultation',
+      'Ecommerce Operation (Shopee, TikTok Shop...)',
+      'Social & Growth (TikTok, Content, KOC)',
+      'Business Operation (Process, HR)',
+      'Website & Digital System',
+      'Data Management & Dashboard',
+      'Other',
+    ]
 
   return {
     header: {
@@ -36,6 +55,25 @@ function createDefaultLocale(lang: BrandLang): CmsLocalizedSiteSettings {
       tagline: 'Golden Generation Company Ltd.',
       ctaLabel: 'Schedule Our Date',
       navLinks: cloneLinks(navItemsByLang[lang], navItemsByLang.en, { hideTheOneStoryByDefault: true }),
+    },
+    booking: {
+      title: 'Congratulations - almost there darling!',
+      subtitle: 'Schedule your first date with The One.',
+      intro: isVi
+        ? 'Chọn ngày và khung thời gian bạn mong muốn. The One - GG99 sẽ liên hệ để xác nhận lịch tư vấn phù hợp.'
+        : 'Choose your preferred date and time. The One - GG99 will reach out to confirm a suitable consultation slot.',
+      frameLabel: isVi ? 'Khung thời gian mong muốn' : 'Preferred time slot',
+      continueLabel: isVi ? 'Tiếp tục đăng ký tư vấn ->' : 'Continue to register ->',
+      continueDisabledLabel: isVi ? 'Chọn ngày và khung thời gian để tiếp tục' : 'Select a date and time slot to continue',
+      submitLabel: isVi ? 'Gửi đăng ký ->' : 'Submit ->',
+      successTitle: isVi ? 'Cảm ơn bạn!' : 'Thank you!',
+      successMessage: isVi
+        ? 'The One - GG99 đã nhận thông tin đăng ký tư vấn.'
+        : 'The One - GG99 has received your consultation request.',
+      successFollowup: isVi
+        ? 'Đội ngũ của chúng tôi sẽ liên hệ lại để xác nhận lịch phù hợp.'
+        : 'Our team will contact you to confirm a suitable time.',
+      needs: bookingNeeds,
     },
     footer: {
       logoSrc: '/logo-gg.png',
@@ -85,6 +123,11 @@ function mergeLocale(
       ...fallback.header,
       ...current?.header,
       navLinks: cloneLinks(current?.header?.navLinks, fallback.header.navLinks, { hideTheOneStoryByDefault: true }),
+    },
+    booking: {
+      ...fallback.booking,
+      ...current?.booking,
+      needs: current?.booking?.needs?.length ? current.booking.needs : fallback.booking.needs,
     },
     footer: {
       ...fallback.footer,

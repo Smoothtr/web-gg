@@ -1,11 +1,15 @@
 ﻿import { useState, useEffect, useCallback } from 'react'
 import { type Lang } from '../i18n'
+import type { CmsLocalizedSiteSettings } from '../cms/types'
 
 /* ─── Types ─────────────────────────────────────────── */
+export type BookingModalCopy = Partial<CmsLocalizedSiteSettings['booking']>
+
 interface BookingModalProps {
   isOpen: boolean
   onClose: () => void
   lang?: Lang
+  copy?: BookingModalCopy
 }
 
 /* ─── i18n ──────────────────────────────────────────── */
@@ -261,8 +265,22 @@ function CalendarPicker({ selected, onSelect, locale, days }: { selected: string
 }
 
 /* ─── Main modal ────────────────────────────────────── */
-export function BookingModal({ isOpen, onClose, lang = 'vi' }: BookingModalProps) {
-  const t: Str = STR[lang] ?? STR.vi
+export function BookingModal({ isOpen, onClose, lang = 'vi', copy }: BookingModalProps) {
+  const base = STR[lang] ?? STR.vi
+  const t: Str = {
+    ...base,
+    title: copy?.title || base.title,
+    subtitle: copy?.subtitle || base.subtitle,
+    intro: copy?.intro || base.intro,
+    frameLabel: copy?.frameLabel || base.frameLabel,
+    continue: copy?.continueLabel || base.continue,
+    continueDisabled: copy?.continueDisabledLabel || base.continueDisabled,
+    submit: copy?.submitLabel || base.submit,
+    thanks: copy?.successTitle || base.thanks,
+    success1: copy?.successMessage || base.success1,
+    success2: copy?.successFollowup || base.success2,
+    needs: copy?.needs?.length ? copy.needs : base.needs,
+  } as Str
   const [step, setStep]         = useState<1 | 2 | 3>(1)
   const [selectedDate, setDate] = useState<string | null>(null)
   const [selectedFrame, setFrame] = useState<string | null>(null)

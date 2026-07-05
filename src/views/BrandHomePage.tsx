@@ -626,7 +626,7 @@ function ClosingBanner({
     }
     : { backgroundImage: gradient }
   const logos = stories.map(getStoryLogoForHome).filter(Boolean)
-  const faqTitle = 'Frequently Asked Questions'
+  const faqTitle = block.heading?.trim() || 'Frequently Asked Questions'
   const closingCharacterCount = countStaggerCharacters(faqTitle)
   const closingFollowDelay = Math.max(360, closingCharacterCount * 18 + 220)
 
@@ -786,7 +786,7 @@ export default function BrandHomePage({
       <section id="packages" className="py-10 md:py-14 px-5 lg:px-10">
         <div className="max-w-6xl mx-auto">
           <SectionHeader
-            title="The One Packages"
+            title={packagesBlock?.heading || 'The One Packages'}
             intro={lang === 'vi' ? 'Chọn hệ tăng trưởng phù hợp với giai đoạn của bạn.' : 'Choose the growth system that fits your stage.'}
             align="center"
           />

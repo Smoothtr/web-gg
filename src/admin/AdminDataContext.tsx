@@ -18,7 +18,6 @@ import { mergeCmsSiteSettings } from '../cms/siteSettings'
 import { getCmsSiteSettings, listCmsInsights, listCmsPages, saveCmsInsight, saveCmsPage, saveCmsSiteSettings, seedDefaultContent } from '../cms/cmsRepository'
 import { getInsightRevalidatePaths, getPageRevalidatePaths, hiddenCmsPageIds, siteSettingsRevalidatePaths } from '../cms/adminNav'
 import type { CmsBlock, CmsBlockItem, CmsInsightContent, CmsPageContent, CmsSiteSettings, CmsStatus } from '../cms/types'
-import { isUnsupportedPreviewVideoUrl } from '../cms/videoValidation'
 
 type PageMetaKey = keyof CmsPageContent['meta']
 type InsightMetaKey = keyof CmsInsightContent['meta']
@@ -134,21 +133,6 @@ function validateTheOneStories(page: CmsPageContent) {
 
   return invalidStories.length
     ? `Không thể publish The One Stories: ${invalidStories.join('; ')}. Mỗi story cần đúng 10 metrics có nội dung và đúng 2 metrics Featured.`
-    : ''
-}
-
-function validatePreviewVideoUrls(page: CmsPageContent) {
-  const invalidItems = page.blocks.flatMap((block) =>
-    (block.items ?? []).flatMap((item) => {
-      const videoUrl = item.videoUrl?.trim()
-      const embedUrl = item.embedUrl?.trim()
-      if (!isUnsupportedPreviewVideoUrl(videoUrl) && !isUnsupportedPreviewVideoUrl(embedUrl)) return []
-      return `${block.heading || block.id}: ${item.title || item.id || item.href || 'Item'}`
-    }),
-  )
-
-  return invalidItems.length
-    ? `Khong the luu preview video YouTube: ${invalidItems.join('; ')}. Hay upload file MP4/WebM/OGG vao CMS.`
     : ''
 }
 
@@ -447,8 +431,6 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
     try {
       const validationError = validateTheOneStories(page)
       if (validationError) throw new Error(validationError)
-      const videoValidationError = validatePreviewVideoUrls(page)
-      if (videoValidationError) throw new Error(videoValidationError)
       const carouselValidationError = validateBackgroundCarouselImages(page)
       if (carouselValidationError) throw new Error(carouselValidationError)
       const homepageGalleryValidationError = validateHomepageGalleryImages(page)

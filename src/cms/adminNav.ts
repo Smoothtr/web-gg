@@ -5,13 +5,11 @@ export const hiddenCmsPageIds = new Set([
   'the-one-consultant',
   'the-one-agency',
   'the-one-partner',
-  'the-one-start',
-  'the-one-system',
-  'the-one-scale',
 ])
 
 export const pageGroups: Array<{ label: string; pageIds: string[] }> = [
   { label: 'Trang chinh', pageIds: ['homepage', 'the-one', 'packages'] },
+  { label: 'Package detail', pageIds: ['the-one-start', 'the-one-system', 'the-one-scale'] },
   { label: 'Trang khac', pageIds: ['about', 'services', 'contact'] },
 ]
 
@@ -19,6 +17,9 @@ export const pageRevalidatePaths: Record<string, string[]> = {
   homepage: ['/', '/en'],
   'the-one': ['/the-one', '/en/the-one', '/', '/en'],
   packages: ['/packages', '/en/packages'],
+  'the-one-start': ['/the-one-start', '/en/the-one-start'],
+  'the-one-system': ['/the-one-system', '/en/the-one-system'],
+  'the-one-scale': ['/the-one-scale', '/en/the-one-scale'],
   about: ['/about', '/en/about'],
   services: ['/services'],
   contact: ['/contact'],

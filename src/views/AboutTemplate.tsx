@@ -177,7 +177,8 @@ const content = {
 
 export default function AboutTemplate({ lang, siteSettings }: { lang: AboutLang; siteSettings?: CmsSiteSettings | null }) {
   const c = content[lang]
-  const { header } = getLocalizedSiteSettings(siteSettings, lang)
+  const localizedSettings = getLocalizedSiteSettings(siteSettings, lang)
+  const { header } = localizedSettings
   const showHeaderCopy = Boolean(header.brandName.trim() || header.tagline.trim())
   const [bookingOpen, setBookingOpen] = useState(false)
   const [showTop, setShowTop] = useState(false)
@@ -204,7 +205,7 @@ export default function AboutTemplate({ lang, siteSettings }: { lang: AboutLang;
 
   return (
     <>
-      <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang={lang} />
+      <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang={lang} copy={localizedSettings.booking} />
 
       {/* ── Navbar ── */}
       <header className="fixed w-full top-0 z-50 bg-surface/92 border-b border-outline-variant/30 shadow-sm">

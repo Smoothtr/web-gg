@@ -7,9 +7,16 @@ import {
   FileText,
   Globe2,
   Layers3,
+  Mail,
+  MapPin,
   Megaphone,
+  MessageCircle,
+  MousePointerClick,
   Palette,
+  PanelsTopLeft,
+  PenTool,
   Rocket,
+  Route,
   Search,
   Settings2,
   ShoppingCart,
@@ -18,6 +25,8 @@ import {
   TrendingUp,
   Users,
   Workflow,
+  Gauge,
+  Flag,
 } from 'lucide-react'
 
 type IconComponent = ComponentType<{ size?: number; className?: string }>
@@ -41,6 +50,15 @@ export const cmsIconOptions: Array<{ value: string; label: string; Icon?: IconCo
   { value: 'Layers3', label: 'System', Icon: Layers3 },
   { value: 'FileText', label: 'Content', Icon: FileText },
   { value: 'Sparkles', label: 'AI / Idea', Icon: Sparkles },
+  { value: 'PanelsTopLeft', label: 'Landing page', Icon: PanelsTopLeft },
+  { value: 'Route', label: 'Route', Icon: Route },
+  { value: 'MousePointerClick', label: 'Click', Icon: MousePointerClick },
+  { value: 'PenTool', label: 'Creative', Icon: PenTool },
+  { value: 'Gauge', label: 'Speed', Icon: Gauge },
+  { value: 'Flag', label: 'Milestone', Icon: Flag },
+  { value: 'Mail', label: 'Email', Icon: Mail },
+  { value: 'MessageCircle', label: 'Chat', Icon: MessageCircle },
+  { value: 'MapPin', label: 'Location', Icon: MapPin },
   { value: '🚀', label: 'Emoji rocket' },
   { value: '🏪', label: 'Emoji store' },
   { value: '📈', label: 'Emoji chart' },
@@ -48,7 +66,14 @@ export const cmsIconOptions: Array<{ value: string; label: string; Icon?: IconCo
   { value: '!', label: 'Alert mark' },
 ]
 
-const iconByName = new Map(cmsIconOptions.filter((item) => item.Icon).map((item) => [item.value, item.Icon as IconComponent]))
+const iconByName = new Map<string, IconComponent>([
+  ...cmsIconOptions.filter((item) => item.Icon).map((item) => [item.value, item.Icon as IconComponent] as const),
+  ['Website', Globe2],
+  ['CRM', Users],
+  ['Email', Mail],
+  ['Chat', MessageCircle],
+  ['Office', MapPin],
+])
 
 export function CmsIcon({
   name,

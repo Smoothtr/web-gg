@@ -8,6 +8,7 @@ import type { BrandLang } from '../../brandContent'
 import type { CmsLink, CmsLocalizedSiteSettings } from '../../cms/types'
 
 type HeaderSettings = CmsLocalizedSiteSettings['header']
+type BookingSettings = CmsLocalizedSiteSettings['booking']
 type FooterSettings = CmsLocalizedSiteSettings['footer']
 
 const languages: Array<{ label: string; value: BrandLang }> = [
@@ -129,6 +130,10 @@ export default function SiteSettingsScreen() {
     updateLocale({ header: { ...locale.header, [key]: value } })
   }
 
+  function updateBooking<K extends keyof BookingSettings>(key: K, value: BookingSettings[K]) {
+    updateLocale({ booking: { ...locale.booking, [key]: value } })
+  }
+
   function updateFooter<K extends keyof FooterSettings>(key: K, value: FooterSettings[K]) {
     updateLocale({ footer: { ...locale.footer, [key]: value } })
   }
@@ -187,6 +192,50 @@ export default function SiteSettingsScreen() {
         </div>
         <div className="mt-5">
           <LinkListEditor items={locale.header.navLinks} onChange={(items) => updateHeader('navLinks', items)} label="Header nav links" />
+        </div>
+      </Card>
+
+      <Card title="Booking modal" description="Text shown after users click Schedule Our Date / booking CTA. Time-slot logic is still controlled by the booking API.">
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Modal title">
+            <TextInput value={locale.booking.title} onChange={(value) => updateBooking('title', value)} />
+          </Field>
+          <Field label="Modal subtitle">
+            <TextInput value={locale.booking.subtitle} onChange={(value) => updateBooking('subtitle', value)} />
+          </Field>
+          <Field label="Time-frame label">
+            <TextInput value={locale.booking.frameLabel} onChange={(value) => updateBooking('frameLabel', value)} />
+          </Field>
+          <Field label="Continue button">
+            <TextInput value={locale.booking.continueLabel} onChange={(value) => updateBooking('continueLabel', value)} />
+          </Field>
+          <Field label="Disabled continue text">
+            <TextInput value={locale.booking.continueDisabledLabel} onChange={(value) => updateBooking('continueDisabledLabel', value)} />
+          </Field>
+          <Field label="Submit button">
+            <TextInput value={locale.booking.submitLabel} onChange={(value) => updateBooking('submitLabel', value)} />
+          </Field>
+          <Field label="Success title">
+            <TextInput value={locale.booking.successTitle} onChange={(value) => updateBooking('successTitle', value)} />
+          </Field>
+          <Field label="Success message">
+            <TextInput value={locale.booking.successMessage} onChange={(value) => updateBooking('successMessage', value)} />
+          </Field>
+        </div>
+        <div className="mt-4 grid gap-4">
+          <Field label="Intro copy">
+            <TextArea value={locale.booking.intro} onChange={(value) => updateBooking('intro', value)} minHeight={78} />
+          </Field>
+          <Field label="Success follow-up">
+            <TextArea value={locale.booking.successFollowup} onChange={(value) => updateBooking('successFollowup', value)} minHeight={70} />
+          </Field>
+          <Field label="Consultation needs" hint="One option per line. These options appear in the booking form select.">
+            <TextArea
+              value={locale.booking.needs.join('\n')}
+              onChange={(value) => updateBooking('needs', value.split('\n').map((item) => item.trim()).filter(Boolean))}
+              minHeight={126}
+            />
+          </Field>
         </div>
       </Card>
 

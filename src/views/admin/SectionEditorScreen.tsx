@@ -26,9 +26,22 @@ import { getUnsupportedPreviewVideoMessage } from '../../cms/videoValidation'
 type UpdateBlockItem = (pageId: string, blockId: string, itemIndex: number, patch: Partial<CmsBlockItem>) => void
 
 const storyMetricSlots = Array.from({ length: 10 }, (_, index) => index)
+const packageDetailPageIds = new Set(['the-one-start', 'the-one-system', 'the-one-scale'])
 
 function listToText(items: string[] | undefined) {
   return (items ?? []).join('\n')
+}
+
+function isPackageListBlock(pageId: string, blockId: string) {
+  return (pageId === 'homepage' || pageId === 'packages') && blockId === 'packages'
+}
+
+function isPackageDetailCardsBlock(pageId: string, blockId: string) {
+  return packageDetailPageIds.has(pageId) && (blockId === 'cards' || blockId === 'process')
+}
+
+function isBasicCardsBlock(pageId: string, blockId: string) {
+  return (pageId === 'about' && blockId === 'cards') || isPackageDetailCardsBlock(pageId, blockId)
 }
 
 function textToDraftList(value: string) {
@@ -245,6 +258,16 @@ function PeopleItemEditor({
         />
       </section>
 
+      <label className="inline-flex w-fit items-center gap-2 rounded-xl border border-outline-variant/45 bg-surface px-3 py-2 text-xs font-extrabold text-on-surface-variant">
+        <input
+          type="checkbox"
+          checked={item.published !== false}
+          onChange={(event) => updateBlockItem(pageId, blockId, index, { published: event.target.checked })}
+          className="h-4 w-4 accent-primary"
+        />
+        Show this person
+      </label>
+
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Ten">
           <TextInput value={item.title} onChange={(value) => updateBlockItem(pageId, blockId, index, { title: value })} />
@@ -257,6 +280,168 @@ function PeopleItemEditor({
       <Field label="Description / Quote">
         <TextArea value={item.body ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { body: value })} minHeight={96} />
       </Field>
+    </div>
+  )
+}
+
+function PackageItemEditor({
+  pageId,
+  blockId,
+  index,
+  item,
+  updateBlockItem,
+  onUploadError,
+}: {
+  pageId: string
+  blockId: string
+  index: number
+  item: CmsBlockItem
+  updateBlockItem: UpdateBlockItem
+  onUploadError: (message: string) => void
+}) {
+  return (
+    <div className="grid gap-4">
+      <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-xs font-semibold leading-relaxed text-on-surface-variant">
+        Body format đang render trên front-end: dòng 1 = mô tả ngắn; dòng có “content units/month” = metric highlight; các dòng task = deliverable cards; dòng cuối “Price:” = Monthly setup.
+      </div>
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Package name">
+          <TextInput value={item.title} onChange={(value) => updateBlockItem(pageId, blockId, index, { title: value })} />
+        </Field>
+        <Field label="Badge / label">
+          <TextInput value={item.label ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { label: value })} placeholder="Most Popular" />
+        </Field>
+        <Field label="Package anchor / href">
+          <TextInput value={item.href ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { href: value })} placeholder="/packages#the-one-system" />
+        </Field>
+        <Field label="CTA text">
+          <TextInput value={item.ctaText ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { ctaText: value })} placeholder="Choose this package" />
+        </Field>
+        <Field label="Case study link">
+          <TextInput value={item.caseStudyLink ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { caseStudyLink: value })} placeholder="/the-one#curnon" />
+        </Field>
+        <Field label="Case study button text">
+          <TextInput value={item.caseStudyLabel ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { caseStudyLabel: value })} placeholder="See case studies" />
+        </Field>
+      </div>
+      <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
+        <div className="grid gap-4">
+          <Field label="Icon">
+            <IconPicker value={item.icon ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { icon: value })} />
+          </Field>
+          <Field label="Package icon/image URL">
+            <div className="grid gap-2">
+              <TextInput value={item.imageUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { imageUrl: value })} />
+              <ImageUploadButton
+                folder={`cms/pages/${pageId}/${blockId}/packages`}
+                onUploaded={(url) => updateBlockItem(pageId, blockId, index, { imageUrl: url })}
+                onError={onUploadError}
+                label={item.imageUrl ? 'Thay image' : 'Upload image'}
+              />
+            </div>
+          </Field>
+          <Field label="Image alt">
+            <TextInput value={item.imageAlt ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { imageAlt: value })} />
+          </Field>
+        </div>
+        <MediaPreview url={item.imageUrl} alt={item.imageAlt} />
+      </div>
+      <Field label="Package content">
+        <TextArea value={item.body ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { body: value })} minHeight={180} />
+      </Field>
+    </div>
+  )
+}
+
+function FaqItemEditor({
+  pageId,
+  blockId,
+  index,
+  item,
+  updateBlockItem,
+}: {
+  pageId: string
+  blockId: string
+  index: number
+  item: CmsBlockItem
+  updateBlockItem: UpdateBlockItem
+}) {
+  return (
+    <div className="grid gap-4">
+      <label className="inline-flex w-fit items-center gap-2 rounded-xl border border-outline-variant/45 bg-surface px-3 py-2 text-xs font-extrabold text-on-surface-variant">
+        <input
+          type="checkbox"
+          checked={item.published !== false}
+          onChange={(event) => updateBlockItem(pageId, blockId, index, { published: event.target.checked })}
+          className="h-4 w-4 accent-primary"
+        />
+        Show this FAQ
+      </label>
+      <Field label="Question">
+        <TextInput value={item.title} onChange={(value) => updateBlockItem(pageId, blockId, index, { title: value })} />
+      </Field>
+      <Field label="Answer">
+        <TextArea value={item.body ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { body: value })} minHeight={120} />
+      </Field>
+    </div>
+  )
+}
+
+function BasicCardItemEditor({
+  pageId,
+  blockId,
+  index,
+  item,
+  updateBlockItem,
+  onUploadError,
+}: {
+  pageId: string
+  blockId: string
+  index: number
+  item: CmsBlockItem
+  updateBlockItem: UpdateBlockItem
+  onUploadError: (message: string) => void
+}) {
+  const isProcess = blockId === 'process'
+
+  return (
+    <div className="grid gap-4">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label={isProcess ? 'Step title' : 'Card title'}>
+          <TextInput value={item.title} onChange={(value) => updateBlockItem(pageId, blockId, index, { title: value })} />
+        </Field>
+        <Field label={isProcess ? 'Step marker' : 'Icon'}>
+          {isProcess ? (
+            <TextInput value={item.icon ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { icon: value })} placeholder={String(index + 1).padStart(2, '0')} />
+          ) : (
+            <IconPicker value={item.icon ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { icon: value })} />
+          )}
+        </Field>
+      </div>
+      <Field label={isProcess ? 'Step description' : 'Card body'}>
+        <TextArea value={item.body ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { body: value })} minHeight={110} />
+      </Field>
+      {!isProcess && (
+        <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
+          <div className="grid gap-4">
+            <Field label="Optional image URL">
+              <div className="grid gap-2">
+                <TextInput value={item.imageUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { imageUrl: value })} />
+                <ImageUploadButton
+                  folder={`cms/pages/${pageId}/${blockId}/cards`}
+                  onUploaded={(url) => updateBlockItem(pageId, blockId, index, { imageUrl: url })}
+                  onError={onUploadError}
+                  label={item.imageUrl ? 'Thay image' : 'Upload image'}
+                />
+              </div>
+            </Field>
+            <Field label="Image alt">
+              <TextInput value={item.imageAlt ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { imageAlt: value })} />
+            </Field>
+          </div>
+          <MediaPreview url={item.imageUrl} alt={item.imageAlt} />
+        </div>
+      )}
     </div>
   )
 }
@@ -465,16 +650,6 @@ function StoryItemEditor({
         </div>
       </section>
 
-      <Field label="CTA text">
-        <TextInput value={item.ctaText ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { ctaText: value })} />
-      </Field>
-      <Field label="Case study link">
-        <TextInput value={item.caseStudyLink ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { caseStudyLink: value })} placeholder="/the-one#curnon" />
-      </Field>
-      <Field label="Case study label">
-        <TextInput value={item.caseStudyLabel ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { caseStudyLabel: value })} placeholder="See case studies" />
-      </Field>
-
       <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
         <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Homepage showcase / media</p>
         <div className="grid gap-4 md:grid-cols-2">
@@ -490,24 +665,6 @@ function StoryItemEditor({
             />
             Show on homepage
           </label>
-          <Field label="Preview video URL" hint="MP4/WebM/OGG Cloudinary URL. YouTube links are blocked because the homepage preview uses an HTML video player.">
-            <div className="grid gap-2">
-              <TextInput value={item.videoUrl ?? item.embedUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { videoUrl: value, embedUrl: '' })} />
-              {getUnsupportedPreviewVideoMessage(item.videoUrl ?? item.embedUrl) && (
-                <p className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
-                  {getUnsupportedPreviewVideoMessage(item.videoUrl ?? item.embedUrl)}
-                </p>
-              )}
-              <VideoUploadButton
-                folder={`cms/pages/${pageId}/${blockId}/previews`}
-                onUploaded={(url) => updateBlockItem(pageId, blockId, index, { videoUrl: url, embedUrl: '' })}
-                onError={onUploadError}
-              />
-            </div>
-          </Field>
-          <Field label="Preview poster URL" hint="Static poster shown before the homepage preview video starts.">
-            <TextInput value={item.videoPoster ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { videoPoster: value })} />
-          </Field>
           <Field label="Homepage thumbnail URL" hint="Main 16:9 thumbnail for the homepage top banner and case rail.">
             <div className="grid gap-2">
               <TextInput value={item.thumbnailUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { thumbnailUrl: value })} />
@@ -658,8 +815,18 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
   const adminSectionLabel = getAdminSectionLabel(pageId, block, blockIndex)
   const isStoryBlock = pageId === 'the-one' && block.id === 'stories'
   const isPeopleBlock = pageId === 'homepage' && block.id === 'people'
-  const canEditBlockMedia = !isStoryBlock && Boolean(block.icon || block.imageUrl || block.imageAlt || ['hero', 'intro', 'closing', 'people'].includes(block.id))
-  const canEditItemMedia = !isStoryBlock && Boolean((block.items ?? []).some((item) => item.icon || item.imageUrl || item.imageAlt))
+  const isHomepageHero = pageId === 'homepage' && block.id === 'hero'
+  const isHomepageClosing = pageId === 'homepage' && block.id === 'closing'
+  const isPackageList = isPackageListBlock(pageId, block.id)
+  const isFaqBlock = isHomepageClosing
+  const isBasicCards = isBasicCardsBlock(pageId, block.id)
+  const isTheOneHero = pageId === 'the-one' && block.id === 'hero'
+  const canEditBlockMedia = !isStoryBlock && (isHomepageHero || isHomepageClosing || (pageId === 'about' && block.id === 'hero'))
+  const canEditItemMedia = !isStoryBlock && !isPackageList && !isBasicCards && !isFaqBlock && Boolean((block.items ?? []).some((item) => item.icon || item.imageUrl || item.imageAlt))
+  const showBlockCtaLabel = isHomepageHero || isTheOneHero
+  const showBlockCtaHref = false
+  const showBlockHeading = !isPackageList
+  const showBlockItems = !isHomepageHero && !isTheOneHero && !(block.id === 'intro' && !block.items?.length)
 
   function commitId() {
     const nextId = updateBlockId(pageId, blockId, idDraft)
@@ -729,21 +896,23 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                 </button>
               )}
             </Field>
-            {!isStoryBlock && (
+            {showBlockCtaHref && (
               <Field label="CTA link">
                 <TextInput value={block.ctaHref ?? ''} onChange={(value) => updateBlock(pageId, blockId, { ctaHref: value })} placeholder="/contact" />
               </Field>
             )}
-            {!isStoryBlock && (
+            {showBlockCtaLabel && (
               <Field label="CTA button text" hint="Text hiển thị trên button, ví dụ: Call Your Shot.">
                 <TextInput value={block.ctaLabel ?? ''} onChange={(value) => updateBlock(pageId, blockId, { ctaLabel: value })} placeholder="Call Your Shot" />
               </Field>
             )}
           </div>
 
-          <Field label="Heading">
+          {showBlockHeading && (
+          <Field label={isFaqBlock ? 'FAQ title' : 'Heading'}>
             <TextInput value={block.heading} onChange={(value) => updateBlock(pageId, blockId, { heading: value })} />
           </Field>
+          )}
           <Field label="Body / mô tả">
             <TextArea value={block.body} onChange={(value) => updateBlock(pageId, blockId, { body: value })} minHeight={130} />
           </Field>
@@ -761,6 +930,17 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
           {pageId === 'homepage' && block.id === 'closing' && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-on-surface-variant">
               Items in this Closing section are rendered as homepage FAQ. Use item title as the question and item body as the answer.
+            </div>
+          )}
+
+          {isPeopleBlock && (
+            <div className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+              <Field label="Closing line 1">
+                <TextInput value={block.closingLine1 ?? ''} onChange={(value) => updateBlock(pageId, blockId, { closingLine1: value })} />
+              </Field>
+              <Field label="Closing line 2">
+                <TextInput value={block.closingLine2 ?? ''} onChange={(value) => updateBlock(pageId, blockId, { closingLine2: value })} />
+              </Field>
             </div>
           )}
 
@@ -846,6 +1026,7 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
           </div>
           )}
 
+          {showBlockItems && (
           <section className="min-w-0 overflow-hidden rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
             <div className="mb-4 flex items-center justify-between gap-3">
               <div>
@@ -912,6 +1093,12 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                       <StoryItemEditor pageId={pageId} blockId={blockId} index={index} item={item} updateBlockItem={updateBlockItem} onUploadError={setUploadError} />
                     ) : isPeopleBlock ? (
                       <PeopleItemEditor pageId={pageId} blockId={blockId} index={index} item={item} updateBlockItem={updateBlockItem} onUploadError={setUploadError} />
+                    ) : isPackageList ? (
+                      <PackageItemEditor pageId={pageId} blockId={blockId} index={index} item={item} updateBlockItem={updateBlockItem} onUploadError={setUploadError} />
+                    ) : isFaqBlock ? (
+                      <FaqItemEditor pageId={pageId} blockId={blockId} index={index} item={item} updateBlockItem={updateBlockItem} />
+                    ) : isBasicCards ? (
+                      <BasicCardItemEditor pageId={pageId} blockId={blockId} index={index} item={item} updateBlockItem={updateBlockItem} onUploadError={setUploadError} />
                     ) : (
                     <>
                     <div className="grid gap-4 md:grid-cols-2">
@@ -997,6 +1184,7 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
               )}
             </div>
           </section>
+          )}
         </div>
       </Card>
     </div>

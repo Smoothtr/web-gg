@@ -111,7 +111,7 @@ export function BrandLayout({
 
   return (
     <>
-      <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang={lang === 'vi' ? 'vi' : 'en'} />
+      <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang={lang === 'vi' ? 'vi' : 'en'} copy={localizedSettings.booking} />
 
       {showHeaderCta && (
         <button

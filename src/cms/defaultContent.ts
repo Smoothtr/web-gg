@@ -2,6 +2,7 @@
   aboutMetaByLang,
   compactAboutByLang,
   compactHomeByLang,
+  compactPackageByLang,
   compactTheOneByLang,
   contactMeta,
   homeMetaByLang,
@@ -71,6 +72,65 @@ const theOnePeopleItems: CmsBlockItem[] = [
   { title: 'Commerce One', label: 'Marketplace Ops', body: 'Operates marketplaces, launches, bundles and campaign mechanics.', imageUrl: '/logo-gg.png', funPhotoUrl: '/logo-gg.png', avatarImages: ['/logo-gg.png', '/logo-gg.png', '/logo-gg.png', '/logo-gg.png'] },
   { title: 'Data One', label: 'Dashboard / Insight', body: 'Turns messy signals into decisions the whole team can understand.', imageUrl: '/logo-gg.png', funPhotoUrl: '/logo-gg.png', avatarImages: ['/logo-gg.png', '/logo-gg.png', '/logo-gg.png', '/logo-gg.png'] },
 ]
+
+const serviceItems: CmsBlockItem[] = [
+  { title: 'Brand', body: 'Identity, positioning and campaign direction.', icon: 'BadgeCheck' },
+  { title: 'Website development', body: 'Landing pages, booking flows and sales-ready web systems.', icon: 'Globe2' },
+  { title: 'CRM', body: 'Customer data, forms and lifecycle workflows.', icon: 'Users' },
+  { title: 'Marketing automation', body: 'Connected journeys, reminders and operating workflows.', icon: 'Workflow' },
+  { title: 'Performance marketing', body: 'Paid media planning, reporting and optimization.', icon: 'Megaphone' },
+]
+
+const contactItems: CmsBlockItem[] = [
+  { title: 'Email', body: 'smooth@gg99.vn', href: 'mailto:smooth@gg99.vn', icon: 'Mail' },
+  { title: 'Chat', body: 'Zalo', href: 'https://zalo.me/smoothgg', icon: 'MessageCircle' },
+  { title: 'Office', body: 'Hanoi, Vietnam', icon: 'Target' },
+]
+
+const packageDetailDefinitions = [
+  { id: 'the-one-start', key: 'consultant' },
+  { id: 'the-one-system', key: 'agency' },
+  { id: 'the-one-scale', key: 'partner' },
+] as const
+
+const packageDetailPages: CmsPageContent[] = packageDetailDefinitions.map(({ id, key }) => {
+  const page = compactPackageByLang.en[key]
+  return {
+    id,
+    title: page.h1,
+    status: 'published',
+    meta: { ...page.meta, path: `/${id}` },
+    blocks: [
+      {
+        id: 'hero',
+        heading: page.h1,
+        body: `${page.hero}\n\n${page.intro}`,
+        imageUrl: '/logo-gg.png',
+        imageAlt: page.h1,
+      },
+      {
+        id: 'cards',
+        heading: 'What you get',
+        body: '',
+        items: page.cards.map((card, index) => ({
+          title: card.title,
+          body: card.text,
+          icon: ['ClipboardCheck', 'Megaphone', 'Users', 'ShoppingCart', 'Target', 'Route'][index] ?? 'BadgeCheck',
+        })),
+      },
+      {
+        id: 'process',
+        heading: 'Process',
+        body: '',
+        items: page.process.map((step, index) => ({
+          title: step.title,
+          body: step.text,
+          icon: String(index + 1).padStart(2, '0'),
+        })),
+      },
+    ],
+  }
+})
 
 const theOneStoryItems: CmsBlockItem[] = caseStudies.map((story) => ({
   id: story.id,
@@ -240,6 +300,7 @@ export const defaultCmsPages: CmsPageContent[] = [
       },
     ],
   },
+  ...packageDetailPages,
   {
     id: 'about',
     title: 'About',
@@ -275,6 +336,7 @@ export const defaultCmsPages: CmsPageContent[] = [
         id: 'intro',
         heading: 'Services',
         body: servicesMeta.description,
+        items: serviceItems,
       },
     ],
   },
@@ -288,6 +350,7 @@ export const defaultCmsPages: CmsPageContent[] = [
         id: 'intro',
         heading: 'Contact GG99',
         body: contactMeta.description,
+        items: contactItems,
       },
     ],
   },

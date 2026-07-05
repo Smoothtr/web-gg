@@ -19,12 +19,13 @@ interface LegalPageProps {
 
 function LegalPage({ title, sections, siteSettings }: LegalPageProps) {
   const [bookingOpen, setBookingOpen] = useState(false)
-  const { header } = getLocalizedSiteSettings(siteSettings, 'vi')
+  const localizedSettings = getLocalizedSiteSettings(siteSettings, 'vi')
+  const { header } = localizedSettings
   const showHeaderCopy = Boolean(header.brandName.trim() || header.tagline.trim())
 
   return (
     <>
-      <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang="vi" />
+      <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang="vi" copy={localizedSettings.booking} />
       {/* Navbar minimal */}
       <header className="fixed w-full top-0 z-50 bg-surface/92 border-b border-outline-variant/30 shadow-sm">
         <nav className="flex justify-between items-center px-5 lg:px-10 max-w-6xl mx-auto h-14">
