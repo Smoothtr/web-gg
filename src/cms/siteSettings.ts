@@ -34,7 +34,7 @@ function createDefaultLocale(lang: BrandLang): CmsLocalizedSiteSettings {
       logoAlt: 'The One - GG99',
       brandName: 'The One',
       tagline: 'Golden Generation Company Ltd.',
-      ctaLabel: 'Call Your Shot',
+      ctaLabel: 'Schedule Our Date',
       navLinks: cloneLinks(navItemsByLang[lang], navItemsByLang.en, { hideTheOneStoryByDefault: true }),
     },
     footer: {

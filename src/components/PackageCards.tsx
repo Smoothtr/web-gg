@@ -34,6 +34,46 @@ function parsePackageBody(body: string | undefined) {
   return { subtitle, price, bullets }
 }
 
+function packageDeliverableTitle(line: string) {
+  if (/content strategy|content calendar|production/i.test(line)) return 'Content engine'
+  if (/booking|sales website|landing pages|website/i.test(line)) return 'Website system'
+  if (/performance marketing|ad spend|media planning/i.test(line)) return 'Performance media'
+  if (/everything included/i.test(line)) return 'System base'
+  if (/on-site events|event execution/i.test(line)) return 'Event ops'
+  if (/campaign strategy|creative direction/i.test(line)) return 'Campaign growth'
+  return 'Growth task'
+}
+
+type NormalizedPackageDeliverable =
+  | { type: 'metric'; value: string; body: string }
+  | { type: 'task'; title: string; body: string }
+
+function normalizePackageDeliverables(lines: string[]): NormalizedPackageDeliverable[] {
+  return lines.map((line) => {
+    const metricMatch = line.match(/^(\d+\s+content units\/month)(?:\s+\((.+)\))?$/i)
+    if (metricMatch) {
+      return {
+        type: 'metric' as const,
+        value: metricMatch[1],
+        body: metricMatch[2] ?? '',
+      }
+    }
+    return {
+      type: 'task' as const,
+      title: packageDeliverableTitle(line),
+      body: line.replace(/\.$/, ''),
+    }
+  })
+}
+
+function isMetricDeliverable(deliverable: NormalizedPackageDeliverable): deliverable is Extract<NormalizedPackageDeliverable, { type: 'metric' }> {
+  return deliverable.type === 'metric'
+}
+
+function isTaskDeliverable(deliverable: NormalizedPackageDeliverable): deliverable is Extract<NormalizedPackageDeliverable, { type: 'task' }> {
+  return deliverable.type === 'task'
+}
+
 function isSystemPackage(item: CmsBlockItem, index: number) {
   return index === 1 || /system/i.test(item.title)
 }
@@ -147,6 +187,9 @@ export function PackageCards({
     <div className={`grid gap-5 md:grid-cols-3 ${className}`}>
       {items.map((item, index) => {
         const { subtitle, price, bullets } = parsePackageBody(item.body)
+        const deliverables = normalizePackageDeliverables(bullets)
+        const metricDeliverables = deliverables.filter(isMetricDeliverable)
+        const taskDeliverables = deliverables.filter(isTaskDeliverable)
         const selected = selectedIndex === index
         const system = isSystemPackage(item, index)
         const id = cardIds[index]
@@ -188,20 +231,33 @@ export function PackageCards({
             </span>
             <h3 className="text-xl font-extrabold text-on-surface">{item.title}</h3>
             {subtitle && <p className="mt-3 text-sm font-semibold leading-relaxed text-on-surface-variant">{subtitle}</p>}
-            {bullets.length > 0 && (
-              <ul className="mt-4 space-y-2 text-sm leading-relaxed text-on-surface-variant">
-                {bullets.map((line, lineIndex) => (
-                  <li key={lineIndex} className="flex gap-2">
-                    <span className="mt-[7px] h-1.5 w-1.5 shrink-0 rounded-full bg-primary" aria-hidden="true" />
-                    <span>{line}</span>
-                  </li>
+            {metricDeliverables.length > 0 && (
+              <div className="mt-4 grid gap-2">
+                {metricDeliverables.map((metric, metricIndex) => (
+                  <div key={`${item.title}-metric-${metricIndex}`} className="rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/12 via-tertiary/10 to-secondary/12 p-3">
+                    <p className="text-[22px] font-black leading-none text-primary">{metric.value}</p>
+                    {metric.body && <p className="mt-1 text-[11px] font-extrabold leading-tight text-on-surface-variant">{metric.body}</p>}
+                  </div>
                 ))}
-              </ul>
+              </div>
+            )}
+            {taskDeliverables.length > 0 && (
+              <div className="mt-4 grid gap-2">
+                {taskDeliverables.map((task, taskIndex) => (
+                  <div key={`${item.title}-task-${taskIndex}`} className="group/task rounded-2xl border border-outline-variant/45 bg-white/60 p-3 transition hover:border-primary/30 hover:bg-primary/5">
+                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-primary">{task.title}</p>
+                    <p className="mt-1 text-[12px] font-semibold leading-relaxed text-on-surface-variant">{task.body}</p>
+                  </div>
+                ))}
+              </div>
             )}
             {price && (
-              <p className="home-price-shimmer mt-5 text-lg font-extrabold text-primary">
-                <PriceText price={price} />
-              </p>
+              <div className="mt-5 rounded-2xl border border-primary/20 bg-gradient-to-r from-white via-primary/5 to-secondary/10 p-3">
+                <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">Monthly setup</p>
+                <p className="home-price-shimmer mt-1 text-lg font-black text-primary">
+                  <PriceText price={price} />
+                </p>
+              </div>
             )}
             <div className="mt-auto flex flex-col gap-2 pt-5">
               <button

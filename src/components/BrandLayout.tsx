@@ -13,20 +13,31 @@ type BrandLayoutProps = {
   hideHeaderCta?: boolean
   flushTop?: boolean
   mobileHeaderTitle?: string
+  floatingCtaRevealSelector?: string
   resolveNavHref?: (href: string, label: string) => string
 }
 
 function resolveHeaderCtaLabel(label: string) {
   const trimmed = label.trim()
   const normalized = trimmed.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  return !trimmed || /book a (free )?consultation|dat lich tu van/.test(normalized)
-    ? 'Call Your Shot'
+  return !trimmed || /book a (free )?consultation|dat lich tu van|call your shot/.test(normalized)
+    ? 'Schedule Our Date'
     : trimmed
 }
 
-export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta = false, flushTop = false, mobileHeaderTitle, resolveNavHref }: BrandLayoutProps) {
+export function BrandLayout({
+  children,
+  lang = 'en',
+  siteSettings,
+  hideHeaderCta = false,
+  flushTop = false,
+  mobileHeaderTitle,
+  floatingCtaRevealSelector,
+  resolveNavHref,
+}: BrandLayoutProps) {
   const [bookingOpen, setBookingOpen] = useState(false)
   const [showTop, setShowTop] = useState(false)
+  const [showFloatingCta, setShowFloatingCta] = useState(!floatingCtaRevealSelector)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
   const localizedSettings = getLocalizedSiteSettings(siteSettings, lang)
@@ -47,6 +58,30 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
   }, [])
+
+  useEffect(() => {
+    if (!floatingCtaRevealSelector) {
+      setShowFloatingCta(true)
+      return
+    }
+
+    const sync = () => {
+      const marker = document.querySelector(floatingCtaRevealSelector)
+      if (!marker) {
+        setShowFloatingCta(window.scrollY > 420)
+        return
+      }
+      setShowFloatingCta(marker.getBoundingClientRect().bottom < 0)
+    }
+
+    sync()
+    window.addEventListener('scroll', sync, { passive: true })
+    window.addEventListener('resize', sync)
+    return () => {
+      window.removeEventListener('scroll', sync)
+      window.removeEventListener('resize', sync)
+    }
+  }, [floatingCtaRevealSelector])
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 1024px)')
@@ -81,7 +116,7 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
       {showHeaderCta && (
         <button
           onClick={() => setBookingOpen(true)}
-          className="header-floating-cta btn-shine cta-idle z-[60] hidden rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] transition hover:opacity-95 glow-orange lg:inline-flex"
+          className={`header-floating-cta btn-shine cta-idle z-[60] hidden rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] transition hover:opacity-95 glow-orange lg:inline-flex ${showFloatingCta ? 'is-visible' : 'is-hidden'}`}
         >
           {headerCtaLabel}
         </button>

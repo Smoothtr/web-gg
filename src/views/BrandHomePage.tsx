@@ -2,7 +2,6 @@
 
 import { useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
-  ArrowDown,
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
@@ -20,7 +19,7 @@ import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
 import type { CaseStudy } from '../data/caseStudies'
 
-const primaryBookingCtaLabel = 'Call Your Shot'
+const primaryBookingCtaLabel = 'Schedule Our Date'
 const defaultHeroGradient = 'linear-gradient(180deg,#FF7AA8 0%,#FF4D7D 45%,#FFB199 100%)'
 const heroFirstWordDelayMs = 420
 const heroWordStepMs = 90
@@ -28,7 +27,7 @@ const heroWordDurationMs = 430
 
 function resolvePrimaryBookingCtaLabel(label?: string) {
   const trimmed = label?.trim() ?? ''
-  return !trimmed || /book a (free )?consultation/i.test(trimmed) ? primaryBookingCtaLabel : trimmed
+  return !trimmed || /book a (free )?consultation|call your shot/i.test(trimmed) ? primaryBookingCtaLabel : trimmed
 }
 
 const storyLogoById: Record<string, string> = {
@@ -222,10 +221,83 @@ function getHomepageCaseStudies(stories: CaseStudy[]) {
     .map(({ story }) => story)
 }
 
+type StoryPreviewState = {
+  story: CaseStudy
+  style: CSSProperties
+}
+
+const storyPreviewThemes: Record<string, { shell: string; accent: string; glow: string; chip: string }> = {
+  phinoi: {
+    shell: 'linear-gradient(145deg,rgba(255,243,219,0.98),rgba(255,180,92,0.9) 46%,rgba(219,39,119,0.86))',
+    accent: '#f59e0b',
+    glow: 'rgba(245,158,11,0.34)',
+    chip: 'rgba(245,158,11,0.16)',
+  },
+  'cota-cuti': {
+    shell: 'linear-gradient(145deg,rgba(255,239,248,0.98),rgba(255,122,168,0.88) 42%,rgba(245,158,11,0.88))',
+    accent: '#db2777',
+    glow: 'rgba(219,39,119,0.34)',
+    chip: 'rgba(219,39,119,0.12)',
+  },
+  inkaholic: {
+    shell: 'linear-gradient(145deg,rgba(255,242,246,0.98),rgba(244,63,94,0.84) 45%,rgba(35,12,22,0.92))',
+    accent: '#f43f5e',
+    glow: 'rgba(244,63,94,0.36)',
+    chip: 'rgba(244,63,94,0.13)',
+  },
+  'qanda-books': {
+    shell: 'linear-gradient(145deg,rgba(255,248,232,0.98),rgba(251,146,60,0.86) 43%,rgba(239,68,68,0.86))',
+    accent: '#fb923c',
+    glow: 'rgba(251,146,60,0.34)',
+    chip: 'rgba(251,146,60,0.15)',
+  },
+  curnon: {
+    shell: 'linear-gradient(145deg,rgba(255,246,236,0.98),rgba(214,163,95,0.84) 44%,rgba(17,24,39,0.9))',
+    accent: '#d6a35f',
+    glow: 'rgba(214,163,95,0.34)',
+    chip: 'rgba(214,163,95,0.15)',
+  },
+  'annita-studios': {
+    shell: 'linear-gradient(145deg,rgba(255,240,242,0.98),rgba(239,47,57,0.86) 45%,rgba(18,3,5,0.92))',
+    accent: '#ef2f39',
+    glow: 'rgba(239,47,57,0.36)',
+    chip: 'rgba(239,47,57,0.14)',
+  },
+}
+
+function getStoryPreviewTheme(story: CaseStudy) {
+  return storyPreviewThemes[story.id] ?? {
+    shell: 'linear-gradient(145deg,rgba(255,247,251,0.98),rgba(219,39,119,0.86) 44%,rgba(245,158,11,0.86))',
+    accent: '#db2777',
+    glow: 'rgba(219,39,119,0.34)',
+    chip: 'rgba(219,39,119,0.13)',
+  }
+}
+
+function getPreviewPopoverStyle(target: HTMLElement): CSSProperties {
+  const rect = target.getBoundingClientRect()
+  const width = Math.min(window.innerWidth * 0.92, 420)
+  const left = Math.min(Math.max(rect.left + rect.width / 2 - width / 2, 16), window.innerWidth - width - 16)
+  const showBelow = rect.top < 360
+  const top = showBelow ? rect.bottom + 14 : rect.top - 14
+  const availableHeight = showBelow ? window.innerHeight - top - 16 : top - 16
+  return {
+    left,
+    top,
+    width,
+    maxHeight: Math.max(260, Math.min(520, availableHeight)),
+    overflowY: 'auto',
+    borderRadius: 24,
+    overscrollBehavior: 'contain',
+    transform: showBelow ? 'none' : 'translateY(-100%)',
+  }
+}
+
 function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: BrandLang }) {
   const images = getCaseStudyGallery(story)
   const [activeImage, setActiveImage] = useState(0)
   const href = resolveStoryHref(lang, story.id, story.id)
+  const theme = getStoryPreviewTheme(story)
 
   useEffect(() => {
     setActiveImage(0)
@@ -237,8 +309,12 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
   }, [story.id, images.length])
 
   return (
-    <article className="pointer-events-auto overflow-hidden rounded-[22px] border border-white/75 bg-white/95 text-on-surface shadow-[0_28px_90px_rgba(219,39,119,0.24)] ring-1 ring-primary/10 backdrop-blur-xl">
-      <div className="relative aspect-video overflow-hidden bg-surface-container-low">
+    <article
+      className="pointer-events-auto relative overflow-hidden rounded-[24px] border border-white/70 text-on-surface ring-1 ring-white/60 backdrop-blur-xl"
+      style={{ background: theme.shell, boxShadow: `0 28px 90px ${theme.glow}` }}
+    >
+      <div className="absolute inset-0 opacity-70" style={{ background: `radial-gradient(circle at 18% 12%, rgba(255,255,255,0.9), transparent 30%), radial-gradient(circle at 86% 22%, ${theme.glow}, transparent 34%)` }} aria-hidden="true" />
+      <div className="relative m-3 aspect-video overflow-hidden rounded-[20px] bg-surface-container-low shadow-[0_18px_44px_rgba(43,23,33,0.18)]">
         {images.map((imageUrl, index) => (
           <img
             key={`${story.id}-preview-${imageUrl}-${index}`}
@@ -250,28 +326,28 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
             } ${activeImage === index ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.03]'}`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-primary/22 via-transparent to-white/16" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-white/18" aria-hidden="true" />
         {images.length > 1 && (
           <div className="absolute bottom-3 left-4 flex gap-1.5" aria-hidden="true">
             {images.map((imageUrl, index) => (
-              <span key={`${story.id}-dot-${imageUrl}-${index}`} className={`h-1.5 rounded-full transition-all ${activeImage === index ? 'w-5 bg-primary' : 'w-1.5 bg-primary/25'}`} />
+              <span key={`${story.id}-dot-${imageUrl}-${index}`} className={`h-1.5 rounded-full transition-all ${activeImage === index ? 'w-5 bg-white' : 'w-1.5 bg-white/55'}`} />
             ))}
           </div>
         )}
       </div>
-      <div className="p-4 md:p-5">
+      <div className="relative m-3 mt-0 rounded-[20px] border border-white/65 bg-white/[0.86] p-4 shadow-[0_18px_44px_rgba(43,23,33,0.12)] md:p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary/80">{story.category}</p>
+            <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: theme.accent }}>{story.category}</p>
             <h3 className="mt-2 line-clamp-2 text-[22px] font-extrabold leading-tight text-on-surface">{story.brandName}</h3>
           </div>
-          <img src={getStoryLogoForHome(story)} alt="" aria-hidden="true" className="h-10 w-10 shrink-0 rounded-full border border-primary/10 bg-white object-contain p-1.5 shadow-sm" />
+          <img src={getStoryLogoForHome(story)} alt="" aria-hidden="true" className="h-11 w-11 shrink-0 rounded-full border border-white bg-white object-contain p-1.5 shadow-[0_10px_28px_rgba(43,23,33,0.14)]" />
         </div>
         <p className="mt-3 line-clamp-2 text-sm font-semibold leading-relaxed text-on-surface-variant">{story.shortDescription}</p>
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-extrabold text-on-surface-variant">
-          <span className="rounded-full bg-primary/8 px-2.5 py-1 text-primary">{story.period}</span>
+          <span className="rounded-full px-2.5 py-1" style={{ background: theme.chip, color: theme.accent }}>{story.period}</span>
           {story.services.slice(0, 2).map((service) => (
-            <span key={`${story.id}-${service}`} className="rounded-full bg-surface-container px-2.5 py-1">
+            <span key={`${story.id}-${service}`} className="rounded-full bg-surface-container/80 px-2.5 py-1">
               {service}
             </span>
           ))}
@@ -292,7 +368,7 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
   const railRef = useRef<HTMLDivElement | null>(null)
   const showcaseStories = getHomepageCaseStudies(stories)
   const [bannerIndex, setBannerIndex] = useState(0)
-  const [previewStory, setPreviewStory] = useState<CaseStudy | null>(null)
+  const [previewStory, setPreviewStory] = useState<StoryPreviewState | null>(null)
 
   useEffect(() => {
     if (showcaseStories.length < 2) return
@@ -312,6 +388,10 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
     const rail = railRef.current
     if (!rail) return
     rail.scrollBy({ left: direction * Math.max(280, rail.clientWidth * 0.82), behavior: 'smooth' })
+  }
+
+  function showPreview(story: CaseStudy, target: HTMLElement) {
+    setPreviewStory({ story, style: getPreviewPopoverStyle(target) })
   }
 
   return (
@@ -378,9 +458,9 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
                 data-reveal="tile-in"
                 data-tile-direction={index % 2 ? 'right' : 'bottom'}
                 style={{ '--ri': index } as CSSProperties}
-                onMouseEnter={() => setPreviewStory(story)}
-                onFocus={() => setPreviewStory(story)}
-                onClick={() => setPreviewStory(story)}
+                onMouseEnter={(event) => showPreview(story, event.currentTarget)}
+                onFocus={(event) => showPreview(story, event.currentTarget)}
+                onClick={(event) => showPreview(story, event.currentTarget)}
                 className="group relative aspect-[16/10] shrink-0 basis-[82%] snap-start overflow-hidden rounded-[16px] bg-[#180b11] text-left shadow-[0_14px_40px_rgba(80,20,50,0.13)] outline-none ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]"
                 aria-label={`Preview ${story.brandName}`}
               >
@@ -410,12 +490,12 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
 
       {previewStory && (
         <>
-          <div className="pointer-events-none fixed left-1/2 top-1/2 z-[80] hidden w-[min(92vw,420px)] -translate-x-1/2 -translate-y-1/2 md:block">
-            <CaseStudyPreviewPopover story={previewStory} lang={lang} />
+          <div className="pointer-events-none fixed z-[80] hidden md:block" style={previewStory.style}>
+            <CaseStudyPreviewPopover story={previewStory.story} lang={lang} />
           </div>
           <div className="fixed inset-0 z-[80] flex items-end bg-black/42 p-4 backdrop-blur-sm md:hidden" onClick={() => setPreviewStory(null)}>
             <div className="mx-auto w-full max-w-[420px]" onClick={(event) => event.stopPropagation()}>
-              <CaseStudyPreviewPopover story={previewStory} lang={lang} />
+              <CaseStudyPreviewPopover story={previewStory.story} lang={lang} />
             </div>
           </div>
         </>
@@ -442,10 +522,12 @@ function formatPeopleQuote(value?: string) {
   return `"${trimmed}"`
 }
 
-function normalizeClosingSubtitle(value?: string) {
-  const trimmed = value?.trim() || 'Build the next story with The One.'
-  const withoutSuffix = trimmed.replace(/\s*-\s*GG99\.?$/i, '.')
-  return withoutSuffix.endsWith('.') ? withoutSuffix : `${withoutSuffix}.`
+function splitPeopleRoles(value?: string) {
+  return value
+    ?.split(/[\/,|]+/)
+    .map((item) => item.trim())
+    .filter(Boolean)
+    .slice(0, 6) ?? []
 }
 
 function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
@@ -463,6 +545,7 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
             const avatarImages = getPeopleAvatarImages(member)
             const carouselDuration = `${Math.max(avatarImages.length, 1) * 2200}ms`
             const quote = formatPeopleQuote(member.body)
+            const roles = splitPeopleRoles(member.label)
             return (
               <article
                 key={`${member.title}-${index}`}
@@ -491,15 +574,17 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
                 </div>
                 <div className="p-3 text-left md:p-5">
                   <h3 className="text-[15px] font-black leading-tight text-primary sm:text-[17px] md:text-[20px]">{member.title}</h3>
-                  {member.label && (
-                    <div className="mt-3">
-                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-tertiary/80 md:text-[10px]">Position stack</p>
-                      <p className="mt-1 text-[11px] font-extrabold leading-relaxed text-on-surface/78 md:text-[13px]">{member.label}</p>
+                  {roles.length > 0 && (
+                    <div className="mt-3 flex flex-wrap gap-1.5">
+                      {roles.map((role) => (
+                        <span key={`${member.title}-${role}`} className="rounded-full bg-gradient-to-r from-primary/10 via-tertiary/10 to-secondary/10 px-2 py-1 text-[10px] font-black leading-none text-primary md:text-[11px]">
+                          {role}
+                        </span>
+                      ))}
                     </div>
                   )}
                   {quote && (
                     <blockquote className="mt-3 border-l-2 border-primary/35 pl-3 md:mt-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary/70 md:text-[10px]">Fav quote</p>
                       <p className="mt-1 line-clamp-4 text-[11px] font-semibold italic leading-relaxed text-on-surface-variant md:text-[13px]">{quote}</p>
                     </blockquote>
                   )}
@@ -513,7 +598,6 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
           <p className="home-people-closing-two mt-3 bg-gradient-to-r from-primary via-tertiary to-secondary bg-clip-text text-[28px] font-semibold leading-tight text-transparent md:text-[44px]">
             {closingLine2}
           </p>
-          <ArrowDown className="mx-auto mt-5 animate-bounce text-primary" size={22} aria-hidden="true" />
         </div>
       </div>
     </section>
@@ -543,7 +627,6 @@ function ClosingBanner({
     : { backgroundImage: gradient }
   const logos = stories.map(getStoryLogoForHome).filter(Boolean)
   const faqTitle = 'Frequently Asked Questions'
-  const closingSubtitle = normalizeClosingSubtitle(block.subtitle)
   const closingCharacterCount = countStaggerCharacters(faqTitle)
   const closingFollowDelay = Math.max(360, closingCharacterCount * 18 + 220)
 
@@ -561,14 +644,8 @@ function ClosingBanner({
           </div>
         )}
         <div className="closing-content relative mx-auto w-full max-w-[1200px]" data-reveal="closing-content">
-          <p
-            className="closing-follow mx-auto max-w-2xl text-center text-base font-black leading-relaxed text-white md:text-xl"
-            style={{ '--closing-delay': '120ms' } as CSSProperties}
-          >
-            {closingSubtitle}
-          </p>
           {faqItems.length > 0 && (
-            <div className="closing-faq mx-auto mt-10 grid max-w-3xl gap-3 text-left">
+            <div className="closing-faq mx-auto grid max-w-3xl gap-3 text-left">
               <div className="mb-2">
                 <h2 className="text-[30px] font-black leading-tight text-white md:text-[42px]">
                   <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
@@ -658,6 +735,7 @@ export default function BrandHomePage({
       lang={lang}
       siteSettings={siteSettings}
       flushTop
+      floatingCtaRevealSelector="[data-floating-cta-threshold='hero']"
       resolveNavHref={(href, label) => (href === '/packages' || label.toLowerCase().includes('packages') ? '#packages' : href)}
     >
       <SeoHead meta={homeMeta} schema={homeSchemas} lang={lang} />
@@ -694,6 +772,7 @@ export default function BrandHomePage({
           <button
             type="button"
             onClick={openBookingModal}
+            data-floating-cta-threshold="hero"
             style={{ '--hero-delay': `${heroDelays.cta}ms` } as CSSProperties}
             className="home-hero-item btn-shine cta-idle mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-7 py-3.5 font-bold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] hover:opacity-95"
           >

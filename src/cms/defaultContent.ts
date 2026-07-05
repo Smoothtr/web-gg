@@ -159,12 +159,12 @@ export const defaultCmsPages: CmsPageContent[] = [
       {
         id: 'closing',
         heading: 'Frequently Asked Questions',
-        subtitle: 'Build the next story with The One.',
+        subtitle: '',
         body: '',
         backgroundImageUrl: '',
         backgroundGradient: 'linear-gradient(135deg,#db2777 0%,#ef4444 48%,#f59e0b 100%)',
         backgroundOverlayOpacity: '0.62',
-        ctaLabel: 'Call Your Shot',
+        ctaLabel: 'Schedule Our Date',
         items: [
           {
             title: 'What does The One help with first?',
