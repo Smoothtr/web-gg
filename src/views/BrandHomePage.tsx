@@ -58,12 +58,16 @@ function SectionHeader({ title, intro, dark = false }: { title: string; intro?: 
   )
 }
 
-function splitHeroWords(text: string) {
+function splitWords(text: string) {
   return text.trim().split(/\s+/).filter(Boolean)
 }
 
-function getHeroAnimationDelays(wordCount: number, showDivider: boolean) {
-  const lastWordDone = Math.max(0, wordCount - 1) * 70 + 450
+function countStaggerCharacters(text: string) {
+  return splitWords(text).reduce((total, word) => total + word.length, 0)
+}
+
+function getHeroAnimationDelays(characterCount: number, showDivider: boolean) {
+  const lastWordDone = Math.max(0, characterCount - 1) * 34 + 520
   const dividerDelay = lastWordDone + 150
   return {
     divider: dividerDelay,
@@ -72,29 +76,40 @@ function getHeroAnimationDelays(wordCount: number, showDivider: boolean) {
   }
 }
 
-function HeroWordTitle({
+function StaggeredText({
   text,
   className,
+  charClassName,
   nowrap,
 }: {
   text: string
   className: string
+  charClassName: string
   nowrap: boolean
 }) {
-  const words = splitHeroWords(text)
+  const words = splitWords(text)
+  let characterIndex = 0
 
   return (
-    <h1 className={className}>
+    <span className={className}>
       <span className="sr-only">{text}</span>
       <span aria-hidden="true" className={nowrap ? 'inline-block whitespace-nowrap' : 'inline'}>
-        {words.map((word, index) => (
-          <span key={`${word}-${index}`} className="hero-word inline-block whitespace-nowrap" style={{ '--wi': index } as CSSProperties}>
-            {word}
-            {index < words.length - 1 ? '\u00a0' : ''}
+        {words.map((word, wordIndex) => (
+          <span key={`${word}-${wordIndex}`} className="stagger-word">
+            {Array.from(word).map((character, index) => {
+              const currentIndex = characterIndex
+              characterIndex += 1
+              return (
+                <span key={`${word}-${index}-${character}`} className={`stagger-char ${charClassName}`} style={{ '--ci': currentIndex } as CSSProperties}>
+                  {character}
+                </span>
+              )
+            })}
+            {wordIndex < words.length - 1 ? <span className="stagger-space" aria-hidden="true">&nbsp;</span> : null}
           </span>
         ))}
       </span>
-    </h1>
+    </span>
   )
 }
 
@@ -407,23 +422,23 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
     <section className="px-5 py-12 md:py-16 lg:px-10">
       <div className="mx-auto max-w-6xl">
         <SectionHeader title={block.heading || 'The One People'} intro={block.body} />
-        <div className="people-card-scroll -mx-5 flex snap-x gap-5 overflow-x-auto px-5 pb-5 md:mx-0 md:grid md:grid-cols-3 md:gap-7 md:overflow-visible md:px-0 md:pb-0">
+        <div className="people-card-grid grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-7">
           {members.map((member, index) => {
             return (
               <article
                 key={`${member.title}-${index}`}
                 data-reveal="people-card"
                 style={{ '--ri': index } as CSSProperties}
-                className="people-card group min-w-[78%] snap-center overflow-hidden rounded-[28px] border border-white/70 bg-white/85 shadow-[0_22px_54px_rgba(80,20,50,0.12)] backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_rgba(219,39,119,0.18)] md:min-w-0"
+                className="people-card group min-w-0 overflow-hidden rounded-[20px] border border-white/70 bg-white/85 shadow-[0_18px_42px_rgba(80,20,50,0.12)] backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_rgba(219,39,119,0.18)] md:rounded-[28px]"
               >
-                <div className="relative aspect-[4/3] overflow-hidden bg-surface-container-low md:aspect-square">
+                <div className="relative aspect-square overflow-hidden bg-surface-container-low">
                   <img src={member.imageUrl || member.photoUrl || '/logo-gg.png'} alt={member.imageAlt || member.title} className="h-full w-full object-cover transition duration-300 group-hover:opacity-0" />
                   <img src={member.funPhotoUrl || member.backgroundImageUrl || member.imageUrl || '/logo-gg.png'} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-300 group-hover:opacity-100" />
                 </div>
-                <div className="p-5 text-left">
-                  <h3 className="text-[18px] font-extrabold leading-tight text-on-surface">{member.title}</h3>
+                <div className="p-3 text-left md:p-5">
+                  <h3 className="text-[14px] font-extrabold leading-tight text-on-surface sm:text-[16px] md:text-[18px]">{member.title}</h3>
                   {member.label && <p className="mt-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary">{member.label}</p>}
-                  {member.body && <p className="mt-3 line-clamp-3 text-[13px] font-semibold leading-relaxed text-on-surface-variant md:text-[14px]">{member.body}</p>}
+                  {member.body && <p className="mt-2 line-clamp-3 text-[12px] font-semibold leading-relaxed text-on-surface-variant md:mt-3 md:text-[14px]">{member.body}</p>}
                 </div>
               </article>
             )
@@ -463,6 +478,9 @@ function ClosingBanner({
     }
     : { backgroundImage: gradient }
   const logos = stories.map(getStoryLogoForHome).filter(Boolean)
+  const closingTitle = block.heading || 'So, ready to be our plus one?'
+  const closingCharacterCount = countStaggerCharacters(closingTitle)
+  const closingFollowDelay = Math.max(520, closingCharacterCount * 28 + 320)
 
   return (
     <section className="closing-section px-0 py-0">
@@ -477,13 +495,23 @@ function ClosingBanner({
             </div>
           </div>
         )}
-        <div className="relative mx-auto w-full max-w-[1200px]" data-reveal="scale">
-          <h2 className="home-hero-title-serif text-[34px] font-semibold leading-tight text-white md:text-[44px]">{block.heading || 'So, ready to be our plus one?'}</h2>
-          {block.subtitle && <p className="mx-auto mt-4 max-w-2xl text-base font-semibold leading-relaxed text-white/82 md:text-lg">{block.subtitle}</p>}
+        <div className="closing-content relative mx-auto w-full max-w-[1200px]" data-reveal="closing-content">
+          <h2 className="home-hero-title-serif text-[34px] font-semibold leading-tight text-white md:text-[44px]">
+            <StaggeredText text={closingTitle} className="inline" charClassName="closing-char" nowrap={false} />
+          </h2>
+          {block.subtitle && (
+            <p
+              className="closing-follow mx-auto mt-4 max-w-2xl text-base font-semibold leading-relaxed text-white/82 md:text-lg"
+              style={{ '--closing-delay': `${closingFollowDelay}ms` } as CSSProperties}
+            >
+              {block.subtitle}
+            </p>
+          )}
           <button
             type="button"
             onClick={() => openBookingModal('closing-banner')}
-            className="mt-8 inline-flex items-center justify-center rounded-full bg-white px-10 py-4 text-base font-extrabold text-primary shadow-[0_20px_50px_rgba(0,0,0,0.18)] transition hover:scale-105 hover:shadow-[0_24px_70px_rgba(0,0,0,0.25)]"
+            className="closing-follow mt-8 inline-flex items-center justify-center rounded-full bg-white px-10 py-4 text-base font-extrabold text-primary shadow-[0_20px_50px_rgba(0,0,0,0.18)] transition hover:scale-105 hover:shadow-[0_24px_70px_rgba(0,0,0,0.25)]"
+            style={{ '--closing-delay': `${closingFollowDelay + 120}ms` } as CSSProperties}
           >
             {resolvePrimaryBookingCtaLabel(block.ctaLabel)}
           </button>
@@ -492,7 +520,11 @@ function ClosingBanner({
               {faqItems.map((item, index) => {
                 const open = openFaqIndex === index
                 return (
-                  <div key={`${item.question}-${index}`} className="overflow-hidden rounded-2xl border border-white/22 bg-white/14 text-white shadow-[0_18px_46px_rgba(0,0,0,0.12)] backdrop-blur-xl">
+                  <div
+                    key={`${item.question}-${index}`}
+                    className="closing-faq-item overflow-hidden rounded-2xl border border-white/22 bg-white/14 text-white shadow-[0_18px_46px_rgba(0,0,0,0.12)] backdrop-blur-xl"
+                    style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + 260 + index * 120}ms` } as CSSProperties}
+                  >
                     <button
                       type="button"
                       onClick={() => setOpenFaqIndex(open ? -1 : index)}
@@ -547,8 +579,8 @@ export default function BrandHomePage({
   const isDefaultHeroTitle = heroLineOne.toLowerCase() === 'the one by gg99'
   const heroTextMode = heroBlock?.textColor ?? 'light'
   const showHeroDivider = heroBlock?.dividerShow !== false
-  const heroWordCount = splitHeroWords(heroLineOne).length
-  const heroDelays = getHeroAnimationDelays(heroWordCount, showHeroDivider)
+  const heroCharacterCount = countStaggerCharacters(heroLineOne)
+  const heroDelays = getHeroAnimationDelays(heroCharacterCount, showHeroDivider)
   const closingFaqItems = getHomeClosingFaqItems(cmsPage)
   const homeSchemas = [organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(cmsPage)].filter(Boolean)
   const packageItems: CmsBlockItem[] = packagesBlock?.items?.length
@@ -579,14 +611,14 @@ export default function BrandHomePage({
         <div className="noise-overlay" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-surface-container" aria-hidden="true" />
         <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-5 pb-10 pt-28 text-center lg:px-10">
-          <HeroWordTitle
-            text={heroLineOne}
-            nowrap={isDefaultHeroTitle}
+          <h1
             className={[
               'hero-word-title home-hero-title-serif gg-hero-title text-[clamp(36px,10vw,48px)] font-semibold not-italic leading-[1.08] md:text-[clamp(48px,6vw,80px)]',
               heroTextMode === 'gradient' ? 'gg-grad-text' : heroTextMode === 'dark' ? 'text-on-surface' : 'text-white',
             ].join(' ')}
-          />
+          >
+            <StaggeredText text={heroLineOne} className="inline" charClassName="hero-char" nowrap={isDefaultHeroTitle} />
+          </h1>
           {showHeroDivider && (
             <div
               className="home-hero-divider mt-5 h-px bg-white/45"

@@ -849,8 +849,8 @@
 @media (max-width: 640px) {
   [data-reveal].is-visible,
   [data-reveal][data-revealed] {
-    animation: rv-up-m 0.6s cubic-bezier(0.16, 0.84, 0.44, 1) backwards !important;
-    animation-delay: calc(var(--ri, 0) * 45ms) !important;
+    animation-duration: 0.72s;
+    animation-delay: calc(var(--ri, 0) * 95ms);
   }
 }
 @media (hover: none) {
@@ -922,15 +922,21 @@
   transform: translateY(0);
 }
 
-.hero-word {
+.stagger-word {
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.stagger-char {
+  display: inline-block;
   opacity: 0;
   transform: translateY(22px);
   filter: blur(10px);
 }
 
-.home-hero.is-ready .hero-word {
+.home-hero.is-ready .hero-char {
   animation: heroWordIn 450ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
-  animation-delay: calc(var(--wi, 0) * 70ms);
+  animation-delay: calc(var(--ci, 0) * 34ms);
 }
 
 @keyframes heroWordIn {
@@ -1002,6 +1008,7 @@
 [data-reveal='explore-frame'][data-revealed] {
   opacity: 1;
   transform: none;
+  animation: none !important;
 }
 
 [data-reveal='explore-tile'] {
@@ -1017,6 +1024,7 @@
 [data-reveal='explore-tile'][data-revealed] {
   opacity: 1;
   transform: none;
+  animation: none !important;
 }
 
 .home-explore-tile {
@@ -1064,14 +1072,6 @@
   display: none;
 }
 
-.people-card-scroll {
-  scrollbar-width: none;
-}
-
-.people-card-scroll::-webkit-scrollbar {
-  display: none;
-}
-
 [data-reveal='people-card'] {
   opacity: 0;
   transform: translateY(24px);
@@ -1085,6 +1085,7 @@
 [data-reveal='people-card'][data-revealed] {
   opacity: 1;
   transform: none;
+  animation: none !important;
 }
 
 .home-people-closing-one,
@@ -1126,6 +1127,40 @@
 
 .closing-logo-marquee:hover {
   animation-play-state: paused;
+}
+
+[data-reveal='closing-content'] {
+  opacity: 0;
+}
+
+[data-reveal='closing-content'].is-visible,
+[data-reveal='closing-content'][data-revealed] {
+  opacity: 1;
+  animation: none !important;
+}
+
+[data-reveal='closing-content'].is-visible .closing-char,
+[data-reveal='closing-content'][data-revealed] .closing-char {
+  animation: heroWordIn 460ms cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--ci, 0) * 28ms);
+}
+
+.closing-follow,
+.closing-faq-item {
+  opacity: 0;
+  transform: translateY(18px);
+}
+
+[data-reveal='closing-content'].is-visible .closing-follow,
+[data-reveal='closing-content'][data-revealed] .closing-follow,
+[data-reveal='closing-content'].is-visible .closing-faq-item,
+[data-reveal='closing-content'][data-revealed] .closing-faq-item {
+  opacity: 1;
+  transform: none;
+  transition:
+    opacity 520ms cubic-bezier(0.22, 1, 0.36, 1),
+    transform 520ms cubic-bezier(0.22, 1, 0.36, 1);
+  transition-delay: var(--closing-delay, calc(var(--ri, 0) * 120ms));
 }
 
 @keyframes closingLogoMarquee {
@@ -1494,6 +1529,7 @@
 @media (prefers-reduced-motion: reduce) {
   .home-price-shimmer::after,
   .home-hero-item,
+  .stagger-char,
   .ig-phone-shell.is-visible .ig-app-icon-wrap,
   .story-chevron {
     animation: none !important;
@@ -1501,7 +1537,9 @@
   }
 
   .home-hero-item,
-  .hero-word,
+  .stagger-char,
+  .closing-follow,
+  .closing-faq-item,
   .ig-app-icon-wrap {
     opacity: 1 !important;
     transform: none !important;
