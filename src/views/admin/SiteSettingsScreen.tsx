@@ -221,6 +221,12 @@ export default function SiteSettingsScreen() {
           <Field label="Success message">
             <TextInput value={locale.booking.successMessage} onChange={(value) => updateBooking('successMessage', value)} />
           </Field>
+          <Field label="Soft CTA label">
+            <TextInput value={locale.booking.softCtaLabel} onChange={(value) => updateBooking('softCtaLabel', value)} />
+          </Field>
+          <Field label="Soft CTA link">
+            <TextInput value={locale.booking.softCtaHref} onChange={(value) => updateBooking('softCtaHref', value)} placeholder="https://zalo.me/smoothgg" />
+          </Field>
         </div>
         <div className="mt-4 grid gap-4">
           <Field label="Intro copy">

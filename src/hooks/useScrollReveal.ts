@@ -34,6 +34,7 @@ export function useScrollReveal() {
     let cancelled = false
     let io: IntersectionObserver | null = null
     let mutationObserver: MutationObserver | null = null
+    let rescueTimer = 0
 
     const observePending = () => {
       if (!io) return
@@ -58,10 +59,14 @@ export function useScrollReveal() {
       observePending()
       mutationObserver = new MutationObserver(observePending)
       mutationObserver.observe(document.body, { childList: true, subtree: true })
+      rescueTimer = window.setTimeout(() => {
+        if (!cancelled) revealAll()
+      }, 4200)
     })
 
     return () => {
       cancelled = true
+      if (rescueTimer) window.clearTimeout(rescueTimer)
       io?.disconnect()
       mutationObserver?.disconnect()
     }

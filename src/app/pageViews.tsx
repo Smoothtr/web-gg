@@ -28,7 +28,7 @@ export async function HomeView({ lang, pageId }: { lang: BrandLang; pageId: stri
   const [page, theOnePage, siteSettings] = await Promise.all([getServerCmsPage(pageId), getServerCmsPage('the-one'), getServerCmsSiteSettings()])
   return (
     <>
-      <JsonLd items={[organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(page)]} />
+      <JsonLd items={[organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(page, lang)]} />
       <BrandHomePage lang={lang} cmsPage={page} theOnePage={theOnePage} siteSettings={siteSettings} />
     </>
   )
@@ -88,22 +88,22 @@ export async function AboutView({ lang, pageId }: { lang: BrandLang; pageId: str
   )
 }
 
-export async function ServicesView() {
+export async function ServicesView({ lang = 'vi' }: { lang?: BrandLang } = {}) {
   const [page, siteSettings] = await Promise.all([getServerCmsPage('services'), getServerCmsSiteSettings()])
   return (
     <>
       <JsonLd items={[organizationSchema, websiteSchema]} />
-      <ServicesPage cmsPage={page} siteSettings={siteSettings} />
+      <ServicesPage lang={lang} cmsPage={page} siteSettings={siteSettings} />
     </>
   )
 }
 
-export async function ContactView() {
+export async function ContactView({ lang = 'vi' }: { lang?: BrandLang } = {}) {
   const [page, siteSettings] = await Promise.all([getServerCmsPage('contact'), getServerCmsSiteSettings()])
   return (
     <>
       <JsonLd items={[organizationSchema, websiteSchema]} />
-      <ContactPage cmsPage={page} siteSettings={siteSettings} />
+      <ContactPage lang={lang} cmsPage={page} siteSettings={siteSettings} />
     </>
   )
 }

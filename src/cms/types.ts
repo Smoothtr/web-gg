@@ -2,6 +2,53 @@ import type { BrandLang, PageMeta } from '../brandContent'
 
 export type CmsStatus = 'draft' | 'published'
 
+export type CmsStatChip = {
+  value: string
+  label: string
+  icon?: string
+}
+
+export type CmsLocalizedBlockFields = {
+  heading?: string
+  body?: string
+  subtitle?: string
+  closingLine1?: string
+  closingLine2?: string
+  ctaLabel?: string
+  ctaHref?: string
+  ctaSubtext?: string
+  pricingNote?: string
+  statChips?: CmsStatChip[]
+}
+
+export type CmsLocalizedBlockItemFields = {
+  title?: string
+  body?: string
+  label?: string
+  caption?: string
+  period?: string
+  shortDescription?: string
+  services?: string[]
+  keyMetrics?: Array<{
+    value: string
+    label: string
+    featured?: boolean
+  }>
+  ctaText?: string
+  caseStudyLabel?: string
+  featuredStats?: CmsStatChip[]
+  proofPoint?: string
+  testimonialQuote?: string
+  testimonialAuthor?: string
+  testimonialRole?: string
+  testimonialAvatar?: string
+  storyDetail?: {
+    challenge?: string
+    solution?: string
+    result?: string
+  }
+}
+
 export type CmsBlockItem = {
   id?: string
   title: string
@@ -56,6 +103,13 @@ export type CmsBlockItem = {
   caseStudyLink?: string
   showOnHomepage?: boolean
   homepageOrder?: string
+  featuredStats?: CmsStatChip[]
+  proofPoint?: string
+  testimonialQuote?: string
+  testimonialAuthor?: string
+  testimonialRole?: string
+  testimonialAvatar?: string
+  locales?: Partial<Record<BrandLang, CmsLocalizedBlockItemFields>>
 }
 
 export type CmsBlock = {
@@ -75,7 +129,11 @@ export type CmsBlock = {
   closingLine2?: string
   ctaLabel?: string
   ctaHref?: string
+  ctaSubtext?: string
+  pricingNote?: string
+  statChips?: CmsStatChip[]
   items?: CmsBlockItem[]
+  locales?: Partial<Record<BrandLang, CmsLocalizedBlockFields>>
 }
 
 export type CmsPageContent = {
@@ -83,6 +141,7 @@ export type CmsPageContent = {
   title: string
   status: CmsStatus
   meta: PageMeta
+  metaLocales?: Partial<Record<BrandLang, PageMeta>>
   blocks: CmsBlock[]
   updatedAt?: string
 }
@@ -135,6 +194,8 @@ export type CmsLocalizedSiteSettings = {
     successTitle: string
     successMessage: string
     successFollowup: string
+    softCtaLabel: string
+    softCtaHref: string
     needs: string[]
   }
   footer: {

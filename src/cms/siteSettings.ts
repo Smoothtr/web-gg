@@ -73,6 +73,8 @@ function createDefaultLocale(lang: BrandLang): CmsLocalizedSiteSettings {
       successFollowup: isVi
         ? 'Đội ngũ của chúng tôi sẽ liên hệ lại để xác nhận lịch phù hợp.'
         : 'Our team will contact you to confirm a suitable time.',
+      softCtaLabel: isVi ? 'Chưa sẵn sàng gọi? Nhắn Zalo làm quen trước đã ->' : 'Not ready to call yet? Say hi on Zalo first ->',
+      softCtaHref: 'https://zalo.me/smoothgg',
       needs: bookingNeeds,
     },
     footer: {

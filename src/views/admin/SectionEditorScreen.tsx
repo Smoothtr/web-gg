@@ -20,7 +20,7 @@ import {
 import { CmsIcon } from '../../components/CmsIcon'
 import { getAdminSectionLabel } from '../../cms/adminSectionLabels'
 import { uploadCmsAsset } from '../../cms/mediaRepository'
-import type { CmsBlockItem } from '../../cms/types'
+import type { CmsBlockItem, CmsStatChip } from '../../cms/types'
 import { getUnsupportedPreviewVideoMessage } from '../../cms/videoValidation'
 
 type UpdateBlockItem = (pageId: string, blockId: string, itemIndex: number, patch: Partial<CmsBlockItem>) => void
@@ -64,6 +64,17 @@ function getItemPreviewImage(item: CmsBlockItem, isPeopleBlock: boolean) {
 
 function getMetric(item: CmsBlockItem, index: number) {
   return item.keyMetrics?.[index] ?? { value: '', label: '', featured: false }
+}
+
+function getStatChip(items: CmsStatChip[] | undefined, index: number): CmsStatChip {
+  return items?.[index] ?? { value: '', label: '', icon: '' }
+}
+
+function patchStatChip(items: CmsStatChip[] | undefined, index: number, patch: Partial<CmsStatChip>) {
+  const next = [...(items ?? [])]
+  while (next.length <= index) next.push({ value: '', label: '', icon: '' })
+  next[index] = { ...next[index], ...patch }
+  return next.filter((item, itemIndex) => itemIndex <= index || item.value.trim() || item.label.trim() || item.icon?.trim())
 }
 
 function moveUrl(items: string[], fromIndex: number, toIndex: number) {
@@ -279,6 +290,9 @@ function PeopleItemEditor({
 
       <Field label="Description / Quote">
         <TextArea value={item.body ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { body: value })} minHeight={96} />
+      </Field>
+      <Field label="Proof point" hint="Mot bang chung so ngan, vi du: 5 nam cung INKAHOLIC, 0->326K don.">
+        <TextInput value={item.proofPoint ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { proofPoint: value })} />
       </Field>
     </div>
   )
@@ -651,6 +665,53 @@ function StoryItemEditor({
       </section>
 
       <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+        <div className="mb-4">
+          <p className="text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Homepage featured stats</p>
+          <p className="mt-1 text-xs leading-relaxed text-on-surface-variant/75">
+            Toi da 2 chip so hien tren featured case va popup hover homepage.
+          </p>
+        </div>
+        <div className="grid gap-3 md:grid-cols-2">
+          {[0, 1].map((statIndex) => {
+            const stat = getStatChip(item.featuredStats, statIndex)
+            return (
+              <div key={statIndex} className="rounded-xl border border-outline-variant/45 bg-surface p-4">
+                <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Featured stat {statIndex + 1}</p>
+                <div className="grid gap-3">
+                  <Field label="Value">
+                    <TextInput value={stat.value} onChange={(value) => updateBlockItem(pageId, blockId, index, { featuredStats: patchStatChip(item.featuredStats, statIndex, { value }) })} />
+                  </Field>
+                  <Field label="Label">
+                    <TextInput value={stat.label} onChange={(value) => updateBlockItem(pageId, blockId, index, { featuredStats: patchStatChip(item.featuredStats, statIndex, { label: value }) })} />
+                  </Field>
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+        <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Client testimonial</p>
+        <div className="grid gap-4 md:grid-cols-2">
+          <Field label="Quote">
+            <TextArea value={item.testimonialQuote ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { testimonialQuote: value })} minHeight={88} />
+          </Field>
+          <div className="grid gap-4">
+            <Field label="Author">
+              <TextInput value={item.testimonialAuthor ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { testimonialAuthor: value })} />
+            </Field>
+            <Field label="Role">
+              <TextInput value={item.testimonialRole ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { testimonialRole: value })} />
+            </Field>
+            <Field label="Avatar URL">
+              <TextInput value={item.testimonialAvatar ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { testimonialAvatar: value })} />
+            </Field>
+          </div>
+        </div>
+      </section>
+
+      <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
         <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Homepage showcase / media</p>
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Homepage order" hint="Lower numbers appear first in the homepage case-study showcase.">
@@ -906,6 +967,11 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                 <TextInput value={block.ctaLabel ?? ''} onChange={(value) => updateBlock(pageId, blockId, { ctaLabel: value })} placeholder="Call Your Shot" />
               </Field>
             )}
+            {isHomepageHero && (
+              <Field label="CTA subtext">
+                <TextInput value={block.ctaSubtext ?? ''} onChange={(value) => updateBlock(pageId, blockId, { ctaSubtext: value })} placeholder="Free 30-min call · không cam kết" />
+              </Field>
+            )}
           </div>
 
           {showBlockHeading && (
@@ -916,6 +982,36 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
           <Field label="Body / mô tả">
             <TextArea value={block.body} onChange={(value) => updateBlock(pageId, blockId, { body: value })} minHeight={130} />
           </Field>
+
+          {isHomepageHero && (
+            <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+              <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Hero stat chips</p>
+              <div className="grid gap-3 md:grid-cols-3">
+                {[0, 1, 2].map((statIndex) => {
+                  const stat = getStatChip(block.statChips, statIndex)
+                  return (
+                    <div key={statIndex} className="rounded-xl border border-outline-variant/45 bg-surface p-4">
+                      <p className="mb-3 text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Chip {statIndex + 1}</p>
+                      <div className="grid gap-3">
+                        <Field label="Value">
+                          <TextInput value={stat.value} onChange={(value) => updateBlock(pageId, blockId, { statChips: patchStatChip(block.statChips, statIndex, { value }) })} />
+                        </Field>
+                        <Field label="Label">
+                          <TextInput value={stat.label} onChange={(value) => updateBlock(pageId, blockId, { statChips: patchStatChip(block.statChips, statIndex, { label: value }) })} />
+                        </Field>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </section>
+          )}
+
+          {isPackageList && (
+            <Field label="Pricing note" hint="Dòng minh bạch dưới các package cards.">
+              <TextArea value={block.pricingNote ?? ''} onChange={(value) => updateBlock(pageId, blockId, { pricingNote: value })} minHeight={86} />
+            </Field>
+          )}
 
           {pageId === 'homepage' && block.id === 'what-is' && (
             <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-on-surface-variant">

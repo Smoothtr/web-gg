@@ -1,7 +1,9 @@
 import type { CmsPageContent } from './types'
+import type { BrandLang } from '../brandContent'
+import { getLocalizedCmsBlock } from './contentBlocks'
 
-export function getHomeClosingFaqItems(page?: CmsPageContent | null) {
-  const closing = page?.blocks.find((block) => block.id === 'closing')
+export function getHomeClosingFaqItems(page?: CmsPageContent | null, lang: BrandLang = 'vi') {
+  const closing = getLocalizedCmsBlock(page, 'closing', lang)
   return (closing?.items ?? [])
     .filter((item) => item.published !== false && item.title.trim() && item.body?.trim())
     .slice(0, 6)
@@ -11,8 +13,8 @@ export function getHomeClosingFaqItems(page?: CmsPageContent | null) {
     }))
 }
 
-export function buildHomeFaqSchema(page?: CmsPageContent | null) {
-  const items = getHomeClosingFaqItems(page)
+export function buildHomeFaqSchema(page?: CmsPageContent | null, lang: BrandLang = 'vi') {
+  const items = getHomeClosingFaqItems(page, lang)
   if (!items.length) return null
 
   return {

@@ -47,6 +47,8 @@ const STR = {
     thanks: 'Cảm ơn bạn!',
     success1: 'The One - GG99 đã nhận thông tin đăng ký tư vấn.',
     success2: 'Đội ngũ của chúng tôi sẽ liên hệ lại để xác nhận lịch phù hợp.',
+    softCtaLabel: 'Chưa sẵn sàng gọi? Nhắn Zalo làm quen trước đã →',
+    softCtaHref: 'https://zalo.me/smoothgg',
     addMore: 'Đăng ký thêm',
     close: 'Đóng',
     days: ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'],
@@ -93,6 +95,8 @@ const STR = {
     thanks: 'Thank you!',
     success1: 'The One - GG99 has received your consultation request.',
     success2: 'Our team will contact you to confirm a suitable time.',
+    softCtaLabel: 'Not ready to call yet? Say hi on Zalo first →',
+    softCtaHref: 'https://zalo.me/smoothgg',
     addMore: 'Book another',
     close: 'Close',
     days: ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'],
@@ -139,6 +143,8 @@ const STR = {
     thanks: '감사합니다!',
     success1: 'The One - GG99이 상담 신청 정보를 받았습니다.',
     success2: '저희 팀이 적합한 일정을 확인하기 위해 연락드리겠습니다.',
+    softCtaLabel: '아직 통화가 부담스럽다면 Zalo로 먼저 인사해 주세요 →',
+    softCtaHref: 'https://zalo.me/smoothgg',
     addMore: '추가 예약',
     close: '닫기',
     days: ['일', '월', '화', '수', '목', '금', '토'],
@@ -279,6 +285,8 @@ export function BookingModal({ isOpen, onClose, lang = 'vi', copy }: BookingModa
     thanks: copy?.successTitle || base.thanks,
     success1: copy?.successMessage || base.success1,
     success2: copy?.successFollowup || base.success2,
+    softCtaLabel: copy?.softCtaLabel || base.softCtaLabel,
+    softCtaHref: copy?.softCtaHref || base.softCtaHref,
     needs: copy?.needs?.length ? copy.needs : base.needs,
   } as Str
   const [step, setStep]         = useState<1 | 2 | 3>(1)
@@ -457,6 +465,17 @@ export function BookingModal({ isOpen, onClose, lang = 'vi', copy }: BookingModa
                   </div>
                   )}
                 </div>
+              )}
+
+              {t.softCtaLabel && t.softCtaHref && (
+                <a
+                  href={t.softCtaHref}
+                  target={/^https?:\/\//i.test(t.softCtaHref) ? '_blank' : undefined}
+                  rel={/^https?:\/\//i.test(t.softCtaHref) ? 'noreferrer' : undefined}
+                  className="mt-5 block rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-center text-xs font-extrabold leading-relaxed text-primary transition hover:bg-primary/10"
+                >
+                  {t.softCtaLabel}
+                </a>
               )}
 
               <button

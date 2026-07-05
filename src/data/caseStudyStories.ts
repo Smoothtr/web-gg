@@ -39,6 +39,7 @@ export function storyFromCmsItem(item: CmsBlockItem) {
         likesSeed: item.likesSeed || fallback.likesSeed,
         services: services.length ? services : fallback.services,
         keyMetrics,
+        featuredStats: item.featuredStats?.length ? item.featuredStats : fallback.featuredStats,
         storyDetail: {
           challenge: item.storyDetail?.challenge || fallback.storyDetail.challenge,
           solution: item.storyDetail?.solution || fallback.storyDetail.solution,
@@ -62,6 +63,10 @@ export function storyFromCmsItem(item: CmsBlockItem) {
         },
         showOnHomepage: item.showOnHomepage ?? fallback.showOnHomepage,
         homepageOrder: item.homepageOrder || fallback.homepageOrder,
+        testimonialQuote: item.testimonialQuote || fallback.testimonialQuote,
+        testimonialAuthor: item.testimonialAuthor || fallback.testimonialAuthor,
+        testimonialRole: item.testimonialRole || fallback.testimonialRole,
+        testimonialAvatar: item.testimonialAvatar || fallback.testimonialAvatar,
         ctaText: item.ctaText || fallback.ctaText,
       }
     }

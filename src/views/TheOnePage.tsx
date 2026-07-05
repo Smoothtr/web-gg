@@ -17,7 +17,7 @@ import { compactTheOneByLang, organizationSchema, websiteSchema, type BrandLang 
 import { BrandLayout } from '../components/BrandLayout'
 import { openBookingModal } from '../components/openBookingModal'
 import { SeoHead } from '../components/SeoHead'
-import { getCmsBlock } from '../cms/contentBlocks'
+import { getLocalizedCmsBlock, getLocalizedPageMeta } from '../cms/contentBlocks'
 import type { CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
 import type { CaseStudy, CaseStudyMetric } from '../data/caseStudies'
@@ -591,6 +591,18 @@ function InstagramPost({
           <span className="font-extrabold">{getAccountName(story)}</span>{' '}
           {story.caption || story.shortDescription}
         </p>
+        {story.testimonialQuote && (
+          <figure className="mt-3 rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/10 via-tertiary/10 to-secondary/10 p-3">
+            <blockquote className="text-sm font-semibold italic leading-relaxed text-on-surface">
+              "{story.testimonialQuote}"
+            </blockquote>
+            {(story.testimonialAuthor || story.testimonialRole) && (
+              <figcaption className="mt-2 text-xs font-black uppercase tracking-[0.08em] text-primary">
+                {story.testimonialAuthor}{story.testimonialRole ? `, ${story.testimonialRole}` : ''}
+              </figcaption>
+            )}
+          </figure>
+        )}
         <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-on-surface-variant">{story.category}</p>
       </footer>
     </article>
@@ -676,8 +688,8 @@ function FinalStoryCta({ label }: { label: string }) {
 
 export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const c = compactTheOneByLang[lang]
-  const heroBlock = getCmsBlock(cmsPage, 'hero')
-  const storiesBlock = getCmsBlock(cmsPage, 'stories')
+  const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang)
+  const storiesBlock = getLocalizedCmsBlock(cmsPage, 'stories', lang)
   const orderedCaseStudies = useMemo(() => getOrderedCaseStudies(storiesBlock), [storiesBlock])
   const [viewedStories, setViewedStories] = useState<Set<string>>(() => new Set())
   const [highlightedId, setHighlightedId] = useState('')
@@ -685,6 +697,7 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
   const [compactStories, setCompactStories] = useState(false)
   const [isMobileStories, setIsMobileStories] = useState(false)
   const storyHeading = heroBlock?.heading?.trim() || 'The One Stories'
+  const storyIntro = heroBlock?.body?.trim()
   const finalCtaLabel = heroBlock?.ctaLabel?.trim() || 'How about our stories?'
 
   useScrollReveal()
@@ -763,7 +776,7 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
 
   return (
     <BrandLayout lang={lang} siteSettings={siteSettings} flushTop mobileHeaderTitle={isMobileStories ? storyHeading : undefined}>
-      <SeoHead meta={cmsPage?.meta ?? c.meta} schema={[organizationSchema, websiteSchema]} lang={lang} />
+      <SeoHead meta={getLocalizedPageMeta(cmsPage, lang, c.meta)} schema={[organizationSchema, websiteSchema]} lang={lang} />
 
       <article className="the-one-page min-h-screen overflow-x-clip bg-[linear-gradient(180deg,#fff5f7_0%,#ffe4ec_35%,#fff1c8_100%)] pb-16 pt-24">
         <StoriesBar
@@ -774,6 +787,12 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
           viewedStories={viewedStories}
           onStoryClick={handleStoryClick}
         />
+
+        {storyIntro && (
+          <p className="mx-auto mt-7 max-w-2xl px-5 text-center text-sm font-bold leading-relaxed text-on-surface-variant md:text-base">
+            {storyIntro}
+          </p>
+        )}
 
         <section className="mx-auto mt-8 grid w-full max-w-[1180px] min-w-0 grid-cols-[minmax(0,1fr)] gap-8 px-3 sm:px-5 xl:grid-cols-[minmax(0,860px)_280px]">
           <div className="mx-auto grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] gap-7 sm:max-w-[860px]">

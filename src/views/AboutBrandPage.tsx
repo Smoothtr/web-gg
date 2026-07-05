@@ -14,7 +14,7 @@ import {
 import { BrandLayout } from '../components/BrandLayout'
 import { CmsIcon } from '../components/CmsIcon'
 import { SeoHead } from '../components/SeoHead'
-import { getCmsBlock, splitCmsParagraphs } from '../cms/contentBlocks'
+import { getCmsBlock, getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
 import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 
 const cardIcons = [Building2, Orbit, Network]
@@ -69,11 +69,11 @@ function AboutPeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> 
 
 export default function AboutBrandPage({ lang = 'vi', cmsPage, homePage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; homePage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const c = compactAboutByLang[lang]
-  const meta = cmsPage?.meta ?? aboutMetaByLang[lang]
+  const meta = getLocalizedPageMeta(cmsPage, lang, aboutMetaByLang[lang])
   const packages = theOnePackagesByLang[lang].packages
-  const heroBlock = getCmsBlock(cmsPage, 'hero')
-  const cardsBlock = getCmsBlock(cmsPage, 'cards')
-  const peopleBlock = getCmsBlock(homePage, 'people')
+  const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang)
+  const cardsBlock = getLocalizedCmsBlock(cmsPage, 'cards', lang)
+  const peopleBlock = getLocalizedCmsBlock(homePage, 'people', lang)
   const heroParagraphs = splitCmsParagraphs(heroBlock?.body)
   const cardItems: CmsBlockItem[] = cardsBlock?.items?.length
     ? cardsBlock.items

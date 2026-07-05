@@ -9,6 +9,7 @@
 .claude
 .vercel
 .vercel-local-cache
+.cms-backups
 dist
 node_modules
 test-results

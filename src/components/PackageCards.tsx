@@ -148,8 +148,8 @@ export function PackageCards({
   const systemIndex = Math.max(0, items.findIndex(isSystemPackage))
   const [selectedIndex, setSelectedIndex] = useState(systemIndex)
   const [highlightedId, setHighlightedId] = useState('')
-  const chooseLabel = lang === 'vi' ? 'Choose this package' : 'Choose this package'
-  const caseStudyLabel = lang === 'vi' ? 'See case studies' : 'See case studies'
+  const chooseLabel = lang === 'vi' ? 'Chọn gói này' : 'Choose this package'
+  const caseStudyLabel = lang === 'vi' ? 'Xem chuyện tình tụi mình' : 'See case studies'
 
   useEffect(() => {
     setSelectedIndex(systemIndex)

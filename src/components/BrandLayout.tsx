@@ -40,6 +40,7 @@ export function BrandLayout({
   const [showFloatingCta, setShowFloatingCta] = useState(!floatingCtaRevealSelector)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
+  const [currentPath, setCurrentPath] = useState('')
   const localizedSettings = getLocalizedSiteSettings(siteSettings, lang)
   const header = localizedSettings.header
   const navItems = header.navLinks.filter((item) => item.visible !== false && item.label.trim() && item.href.trim())
@@ -53,10 +54,32 @@ export function BrandLayout({
     return localizedPath(lang, resolved)
   }
 
+  function getLanguageHref(nextLang: BrandLang) {
+    const value = currentPath || (lang === 'en' ? '/en' : '/')
+    const hashIndex = value.indexOf('#')
+    const beforeHash = hashIndex >= 0 ? value.slice(0, hashIndex) : value
+    const hash = hashIndex >= 0 ? value.slice(hashIndex) : ''
+    const queryIndex = beforeHash.indexOf('?')
+    const path = queryIndex >= 0 ? beforeHash.slice(0, queryIndex) : beforeHash
+    const query = queryIndex >= 0 ? beforeHash.slice(queryIndex) : ''
+    return `${localizedPath(nextLang, path)}${query}${hash}`
+  }
+
   useEffect(() => {
     const onScroll = () => setShowTop(window.scrollY > 400)
     window.addEventListener('scroll', onScroll, { passive: true })
     return () => window.removeEventListener('scroll', onScroll)
+  }, [])
+
+  useEffect(() => {
+    const syncPath = () => setCurrentPath(`${window.location.pathname}${window.location.search}${window.location.hash}`)
+    syncPath()
+    window.addEventListener('popstate', syncPath)
+    window.addEventListener('hashchange', syncPath)
+    return () => {
+      window.removeEventListener('popstate', syncPath)
+      window.removeEventListener('hashchange', syncPath)
+    }
   }, [])
 
   useEffect(() => {
@@ -154,6 +177,20 @@ export function BrandLayout({
                 {item.label}
               </a>
             ))}
+            <div className="flex items-center rounded-full border border-primary/15 bg-white/60 p-1 text-[11px] font-black shadow-sm">
+              {(['vi', 'en'] as BrandLang[]).map((itemLang) => (
+                <a
+                  key={itemLang}
+                  href={getLanguageHref(itemLang)}
+                  className={`rounded-full px-2.5 py-1 transition-colors ${
+                    lang === itemLang ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-primary'
+                  }`}
+                  aria-current={lang === itemLang ? 'page' : undefined}
+                >
+                  {itemLang.toUpperCase()}
+                </a>
+              ))}
+            </div>
           </div>
           )}
 
@@ -185,6 +222,21 @@ export function BrandLayout({
                 {item.label}
               </a>
             ))}
+            <div className="mt-1 grid grid-cols-2 gap-2">
+              {(['vi', 'en'] as BrandLang[]).map((itemLang) => (
+                <a
+                  key={itemLang}
+                  href={getLanguageHref(itemLang)}
+                  onClick={() => setMenuOpen(false)}
+                  className={`rounded-2xl px-4 py-3 text-center text-sm font-black transition-colors ${
+                    lang === itemLang ? 'bg-primary text-on-primary' : 'bg-primary/10 text-primary hover:bg-primary/20'
+                  }`}
+                  aria-current={lang === itemLang ? 'page' : undefined}
+                >
+                  {itemLang.toUpperCase()}
+                </a>
+              ))}
+            </div>
             {showHeaderCta && (
               <button
                 type="button"

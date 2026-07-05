@@ -19,6 +19,7 @@ export type CaseStudy = {
   likesSeed?: string
   services: string[]
   keyMetrics: CaseStudyMetric[]
+  featuredStats?: CaseStudyMetric[]
   storyDetail: {
     challenge: string
     solution: string
@@ -36,6 +37,10 @@ export type CaseStudy = {
   }
   showOnHomepage?: boolean
   homepageOrder?: string
+  testimonialQuote?: string
+  testimonialAuthor?: string
+  testimonialRole?: string
+  testimonialAvatar?: string
   socialLinks?: {
     instagram?: string
     facebook?: string

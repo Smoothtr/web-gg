@@ -13,7 +13,7 @@ import {
 import { BrandLayout } from '../components/BrandLayout'
 import { PackageCards } from '../components/PackageCards'
 import { SeoHead } from '../components/SeoHead'
-import { getCmsBlock, splitCmsParagraphs } from '../cms/contentBlocks'
+import { getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
 import { getLocalizedSiteSettings } from '../cms/siteSettings'
 import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -36,16 +36,16 @@ export function PackagesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: Br
   useScrollReveal()
 
   const c = theOnePackagesByLang[lang]
-  const meta = cmsPage?.meta ?? packagesMetaByLang[lang]
-  const introBlock = getCmsBlock(cmsPage, 'intro')
-  const packageBlock = getCmsBlock(cmsPage, 'packages')
+  const meta = getLocalizedPageMeta(cmsPage, lang, packagesMetaByLang[lang])
+  const introBlock = getLocalizedCmsBlock(cmsPage, 'intro', lang)
+  const packageBlock = getLocalizedCmsBlock(cmsPage, 'packages', lang)
   const introParagraphs = splitCmsParagraphs(introBlock?.body)
   const packageItems: CmsBlockItem[] = packageBlock?.items?.length
     ? packageBlock.items
     : c.packages.map((item, index) => ({
       title: item.name,
       body: `${item.title}\n${item.text}`,
-      icon: ['🚀', '⚙️', '📣'][index],
+      icon: ['Rocket', 'Workflow', 'Megaphone'][index],
       href: item.href,
     }))
 
@@ -84,6 +84,11 @@ export function PackagesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: Br
               </div>
             )}
             <PackageCards items={packageItems} lang={lang} />
+            {packageBlock?.pricingNote && (
+              <p className="mx-auto mt-6 max-w-3xl rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-center text-sm font-bold leading-relaxed text-on-surface-variant">
+                {packageBlock.pricingNote}
+              </p>
+            )}
           </div>
         </section>
       </article>
@@ -91,12 +96,12 @@ export function PackagesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: Br
   )
 }
 
-export function ServicesPage({ cmsPage, siteSettings }: { cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
-  const introBlock = getCmsBlock(cmsPage, 'intro')
+export function ServicesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
+  const introBlock = getLocalizedCmsBlock(cmsPage, 'intro', lang)
   const serviceItems = introBlock?.items?.length ? introBlock.items : defaultServiceItems
   return (
-    <BrandLayout lang="en" siteSettings={siteSettings}>
-      <SeoHead meta={cmsPage?.meta ?? servicesMeta} schema={[organizationSchema, websiteSchema]} lang="en" />
+    <BrandLayout lang={lang} siteSettings={siteSettings}>
+      <SeoHead meta={getLocalizedPageMeta(cmsPage, lang, servicesMeta)} schema={[organizationSchema, websiteSchema]} lang={lang} />
       <section className="relative overflow-hidden px-5 lg:px-10 py-14 md:py-20">
         <div className="absolute inset-0 tech-grid opacity-80 pointer-events-none" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">
@@ -119,14 +124,14 @@ export function ServicesPage({ cmsPage, siteSettings }: { cmsPage?: CmsPageConte
   )
 }
 
-export function ContactPage({ cmsPage, siteSettings }: { cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
-  const introBlock = getCmsBlock(cmsPage, 'intro')
-  const footer = getLocalizedSiteSettings(siteSettings, 'en').footer
+export function ContactPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
+  const introBlock = getLocalizedCmsBlock(cmsPage, 'intro', lang)
+  const footer = getLocalizedSiteSettings(siteSettings, lang).footer
   const contactItems = introBlock?.items?.length ? introBlock.items : defaultContactItems
   const email = footer.email || 'smooth@gg99.vn'
   return (
-    <BrandLayout lang="en" siteSettings={siteSettings}>
-      <SeoHead meta={cmsPage?.meta ?? contactMeta} schema={[organizationSchema, websiteSchema]} lang="en" />
+    <BrandLayout lang={lang} siteSettings={siteSettings}>
+      <SeoHead meta={getLocalizedPageMeta(cmsPage, lang, contactMeta)} schema={[organizationSchema, websiteSchema]} lang={lang} />
       <section className="relative overflow-hidden px-5 lg:px-10 py-14 md:py-20">
         <div className="absolute inset-0 tech-grid opacity-80 pointer-events-none" aria-hidden="true" />
         <div className="relative max-w-5xl mx-auto">

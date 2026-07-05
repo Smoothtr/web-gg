@@ -24,7 +24,7 @@ import { compactPackageByLang, localizedPath, organizationSchema, serviceSchemas
 import { BrandLayout } from '../components/BrandLayout'
 import { CmsIcon } from '../components/CmsIcon'
 import { SeoHead } from '../components/SeoHead'
-import { getCmsBlock, splitCmsParagraphs } from '../cms/contentBlocks'
+import { getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
 import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 
 const serviceByPackage: Record<PackageKey, unknown> = {
@@ -62,9 +62,9 @@ const icons = [
 
 export function PackagePage({ packageKey, lang = 'vi', cmsPage, siteSettings }: { packageKey: PackageKey; lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const page = compactPackageByLang[lang][packageKey]
-  const heroBlock = getCmsBlock(cmsPage, 'hero') ?? getCmsBlock(cmsPage, 'intro')
-  const cardsBlock = getCmsBlock(cmsPage, 'cards')
-  const processBlock = getCmsBlock(cmsPage, 'process')
+  const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang) ?? getLocalizedCmsBlock(cmsPage, 'intro', lang)
+  const cardsBlock = getLocalizedCmsBlock(cmsPage, 'cards', lang)
+  const processBlock = getLocalizedCmsBlock(cmsPage, 'process', lang)
   const heroParagraphs = splitCmsParagraphs(heroBlock?.body)
   const cardItems: CmsBlockItem[] = cardsBlock?.items?.length
     ? cardsBlock.items
@@ -75,7 +75,7 @@ export function PackagePage({ packageKey, lang = 'vi', cmsPage, siteSettings }: 
 
   return (
     <BrandLayout lang={lang} siteSettings={siteSettings}>
-      <SeoHead meta={cmsPage?.meta ?? page.meta} schema={[organizationSchema, serviceByPackage[packageKey]]} lang={lang} />
+      <SeoHead meta={getLocalizedPageMeta(cmsPage, lang, page.meta)} schema={[organizationSchema, serviceByPackage[packageKey]]} lang={lang} />
 
       <article>
         <section className="relative overflow-hidden px-5 lg:px-10 py-14 md:py-20">

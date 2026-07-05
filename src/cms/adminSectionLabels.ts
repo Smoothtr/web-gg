@@ -4,6 +4,7 @@ const homepageSectionLabels: Record<string, string> = {
   hero: 'Hero - The One by gg99',
   'what-is': 'Explore - The One Services',
   packages: 'Packages',
+  'red-flags': 'Red Flags',
   people: 'People',
   closing: 'Closing + FAQ',
 }

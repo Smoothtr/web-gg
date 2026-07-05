@@ -14,8 +14,17 @@ export type PageMeta = {
 
 export type BrandLang = 'vi' | 'en'
 
-export function localizedPath(_lang: BrandLang, path: string) {
-  return path
+export function localizedPath(lang: BrandLang, path: string) {
+  const trimmed = path.trim() || '/'
+  if (/^(https?:|mailto:|tel:)/i.test(trimmed) || trimmed.startsWith('#')) return trimmed
+  if (lang === 'en') {
+    if (trimmed === '/') return '/en'
+    if (trimmed.startsWith('/en/')) return trimmed
+    if (trimmed === '/en') return trimmed
+    return trimmed.startsWith('/') ? `/en${trimmed}` : `/en/${trimmed}`
+  }
+  const withoutEnglishPrefix = trimmed.replace(/^\/en(?=\/|$)/, '')
+  return withoutEnglishPrefix || '/'
 }
 
 export const footerCopy = {
@@ -505,24 +514,24 @@ export const navItemsByLang: Record<BrandLang, typeof navItems> = {
 }
 
 const homeMetaVi: PageMeta = {
-  title: 'The One - GG99 | Growth Partner for Startups & SMEs',
+  title: 'The One - GG99 | Agency tăng trưởng cho Startups & SMEs',
   description:
-    'The One - GG99 helps startups and SMEs build brand, website, CRM, automation and performance marketing in one connected growth system.',
+    'The One - GG99 giúp startup và SME xây brand, website, CRM, automation và performance marketing trong một hệ tăng trưởng kết nối.',
   path: '/',
   ogTitle: 'The One - GG99',
   ogDescription:
-    'The One - GG99 is a growth partner for brand, website, CRM, automation and performance marketing.',
+    'The One - GG99 là đối tác tăng trưởng cho brand, website, CRM, automation và performance marketing.',
   ogImage: ogTheOneImagePath,
 }
 
 const theOneMetaVi: PageMeta = {
   title: 'The One là gì? | GG99',
   description:
-    'The One là slogan và định vị thương hiệu của GG99 — one growth partner for brand, website, CRM, automation and performance marketing.',
+    'The One là slogan và định vị thương hiệu của GG99: một đối tác tăng trưởng cho brand, website, CRM, automation và performance marketing.',
   path: '/the-one',
   ogTitle: 'The One - GG99',
   ogDescription:
-    'GG99 is The One growth partner for brand, website, CRM, automation and performance marketing.',
+    'GG99 là The One growth partner cho brand, website, CRM, automation và performance marketing.',
   ogImage: ogTheOneImagePath,
 }
 
@@ -1280,13 +1289,13 @@ export const compactPackageByLang = {
 
 export const aboutMetaByLang: Record<BrandLang, PageMeta> = {
   vi: {
-    title: 'About The One - GG99',
+    title: 'Về The One - GG99',
     description:
-      'The One - GG99 is a growth partner for brand, website, CRM, automation and performance marketing.',
+      'The One - GG99 là đối tác tăng trưởng cho brand, website, CRM, automation và performance marketing.',
     path: '/about',
-    ogTitle: 'About The One - GG99',
+    ogTitle: 'Về The One - GG99',
     ogDescription:
-      'GG99 is The One growth partner for startups and SMEs.',
+      'GG99 là The One growth partner cho startups và SMEs.',
     ogImage: ogTheOneImagePath,
   },
   en: {

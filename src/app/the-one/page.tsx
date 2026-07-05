@@ -6,9 +6,9 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export function generateMetadata() {
-  return generateCmsPageMetadata('the-one', 'en', compactTheOneByLang.vi.meta)
+  return generateCmsPageMetadata('the-one', 'vi', compactTheOneByLang.vi.meta)
 }
 
 export default function Page() {
-  return <TheOneView lang="en" pageId="the-one" />
+  return <TheOneView lang="vi" pageId="the-one" />
 }

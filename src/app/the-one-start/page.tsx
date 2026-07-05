@@ -5,9 +5,9 @@ import { generateCmsPageMetadata } from '../routeMetadata'
 export const revalidate = 5
 
 export function generateMetadata() {
-  return generateCmsPageMetadata('the-one-start', 'en', compactPackageByLang.vi.consultant.meta)
+  return generateCmsPageMetadata('the-one-start', 'vi', compactPackageByLang.vi.consultant.meta)
 }
 
 export default function Page() {
-  return <PackageDetailView lang="en" packageKey="consultant" pageId="the-one-start" />
+  return <PackageDetailView lang="vi" packageKey="consultant" pageId="the-one-start" />
 }

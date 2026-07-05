@@ -13,7 +13,7 @@ import { PackageCards } from '../components/PackageCards'
 import { SeoHead } from '../components/SeoHead'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { whenIntroGone } from '../hooks/useIntroGate'
-import { getCmsBlock, splitCmsParagraphs } from '../cms/contentBlocks'
+import { getCmsBlock, getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
 import { buildHomeFaqSchema, getHomeClosingFaqItems } from '../cms/homeFaqSchema'
 import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
@@ -205,6 +205,12 @@ function getCaseStudyGallery(story: CaseStudy) {
   ]).slice(0, 4)
 }
 
+function getFeaturedStats(story: CaseStudy) {
+  const explicit = story.featuredStats?.filter((metric) => metric.value.trim() || metric.label.trim()) ?? []
+  const source = explicit.length ? explicit : story.keyMetrics.filter((metric) => metric.value.trim() || metric.label.trim()).slice(0, 2)
+  return source.slice(0, 2)
+}
+
 function isLogoLikeImage(url: string) {
   return /(^|\/)logo[-_]/i.test(url) || /logo[-_]/i.test(url)
 }
@@ -295,6 +301,7 @@ function getPreviewPopoverStyle(target: HTMLElement): CSSProperties {
 
 function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: BrandLang }) {
   const images = getCaseStudyGallery(story)
+  const stats = getFeaturedStats(story)
   const [activeImage, setActiveImage] = useState(0)
   const href = resolveStoryHref(lang, story.id, story.id)
   const theme = getStoryPreviewTheme(story)
@@ -344,6 +351,15 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
           <img src={getStoryLogoForHome(story)} alt="" aria-hidden="true" className="h-11 w-11 shrink-0 rounded-full border border-white bg-white object-contain p-1.5 shadow-[0_10px_28px_rgba(43,23,33,0.14)]" />
         </div>
         <p className="mt-3 line-clamp-2 text-sm font-semibold leading-relaxed text-on-surface-variant">{story.shortDescription}</p>
+        {stats.length > 0 && (
+          <div className="mt-4 flex flex-wrap gap-2">
+            {stats.map((stat) => (
+              <span key={`${story.id}-preview-stat-${stat.value}-${stat.label}`} className="rounded-full bg-gradient-to-r from-primary/12 via-tertiary/10 to-secondary/12 px-3 py-1.5 text-xs font-black text-primary">
+                {stat.value}{stat.label ? ` ${stat.label}` : ''}
+              </span>
+            ))}
+          </div>
+        )}
         <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-extrabold text-on-surface-variant">
           <span className="rounded-full px-2.5 py-1" style={{ background: theme.chip, color: theme.accent }}>{story.period}</span>
           {story.services.slice(0, 2).map((service) => (
@@ -383,6 +399,7 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
   const activeBannerIndex = bannerIndex % showcaseStories.length
   const activeStory = showcaseStories[activeBannerIndex] ?? showcaseStories[0]
   const activeStoryHref = resolveStoryHref(lang, activeStory.id, activeStory.id)
+  const activeStats = getFeaturedStats(activeStory)
 
   function moveRail(direction: -1 | 1) {
     const rail = railRef.current
@@ -426,6 +443,15 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/68">Featured case</p>
             <h2 className="mt-2 max-w-2xl text-[30px] font-extrabold leading-tight md:text-[48px]">{activeStory.brandName}</h2>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-relaxed text-white/76 md:text-base">{activeStory.caption || activeStory.shortDescription}</p>
+            {activeStats.length > 0 && (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {activeStats.map((stat) => (
+                  <span key={`${activeStory.id}-banner-stat-${stat.value}-${stat.label}`} className="rounded-full border border-white/24 bg-white/18 px-3 py-1.5 text-xs font-black text-white shadow-[0_10px_26px_rgba(0,0,0,0.16)] backdrop-blur-md">
+                    {stat.value}{stat.label ? ` ${stat.label}` : ''}
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </a>
 
@@ -461,7 +487,10 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
                 onMouseEnter={(event) => showPreview(story, event.currentTarget)}
                 onFocus={(event) => showPreview(story, event.currentTarget)}
                 onClick={(event) => showPreview(story, event.currentTarget)}
-                className="group relative aspect-[16/10] shrink-0 basis-[82%] snap-start overflow-hidden rounded-[16px] bg-[#180b11] text-left shadow-[0_14px_40px_rgba(80,20,50,0.13)] outline-none ring-1 ring-white/70 transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]"
+                className={[
+                  'group relative aspect-[16/10] shrink-0 basis-[82%] snap-start overflow-hidden rounded-[16px] bg-[#180b11] text-left shadow-[0_14px_40px_rgba(80,20,50,0.13)] outline-none ring-1 transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]',
+                  index === activeBannerIndex ? 'ring-primary/70' : 'ring-white/70',
+                ].join(' ')}
                 aria-label={`Preview ${story.brandName}`}
               >
                 {(() => {
@@ -477,10 +506,10 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
                     />
                   )
                 })()}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/76 via-black/12 to-transparent" aria-hidden="true" />
+                <div className={`absolute inset-0 bg-gradient-to-t ${index === activeBannerIndex ? 'from-black/82 via-black/18 to-transparent' : 'from-white/88 via-white/46 to-white/12 group-hover:from-black/76 group-hover:via-black/12 group-hover:to-transparent'}`} aria-hidden="true" />
                 <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                  <h3 className="line-clamp-1 text-[17px] font-extrabold leading-tight">{story.brandName}</h3>
-                  <p className="mt-1 line-clamp-2 text-xs font-semibold leading-relaxed text-white/70">{story.headline}</p>
+                  <h3 className={`line-clamp-1 text-[17px] font-extrabold leading-tight ${index === activeBannerIndex ? 'text-white' : 'text-on-surface group-hover:text-white'}`}>{story.brandName}</h3>
+                  <p className={`mt-1 line-clamp-2 text-xs font-semibold leading-relaxed ${index === activeBannerIndex ? 'text-white/70' : 'text-on-surface-variant group-hover:text-white/70'}`}>{story.headline}</p>
                 </div>
               </button>
             ))}
@@ -500,6 +529,48 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
           </div>
         </>
       )}
+    </section>
+  )
+}
+
+function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
+  const items = (block?.items ?? []).filter((item) => item.published !== false && item.title.trim()).slice(0, 5)
+  if (!block || (!block.heading.trim() && !block.body.trim() && !items.length)) return null
+
+  return (
+    <section className="relative overflow-hidden bg-[#180712] px-5 py-14 text-white md:py-20 lg:px-10">
+      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(219,39,119,0.34),transparent_34%),radial-gradient(circle_at_86%_24%,rgba(245,158,11,0.24),transparent_30%),linear-gradient(135deg,rgba(255,122,168,0.1),rgba(239,68,68,0.08))]" aria-hidden="true" />
+      <div className="relative mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center">
+        <div>
+          <p data-reveal className="text-[11px] font-black uppercase tracking-[0.2em] text-white/54">Red flags</p>
+          <h2 data-reveal className="mt-4 max-w-xl font-serif text-[38px] font-normal leading-[0.98] md:text-[58px]">
+            {block.heading || 'Sound familiar?'}
+          </h2>
+          {block.body && (
+            <p data-reveal className="mt-5 max-w-xl bg-gradient-to-r from-[#ff7aa8] via-[#ef4444] to-[#f59e0b] bg-clip-text text-[24px] font-black leading-tight text-transparent md:text-[34px]">
+              {block.body}
+            </p>
+          )}
+        </div>
+        <div className="grid gap-3">
+          {items.map((item, index) => (
+            <article
+              key={`${item.title}-${index}`}
+              data-reveal="tile-in"
+              data-tile-direction={index % 2 ? 'right' : 'bottom'}
+              style={{ '--ri': index } as CSSProperties}
+              className="relative ml-auto w-[min(100%,620px)] rounded-[24px] border border-white/12 bg-white/[0.08] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.22)] backdrop-blur-xl"
+            >
+              <div className="mb-3 flex items-center gap-1.5" aria-hidden="true">
+                <span className="h-2 w-2 rounded-full bg-[#ff7aa8]" />
+                <span className="h-2 w-2 rounded-full bg-[#f59e0b]" />
+                <span className="h-2 w-2 rounded-full bg-white/36" />
+              </div>
+              <p className="text-[15px] font-bold leading-relaxed text-white/88 md:text-[17px]">{item.title}</p>
+            </article>
+          ))}
+        </div>
+      </div>
     </section>
   )
 }
@@ -588,6 +659,11 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
                       <p className="mt-1 line-clamp-4 text-[11px] font-semibold italic leading-relaxed text-on-surface-variant md:text-[13px]">{quote}</p>
                     </blockquote>
                   )}
+                  {member.proofPoint && (
+                    <p className="mt-3 rounded-2xl bg-gradient-to-r from-primary/10 via-tertiary/10 to-secondary/10 px-3 py-2 text-[11px] font-black leading-snug text-primary md:text-[12px]">
+                      {member.proofPoint}
+                    </p>
+                  )}
                 </div>
               </article>
             )
@@ -627,6 +703,7 @@ function ClosingBanner({
     : { backgroundImage: gradient }
   const logos = stories.map(getStoryLogoForHome).filter(Boolean)
   const faqTitle = block.heading?.trim() || 'Frequently Asked Questions'
+  const faqSubtitle = block.subtitle?.trim() || block.body?.trim()
   const closingCharacterCount = countStaggerCharacters(faqTitle)
   const closingFollowDelay = Math.max(360, closingCharacterCount * 18 + 220)
 
@@ -635,30 +712,35 @@ function ClosingBanner({
       <div className="closing-banner relative flex min-h-[420px] items-center overflow-hidden px-5 py-16 text-center md:min-h-[540px] lg:px-10" style={style}>
         <div className="absolute inset-0 closing-banner-bg" aria-hidden="true" />
         {logos.length > 0 && (
-          <div className="closing-logo-rail absolute inset-x-0 top-7 h-12 overflow-hidden opacity-70">
+          <div className="closing-logo-rail absolute inset-x-0 top-7 h-12 overflow-hidden opacity-80">
             <div className="closing-logo-marquee flex w-max items-center gap-12">
               {[...logos, ...logos].map((logo, index) => (
-                <img key={`${logo}-${index}`} src={logo} alt="" aria-hidden="true" className="h-8 w-auto max-w-[128px] object-contain brightness-0 invert opacity-70" />
+                <img key={`${logo}-${index}`} src={logo} alt="" aria-hidden="true" className="h-8 w-auto max-w-[128px] object-contain brightness-0 invert opacity-80" />
               ))}
             </div>
           </div>
         )}
         <div className="closing-content relative mx-auto w-full max-w-[1200px]" data-reveal="closing-content">
+          <div className="mx-auto mb-7 max-w-3xl text-left md:text-center">
+            <h2 className="text-[30px] font-black leading-tight text-white md:text-[42px]">
+              <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
+            </h2>
+            <div className="home-gradient-underline mt-3 bg-white/80 md:mx-auto" aria-hidden="true" />
+            {faqSubtitle && (
+              <p className="closing-follow mt-4 text-[15px] font-bold leading-relaxed text-white/82 md:text-[18px]" style={{ '--closing-delay': `${closingFollowDelay}ms` } as CSSProperties}>
+                {faqSubtitle}
+              </p>
+            )}
+          </div>
           {faqItems.length > 0 && (
             <div className="closing-faq mx-auto grid max-w-3xl gap-3 text-left">
-              <div className="mb-2">
-                <h2 className="text-[30px] font-black leading-tight text-white md:text-[42px]">
-                  <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
-                </h2>
-                <div className="home-gradient-underline mt-3 bg-white/80" aria-hidden="true" />
-              </div>
               {faqItems.map((item, index) => {
                 const open = openFaqIndex === index
                 return (
                   <div
                     key={`${item.question}-${index}`}
                     className="closing-faq-item overflow-hidden rounded-2xl border border-white/22 bg-white/14 text-white shadow-[0_18px_46px_rgba(0,0,0,0.12)] backdrop-blur-xl"
-                    style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + index * 80}ms` } as CSSProperties}
+                    style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + 140 + index * 80}ms` } as CSSProperties}
                   >
                     <button
                       type="button"
@@ -700,12 +782,13 @@ export default function BrandHomePage({
   const [heroReady, setHeroReady] = useState(false)
 
   const c = compactHomeByLang[lang]
-  const homeMeta = cmsPage?.meta ?? homeMetaByLang[lang]
-  const heroBlock = getCmsBlock(cmsPage, 'hero')
-  const packagesBlock = getCmsBlock(cmsPage, 'packages')
-  const peopleBlock = getCmsBlock(cmsPage, 'people')
-  const closingBlock = getCmsBlock(cmsPage, 'closing')
-  const storiesBlock = getCmsBlock(theOnePage, 'stories')
+  const homeMeta = getLocalizedPageMeta(cmsPage, lang, homeMetaByLang[lang])
+  const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang)
+  const packagesBlock = getLocalizedCmsBlock(cmsPage, 'packages', lang)
+  const redFlagsBlock = getLocalizedCmsBlock(cmsPage, 'red-flags', lang)
+  const peopleBlock = getLocalizedCmsBlock(cmsPage, 'people', lang)
+  const closingBlock = getLocalizedCmsBlock(cmsPage, 'closing', lang)
+  const storiesBlock = getLocalizedCmsBlock(theOnePage, 'stories', lang)
   const storyTargets = getOrderedCaseStudies(storiesBlock)
   const heroLines = splitCmsParagraphs(heroBlock?.body)
   const heroLineOne = heroBlock?.heading?.trim() || 'The One by gg99'
@@ -715,8 +798,10 @@ export default function BrandHomePage({
   const showHeroDivider = heroBlock?.dividerShow !== false
   const heroWordCount = countStaggerWords(heroLineOne)
   const heroDelays = getHeroAnimationDelays(heroWordCount, showHeroDivider)
-  const closingFaqItems = getHomeClosingFaqItems(cmsPage)
-  const homeSchemas = [organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(cmsPage)].filter(Boolean)
+  const heroStatChips = (heroBlock?.statChips ?? []).filter((chip) => chip.value.trim() || chip.label.trim()).slice(0, 3)
+  const heroCtaSubtext = heroBlock?.ctaSubtext?.trim()
+  const closingFaqItems = getHomeClosingFaqItems(cmsPage, lang)
+  const homeSchemas = [organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(cmsPage, lang)].filter(Boolean)
   const packageItems: CmsBlockItem[] = packagesBlock?.items?.length
     ? packagesBlock.items
     : c.packages.map((item, index) => ({
@@ -778,21 +863,42 @@ export default function BrandHomePage({
           >
             {resolvePrimaryBookingCtaLabel(heroBlock?.ctaLabel)}
           </button>
+          {heroCtaSubtext && (
+            <p
+              style={{ '--hero-delay': `${heroDelays.cta + 140}ms` } as CSSProperties}
+              className={`home-hero-item mt-3 max-w-xl text-xs font-bold md:text-sm ${heroTextMode === 'dark' ? 'text-on-surface-variant' : 'text-white/76'}`}
+            >
+              {heroCtaSubtext}
+            </p>
+          )}
+          {heroStatChips.length > 0 && (
+            <div
+              style={{ '--hero-delay': `${heroDelays.cta + 230}ms` } as CSSProperties}
+              className="home-hero-item mt-5 flex flex-wrap justify-center gap-2"
+            >
+              {heroStatChips.map((chip) => (
+                <span key={`${chip.value}-${chip.label}`} className="rounded-full border border-white/24 bg-white/16 px-3 py-1.5 text-xs font-black text-white shadow-[0_10px_26px_rgba(0,0,0,0.12)] backdrop-blur-md md:text-sm">
+                  {chip.value}{chip.label ? ` ${chip.label}` : ''}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       </section>
 
       <CaseStudyShowcase stories={storyTargets} lang={lang} />
+      <RedFlagsSection block={redFlagsBlock} />
 
       <section id="packages" className="py-10 md:py-14 px-5 lg:px-10">
         <div className="max-w-6xl mx-auto">
           <SectionHeader
             title={packagesBlock?.heading || 'The One Packages'}
-            intro={lang === 'vi' ? 'Chọn hệ tăng trưởng phù hợp với giai đoạn của bạn.' : 'Choose the growth system that fits your stage.'}
+            intro={packagesBlock?.body || (lang === 'vi' ? 'Chọn nhịp tăng trưởng phù hợp với giai đoạn của bạn.' : 'Choose the growth system that fits your stage.')}
             align="center"
           />
-          {packagesBlock?.body && (
+          {packagesBlock?.pricingNote && (
             <div className="mx-auto mb-6 max-w-3xl whitespace-pre-line text-center text-sm leading-relaxed text-on-surface-variant">
-              {packagesBlock.body}
+              {packagesBlock.pricingNote}
             </div>
           )}
           <PackageCards items={packageItems} lang={lang} />
