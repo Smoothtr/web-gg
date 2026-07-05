@@ -81,7 +81,7 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
       {showHeaderCta && (
         <button
           onClick={() => setBookingOpen(true)}
-          className="header-floating-cta btn-shine z-[60] hidden rounded-full bg-primary px-5 py-2.5 text-sm font-bold text-on-primary shadow-[0_18px_48px_rgba(219,39,119,0.18)] transition hover:opacity-90 gg-btn-primary glow-orange lg:inline-flex"
+          className="header-floating-cta btn-shine cta-idle z-[60] hidden rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] transition hover:opacity-95 glow-orange lg:inline-flex"
         >
           {headerCtaLabel}
         </button>
@@ -157,7 +157,7 @@ export function BrandLayout({ children, lang = 'en', siteSettings, hideHeaderCta
                   setMenuOpen(false)
                   setBookingOpen(true)
                 }}
-                className="btn-shine mt-2 inline-flex items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-bold text-on-primary gg-btn-primary glow-orange"
+                className="btn-shine cta-idle mt-2 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.24)] glow-orange"
               >
                 {headerCtaLabel}
               </button>

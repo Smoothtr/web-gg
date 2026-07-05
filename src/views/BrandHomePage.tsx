@@ -44,13 +44,24 @@ function getStoryLogoForHome(story: Pick<CaseStudy, 'id' | 'logoUrl'>) {
   return story.logoUrl || storyLogoById[story.id] || '/logo-gg.png'
 }
 
-function SectionHeader({ title, intro, dark = false }: { title: string; intro?: string; dark?: boolean }) {
+function SectionHeader({
+  title,
+  intro,
+  dark = false,
+  align = 'left',
+}: {
+  title: string
+  intro?: string
+  dark?: boolean
+  align?: 'left' | 'center'
+}) {
+  const centered = align === 'center'
   return (
-    <div className="max-w-3xl mb-8">
+    <div className={`mb-8 max-w-3xl ${centered ? 'mx-auto text-center' : ''}`}>
       <h2 data-reveal className={`text-[28px] md:text-[36px] font-extrabold leading-tight ${dark ? 'text-white' : 'text-on-surface'}`}>
         {title}
       </h2>
-      <div data-reveal="line" className="home-gradient-underline mt-3" aria-hidden="true" />
+      <div data-reveal="line" className={`home-gradient-underline mt-3 ${centered ? 'mx-auto' : ''}`} aria-hidden="true" />
       {intro && <p className={`mt-4 text-[15px] md:text-base leading-relaxed ${dark ? 'text-white/65' : 'text-on-surface-variant'}`}>{intro}</p>}
     </div>
   )
@@ -226,8 +237,8 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
   }, [story.id, images.length])
 
   return (
-    <article className="pointer-events-auto overflow-hidden rounded-[20px] bg-[#141414] text-white shadow-[0_28px_90px_rgba(0,0,0,0.42)] ring-1 ring-white/18">
-      <div className="relative aspect-video overflow-hidden bg-black">
+    <article className="pointer-events-auto overflow-hidden rounded-[22px] border border-white/75 bg-white/95 text-on-surface shadow-[0_28px_90px_rgba(219,39,119,0.24)] ring-1 ring-primary/10 backdrop-blur-xl">
+      <div className="relative aspect-video overflow-hidden bg-surface-container-low">
         {images.map((imageUrl, index) => (
           <img
             key={`${story.id}-preview-${imageUrl}-${index}`}
@@ -239,11 +250,11 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
             } ${activeImage === index ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.03]'}`}
           />
         ))}
-        <div className="absolute inset-0 bg-gradient-to-t from-black/42 via-transparent to-transparent" aria-hidden="true" />
+        <div className="absolute inset-0 bg-gradient-to-t from-primary/22 via-transparent to-white/16" aria-hidden="true" />
         {images.length > 1 && (
           <div className="absolute bottom-3 left-4 flex gap-1.5" aria-hidden="true">
             {images.map((imageUrl, index) => (
-              <span key={`${story.id}-dot-${imageUrl}-${index}`} className={`h-1.5 rounded-full transition-all ${activeImage === index ? 'w-5 bg-white' : 'w-1.5 bg-white/45'}`} />
+              <span key={`${story.id}-dot-${imageUrl}-${index}`} className={`h-1.5 rounded-full transition-all ${activeImage === index ? 'w-5 bg-primary' : 'w-1.5 bg-primary/25'}`} />
             ))}
           </div>
         )}
@@ -251,23 +262,23 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
       <div className="p-4 md:p-5">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
-            <p className="text-[11px] font-extrabold uppercase tracking-[0.18em] text-white/55">{story.category}</p>
-            <h3 className="mt-2 line-clamp-2 text-[22px] font-extrabold leading-tight text-white">{story.brandName}</h3>
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.18em] text-primary/80">{story.category}</p>
+            <h3 className="mt-2 line-clamp-2 text-[22px] font-extrabold leading-tight text-on-surface">{story.brandName}</h3>
           </div>
-          <img src={getStoryLogoForHome(story)} alt="" aria-hidden="true" className="h-10 w-10 shrink-0 rounded-full bg-white/92 object-contain p-1.5" />
+          <img src={getStoryLogoForHome(story)} alt="" aria-hidden="true" className="h-10 w-10 shrink-0 rounded-full border border-primary/10 bg-white object-contain p-1.5 shadow-sm" />
         </div>
-        <p className="mt-3 line-clamp-2 text-sm font-semibold leading-relaxed text-white/70">{story.shortDescription}</p>
-        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-bold text-white/62">
-          <span>{story.period}</span>
+        <p className="mt-3 line-clamp-2 text-sm font-semibold leading-relaxed text-on-surface-variant">{story.shortDescription}</p>
+        <div className="mt-4 flex flex-wrap items-center gap-2 text-xs font-extrabold text-on-surface-variant">
+          <span className="rounded-full bg-primary/8 px-2.5 py-1 text-primary">{story.period}</span>
           {story.services.slice(0, 2).map((service) => (
-            <span key={`${story.id}-${service}`} className="rounded-full bg-white/10 px-2.5 py-1">
+            <span key={`${story.id}-${service}`} className="rounded-full bg-surface-container px-2.5 py-1">
               {service}
             </span>
           ))}
         </div>
         <a
           href={href}
-          className="mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-white px-4 py-2.5 text-sm font-extrabold text-[#141414] transition hover:bg-primary hover:text-white"
+          className="btn-shine mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-4 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] transition hover:opacity-95"
         >
           About this one
           <ArrowUpRight size={15} strokeWidth={2.5} aria-hidden="true" />
@@ -295,6 +306,7 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
 
   const activeBannerIndex = bannerIndex % showcaseStories.length
   const activeStory = showcaseStories[activeBannerIndex] ?? showcaseStories[0]
+  const activeStoryHref = resolveStoryHref(lang, activeStory.id, activeStory.id)
 
   function moveRail(direction: -1 | 1) {
     const rail = railRef.current
@@ -305,19 +317,13 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
   return (
     <section className="relative overflow-visible bg-surface-container px-5 py-8 md:py-12 lg:px-10" onMouseLeave={() => setPreviewStory(null)}>
       <div className="mx-auto max-w-6xl">
-        <SectionHeader
-          title="The One Stories"
-          intro={lang === 'vi' ? 'Nhung case study dang chay trong he thong The One.' : 'Case studies moving through The One system.'}
-        />
-
-        <button
-          type="button"
+        <a
+          href={activeStoryHref}
           data-reveal="scale"
-          onMouseEnter={() => setPreviewStory(activeStory)}
-          onFocus={() => setPreviewStory(activeStory)}
-          onClick={() => setPreviewStory(activeStory)}
+          onMouseEnter={() => setPreviewStory(null)}
+          onFocus={() => setPreviewStory(null)}
           className="group relative block aspect-[16/8] w-full overflow-hidden rounded-[24px] bg-[#190b12] text-left shadow-[0_24px_70px_rgba(80,20,50,0.18)] outline-none ring-1 ring-white/65 transition duration-500 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary md:aspect-[16/6]"
-          aria-label={`Preview ${activeStory.brandName}`}
+          aria-label={`Open ${activeStory.brandName} story`}
         >
           {showcaseStories.map((story, index) => (
             (() => {
@@ -328,20 +334,20 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
                   src={thumbnail}
                   alt={index === activeBannerIndex ? `${story.brandName} case study thumbnail` : ''}
                   aria-hidden={index === activeBannerIndex ? undefined : true}
-                  className={`absolute inset-0 h-full w-full transition duration-700 group-hover:scale-[1.025] ${
+                  className={`pointer-events-none absolute inset-0 h-full w-full transition duration-700 group-hover:scale-[1.025] ${
                     isLogoLikeImage(thumbnail) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-12 md:p-20' : 'object-cover'
                   } ${index === activeBannerIndex ? 'opacity-100' : 'opacity-0'}`}
                 />
               )
             })()
           ))}
-          <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/18 to-transparent" aria-hidden="true" />
-          <div className="absolute inset-x-0 bottom-0 p-5 text-white md:p-8">
+          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/18 to-transparent" aria-hidden="true" />
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 text-white md:p-8">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/68">Featured case</p>
             <h2 className="mt-2 max-w-2xl text-[30px] font-extrabold leading-tight md:text-[48px]">{activeStory.brandName}</h2>
             <p className="mt-2 max-w-2xl text-sm font-semibold leading-relaxed text-white/76 md:text-base">{activeStory.caption || activeStory.shortDescription}</p>
           </div>
-        </button>
+        </a>
 
         <div className="relative mt-3">
           {showcaseStories.length > 1 && (
@@ -429,6 +435,19 @@ function getPeopleAvatarImages(member: CmsBlockItem) {
   return (legacyImages.length ? legacyImages : ['/logo-gg.png']).slice(0, 4)
 }
 
+function formatPeopleQuote(value?: string) {
+  const trimmed = value?.trim()
+  if (!trimmed) return ''
+  if ((trimmed.startsWith('"') && trimmed.endsWith('"')) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) return trimmed
+  return `"${trimmed}"`
+}
+
+function normalizeClosingSubtitle(value?: string) {
+  const trimmed = value?.trim() || 'Build the next story with The One.'
+  const withoutSuffix = trimmed.replace(/\s*-\s*GG99\.?$/i, '.')
+  return withoutSuffix.endsWith('.') ? withoutSuffix : `${withoutSuffix}.`
+}
+
 function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
   const members = (block?.items ?? []).filter((item) => item.published !== false).slice(0, 6)
   if (!block || !members.length) return null
@@ -438,17 +457,18 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
   return (
     <section className="px-5 py-12 md:py-16 lg:px-10">
       <div className="mx-auto max-w-6xl">
-        <SectionHeader title={block.heading || 'The One People'} intro={block.body} />
+        <SectionHeader title={block.heading || 'The One People'} intro={block.body} align="center" />
         <div className="people-card-grid grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-7">
           {members.map((member, index) => {
             const avatarImages = getPeopleAvatarImages(member)
             const carouselDuration = `${Math.max(avatarImages.length, 1) * 2200}ms`
+            const quote = formatPeopleQuote(member.body)
             return (
               <article
                 key={`${member.title}-${index}`}
                 data-reveal="people-card"
                 style={{ '--ri': index } as CSSProperties}
-                className="people-card group min-w-0 overflow-hidden rounded-[20px] border border-white/70 bg-white/85 shadow-[0_18px_42px_rgba(80,20,50,0.12)] backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_rgba(219,39,119,0.18)] md:rounded-[28px]"
+                className="people-card group min-w-0 overflow-hidden rounded-[20px] border border-white/70 bg-white/90 shadow-[0_18px_42px_rgba(80,20,50,0.12)] backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_rgba(219,39,119,0.18)] md:rounded-[28px]"
               >
                 <div className="relative aspect-square overflow-hidden bg-surface-container-low">
                   {avatarImages.length === 1 ? (
@@ -470,9 +490,19 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
                   )}
                 </div>
                 <div className="p-3 text-left md:p-5">
-                  <h3 className="text-[14px] font-extrabold leading-tight text-on-surface sm:text-[16px] md:text-[18px]">{member.title}</h3>
-                  {member.label && <p className="mt-2 text-[11px] font-extrabold uppercase tracking-[0.16em] text-primary">{member.label}</p>}
-                  {member.body && <p className="mt-2 line-clamp-3 text-[12px] font-semibold leading-relaxed text-on-surface-variant md:mt-3 md:text-[14px]">{member.body}</p>}
+                  <h3 className="text-[15px] font-black leading-tight text-primary sm:text-[17px] md:text-[20px]">{member.title}</h3>
+                  {member.label && (
+                    <div className="mt-3">
+                      <p className="text-[9px] font-black uppercase tracking-[0.18em] text-tertiary/80 md:text-[10px]">Position stack</p>
+                      <p className="mt-1 text-[11px] font-extrabold leading-relaxed text-on-surface/78 md:text-[13px]">{member.label}</p>
+                    </div>
+                  )}
+                  {quote && (
+                    <blockquote className="mt-3 border-l-2 border-primary/35 pl-3 md:mt-4">
+                      <p className="text-[9px] font-black uppercase tracking-[0.16em] text-primary/70 md:text-[10px]">Fav quote</p>
+                      <p className="mt-1 line-clamp-4 text-[11px] font-semibold italic leading-relaxed text-on-surface-variant md:text-[13px]">{quote}</p>
+                    </blockquote>
+                  )}
                 </div>
               </article>
             )
@@ -512,8 +542,9 @@ function ClosingBanner({
     }
     : { backgroundImage: gradient }
   const logos = stories.map(getStoryLogoForHome).filter(Boolean)
-  const closingTitle = block.heading || 'So, ready to be our plus one?'
-  const closingCharacterCount = countStaggerCharacters(closingTitle)
+  const faqTitle = 'Frequently Asked Questions'
+  const closingSubtitle = normalizeClosingSubtitle(block.subtitle)
+  const closingCharacterCount = countStaggerCharacters(faqTitle)
   const closingFollowDelay = Math.max(360, closingCharacterCount * 18 + 220)
 
   return (
@@ -530,34 +561,27 @@ function ClosingBanner({
           </div>
         )}
         <div className="closing-content relative mx-auto w-full max-w-[1200px]" data-reveal="closing-content">
-          <h2 className="home-hero-title-serif text-[34px] font-semibold leading-tight text-white md:text-[44px]">
-            <StaggeredText text={closingTitle} className="inline" charClassName="closing-char" nowrap={false} />
-          </h2>
-          {block.subtitle && (
-            <p
-              className="closing-follow mx-auto mt-4 max-w-2xl text-base font-semibold leading-relaxed text-white/82 md:text-lg"
-              style={{ '--closing-delay': `${closingFollowDelay}ms` } as CSSProperties}
-            >
-              {block.subtitle}
-            </p>
-          )}
-          <button
-            type="button"
-            onClick={() => openBookingModal('closing-banner')}
-            className="closing-follow mt-8 inline-flex items-center justify-center rounded-full bg-white px-10 py-4 text-base font-extrabold text-primary shadow-[0_20px_50px_rgba(0,0,0,0.18)] transition hover:scale-105 hover:shadow-[0_24px_70px_rgba(0,0,0,0.25)]"
-            style={{ '--closing-delay': `${closingFollowDelay + 120}ms` } as CSSProperties}
+          <p
+            className="closing-follow mx-auto max-w-2xl text-center text-base font-black leading-relaxed text-white md:text-xl"
+            style={{ '--closing-delay': '120ms' } as CSSProperties}
           >
-            {resolvePrimaryBookingCtaLabel(block.ctaLabel)}
-          </button>
+            {closingSubtitle}
+          </p>
           {faqItems.length > 0 && (
-            <div className="closing-faq mx-auto mt-9 grid max-w-3xl gap-3 text-left">
+            <div className="closing-faq mx-auto mt-10 grid max-w-3xl gap-3 text-left">
+              <div className="mb-2">
+                <h2 className="text-[30px] font-black leading-tight text-white md:text-[42px]">
+                  <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
+                </h2>
+                <div className="home-gradient-underline mt-3 bg-white/80" aria-hidden="true" />
+              </div>
               {faqItems.map((item, index) => {
                 const open = openFaqIndex === index
                 return (
                   <div
                     key={`${item.question}-${index}`}
                     className="closing-faq-item overflow-hidden rounded-2xl border border-white/22 bg-white/14 text-white shadow-[0_18px_46px_rgba(0,0,0,0.12)] backdrop-blur-xl"
-                    style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + 180 + index * 80}ms` } as CSSProperties}
+                    style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + index * 80}ms` } as CSSProperties}
                   >
                     <button
                       type="button"
@@ -685,9 +709,10 @@ export default function BrandHomePage({
           <SectionHeader
             title="The One Packages"
             intro={lang === 'vi' ? 'Chọn hệ tăng trưởng phù hợp với giai đoạn của bạn.' : 'Choose the growth system that fits your stage.'}
+            align="center"
           />
           {packagesBlock?.body && (
-            <div className="mb-6 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-on-surface-variant">
+            <div className="mx-auto mb-6 max-w-3xl whitespace-pre-line text-center text-sm leading-relaxed text-on-surface-variant">
               {packagesBlock.body}
             </div>
           )}

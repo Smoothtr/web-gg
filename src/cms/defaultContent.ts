@@ -158,8 +158,8 @@ export const defaultCmsPages: CmsPageContent[] = [
       },
       {
         id: 'closing',
-        heading: 'So, ready to be our plus one?',
-        subtitle: 'Build the next story with The One - GG99.',
+        heading: 'Frequently Asked Questions',
+        subtitle: 'Build the next story with The One.',
         body: '',
         backgroundImageUrl: '',
         backgroundGradient: 'linear-gradient(135deg,#db2777 0%,#ef4444 48%,#f59e0b 100%)',
