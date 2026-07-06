@@ -1094,6 +1094,19 @@
   display: none;
 }
 
+.red-flags-scroll {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.red-flags-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.package-horizontal-row {
+  scroll-margin-top: 132px;
+}
+
 @media (min-width: 768px) {
   .home-explore-tile.md\:col-span-2 .home-explore-media,
   .home-explore-grid > .md\:col-span-2 .home-explore-media {

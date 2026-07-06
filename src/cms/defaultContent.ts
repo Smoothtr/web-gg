@@ -30,10 +30,28 @@ const theOnePackageItems: CmsBlockItem[] = [
       'Performance marketing (% trên ad spend thực tế)',
       'Price: 15,000,000 VND/month',
     ].join('\n'),
+    subtitle: 'Mới quen - xây nền digital tử tế, đều tay mỗi tuần.',
+    features: [
+      { label: 'CONTENT ENGINE', text: '45 content units/month, tối thiểu 15 reels/short-form videos.' },
+      { label: 'WEBSITE SYSTEM', text: 'Basic booking website, tối đa 10 landing pages.' },
+      { label: 'PERFORMANCE MEDIA', text: 'Performance marketing theo % trên ad spend thực tế.' },
+    ],
+    priceLabel: 'MONTHLY SETUP',
+    priceValue: '15,000,000 VND/month',
+    leftBackgroundUrl: '',
+    rightBackgroundUrl: '',
     ctaText: 'Chọn gói này',
     caseStudyLabel: 'Xem chuyện tình tụi mình',
     locales: {
       en: {
+        subtitle: 'For brands starting to build a consistent digital presence.',
+        features: [
+          { label: 'CONTENT ENGINE', text: '45 content units/month, minimum 15 reels/short-form videos.' },
+          { label: 'WEBSITE SYSTEM', text: 'Basic booking website, up to 10 landing pages.' },
+          { label: 'PERFORMANCE MEDIA', text: 'Performance marketing based on actual ad spend.' },
+        ],
+        priceLabel: 'MONTHLY SETUP',
+        priceValue: '15,000,000 VND/month',
         body: [
           'For brands starting to build a consistent digital presence.',
           '45 content units/month (minimum 15 reels/short-form videos)',
@@ -62,11 +80,29 @@ const theOnePackageItems: CmsBlockItem[] = [
       'Performance marketing (% trên ad spend thực tế)',
       'Price: 30,000,000 VND/month',
     ].join('\n'),
+    subtitle: 'Về chung nhà - content, web và ads chạy như một hệ thống.',
+    features: [
+      { label: 'CONTENT ENGINE', text: '60 content units/month, tối thiểu 20 reels/short-form videos.' },
+      { label: 'WEBSITE SYSTEM', text: 'Booking/sales website, unlimited landing pages.' },
+      { label: 'PERFORMANCE MEDIA', text: 'Performance marketing theo % trên ad spend thực tế.' },
+    ],
+    priceLabel: 'MONTHLY SETUP',
+    priceValue: '30,000,000 VND/month',
+    leftBackgroundUrl: '',
+    rightBackgroundUrl: '',
     ctaText: 'Chọn gói này',
     caseStudyLabel: 'Xem chuyện tình tụi mình',
     locales: {
       en: {
         label: 'Most Popular',
+        subtitle: 'For brands that need content, website and paid media running as one stable system.',
+        features: [
+          { label: 'CONTENT ENGINE', text: '60 content units/month, minimum 20 reels/short-form videos.' },
+          { label: 'WEBSITE SYSTEM', text: 'Booking/sales website, unlimited landing pages.' },
+          { label: 'PERFORMANCE MEDIA', text: 'Performance marketing based on actual ad spend.' },
+        ],
+        priceLabel: 'MONTHLY SETUP',
+        priceValue: '30,000,000 VND/month',
         body: [
           'For brands that need content, website and paid media running as one stable system.',
           '60 content units/month (minimum 20 reels/short-form videos)',
@@ -94,10 +130,28 @@ const theOnePackageItems: CmsBlockItem[] = [
       'Performance marketing (% trên ad spend thực tế)',
       'Price: Custom package — based on project scope.',
     ].join('\n'),
+    subtitle: 'Tính chuyện lâu dài - chiến dịch lớn, mục tiêu doanh thu cụ thể.',
+    features: [
+      { label: 'SYSTEM BASE', text: 'Everything included in The One System.' },
+      { label: 'EVENT OPS', text: 'Support planning and running on-site events.' },
+      { label: 'PERFORMANCE MEDIA', text: 'Campaign strategy, creative direction, media planning and performance optimization.' },
+    ],
+    priceLabel: 'MONTHLY SETUP',
+    priceValue: 'Custom package — based on project scope.',
+    leftBackgroundUrl: '',
+    rightBackgroundUrl: '',
     ctaText: 'Chọn gói này',
     caseStudyLabel: 'Xem chuyện tình tụi mình',
     locales: {
       en: {
+        subtitle: 'For brands ready for strong growth: large campaigns, event execution, branch expansion or specific revenue targets.',
+        features: [
+          { label: 'SYSTEM BASE', text: 'Everything included in The One System.' },
+          { label: 'EVENT OPS', text: 'Support planning and running on-site events.' },
+          { label: 'PERFORMANCE MEDIA', text: 'Campaign strategy, creative direction, media planning and performance optimization.' },
+        ],
+        priceLabel: 'MONTHLY SETUP',
+        priceValue: 'Custom package — based on project scope.',
         body: [
           'For brands ready for strong growth: large campaigns, event execution, branch expansion or specific revenue targets.',
           'Everything included in The One System.',
@@ -121,6 +175,8 @@ const theOnePeopleItems: CmsBlockItem[] = [
     proofPoint: '5 năm cùng INKAHOLIC, 0 -> 326K+ đơn hàng.',
     imageUrl: '/logo-gg.png',
     funPhotoUrl: '/logo-gg.png',
+    bannerImageUrl: '/logo-gg.png',
+    thumbnailUrl: '/logo-gg.png',
     avatarImages: ['/logo-gg.png', '/logo-gg.png', '/logo-gg.png', '/logo-gg.png'],
     locales: {
       en: {
@@ -137,6 +193,8 @@ const theOnePeopleItems: CmsBlockItem[] = [
     proofPoint: 'Vận hành nội dung ngắn hạn cho nhiều brand Gen Z.',
     imageUrl: '/logo-gg.png',
     funPhotoUrl: '/logo-gg.png',
+    bannerImageUrl: '/logo-gg.png',
+    thumbnailUrl: '/logo-gg.png',
     avatarImages: ['/logo-gg.png', '/logo-gg.png', '/logo-gg.png', '/logo-gg.png'],
     locales: {
       en: {
@@ -153,6 +211,8 @@ const theOnePeopleItems: CmsBlockItem[] = [
     proofPoint: 'Theo dõi ads, ROAS, CPA và dashboard hằng tuần.',
     imageUrl: '/logo-gg.png',
     funPhotoUrl: '/logo-gg.png',
+    bannerImageUrl: '/logo-gg.png',
+    thumbnailUrl: '/logo-gg.png',
     avatarImages: ['/logo-gg.png', '/logo-gg.png', '/logo-gg.png', '/logo-gg.png'],
     locales: {
       en: {
@@ -169,6 +229,8 @@ const theOnePeopleItems: CmsBlockItem[] = [
     proofPoint: 'Xây web, funnel và CRM flow cho các đội lean.',
     imageUrl: '/logo-gg.png',
     funPhotoUrl: '/logo-gg.png',
+    bannerImageUrl: '/logo-gg.png',
+    thumbnailUrl: '/logo-gg.png',
     avatarImages: ['/logo-gg.png', '/logo-gg.png', '/logo-gg.png', '/logo-gg.png'],
     locales: {
       en: {
@@ -185,6 +247,8 @@ const theOnePeopleItems: CmsBlockItem[] = [
     proofPoint: 'Vận hành Shopee, TikTok Shop, bundles và launch calendar.',
     imageUrl: '/logo-gg.png',
     funPhotoUrl: '/logo-gg.png',
+    bannerImageUrl: '/logo-gg.png',
+    thumbnailUrl: '/logo-gg.png',
     avatarImages: ['/logo-gg.png', '/logo-gg.png', '/logo-gg.png', '/logo-gg.png'],
     locales: {
       en: {
@@ -201,6 +265,8 @@ const theOnePeopleItems: CmsBlockItem[] = [
     proofPoint: 'Biến tín hiệu rời rạc thành dashboard dùng được mỗi tuần.',
     imageUrl: '/logo-gg.png',
     funPhotoUrl: '/logo-gg.png',
+    bannerImageUrl: '/logo-gg.png',
+    thumbnailUrl: '/logo-gg.png',
     avatarImages: ['/logo-gg.png', '/logo-gg.png', '/logo-gg.png', '/logo-gg.png'],
     locales: {
       en: {
@@ -569,6 +635,8 @@ export const defaultCmsPages: CmsPageContent[] = [
         dividerShow: true,
         ctaLabel: 'Schedule Our Date',
         ctaSubtext: '30 phút cà phê online với founder - miễn phí, không ràng buộc, không sales gọi dai.',
+        showCtaSubtext: false,
+        showStatChips: false,
         statChips: [
           { value: '5', label: 'mối tình đang bền' },
           { value: 'x35', label: 'tăng trưởng đỉnh' },
@@ -607,12 +675,15 @@ export const defaultCmsPages: CmsPageContent[] = [
         id: 'packages',
         heading: 'The One Packages',
         body: 'Mối quan hệ nào cũng cần đúng nhịp. Chọn nhịp của bạn - mình không vội.',
+        layout: 'horizontal',
         pricingNote: 'Giá thật. Không phí ẩn. Cam kết theo quý - hợp thì đi tiếp, không hợp thì chia tay văn minh, dữ liệu và tài khoản là của bạn.',
+        disclaimer: '* The One không cam kết doanh thu. Về workflow, tài khoản quảng cáo và nền tảng, The One là đơn vị vận hành/đối tác triển khai, không phải đại diện của Meta, TikTok, Google hoặc Shopee.',
         items: theOnePackageItems,
         locales: {
           en: {
             body: 'Choose the growth system that fits your stage.',
             pricingNote: 'Transparent pricing. No hidden fees. Quarterly commitment - if it works, we continue; if not, we part cleanly and your data stays yours.',
+            disclaimer: '* The One does not guarantee revenue. For workflows, ad accounts and platforms, The One operates as an implementation partner, not as a representative of Meta, TikTok, Google or Shopee.',
           },
         },
       },
@@ -621,10 +692,10 @@ export const defaultCmsPages: CmsPageContent[] = [
         heading: 'Nghe quen không?',
         body: 'Bạn không cần thêm một agency. Bạn cần The One.',
         items: [
-          { title: '"Bên em cam kết KPI, anh yên tâm" - rồi biến mất sau tháng thứ 2.' },
-          { title: 'Báo cáo 40 trang màu mè. Đơn hàng thì không thấy đâu.' },
-          { title: 'Đổi người phụ trách 3 lần một quý. Lần nào cũng kể lại từ đầu.' },
-          { title: 'Phí phát sinh nhiều hơn kết quả.' },
+          { title: '"Bên em cam kết KPI, anh yên tâm" - rồi biến mất sau tháng thứ 2.', thumbnailUrl: '/logo-gg.png' },
+          { title: 'Báo cáo 40 trang màu mè. Đơn hàng thì không thấy đâu.', thumbnailUrl: '/logo-gg.png' },
+          { title: 'Đổi người phụ trách 3 lần một quý. Lần nào cũng kể lại từ đầu.', thumbnailUrl: '/logo-gg.png' },
+          { title: 'Phí phát sinh nhiều hơn kết quả.', thumbnailUrl: '/logo-gg.png' },
         ],
         locales: {
           en: {
@@ -637,6 +708,7 @@ export const defaultCmsPages: CmsPageContent[] = [
         id: 'people',
         heading: 'The One People',
         body: 'Những người đã bỏ việc 9-5 để làm "người ấy" của bạn: chiến lược, content, media, thương mại, CRM và data chạy về một hướng.',
+        autoSlideSeconds: '5',
         closingLine1: 'Tụi mình đã nghỉ việc 9-5 và tự mở công ty.',
         closingLine2: "Isn't it your turn now?",
         items: theOnePeopleItems,

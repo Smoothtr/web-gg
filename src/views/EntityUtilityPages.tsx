@@ -83,10 +83,15 @@ export function PackagesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: Br
                 {packageBlock.body}
               </div>
             )}
-            <PackageCards items={packageItems} lang={lang} />
+            <PackageCards items={packageItems} lang={lang} layout={packageBlock?.layout === 'cards' ? 'cards' : 'horizontal'} />
             {packageBlock?.pricingNote && (
               <p className="mx-auto mt-6 max-w-3xl rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-center text-sm font-bold leading-relaxed text-on-surface-variant">
                 {packageBlock.pricingNote}
+              </p>
+            )}
+            {packageBlock?.disclaimer && (
+              <p className="mx-auto mt-6 max-w-[720px] whitespace-pre-line text-center text-[12px] italic leading-relaxed text-on-surface-variant/60 md:text-[13px]">
+                {packageBlock.disclaimer}
               </p>
             )}
           </div>

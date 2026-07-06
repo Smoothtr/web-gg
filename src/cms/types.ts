@@ -8,6 +8,11 @@ export type CmsStatChip = {
   icon?: string
 }
 
+export type CmsPackageFeature = {
+  label: string
+  text: string
+}
+
 export type CmsLocalizedBlockFields = {
   heading?: string
   body?: string
@@ -18,17 +23,20 @@ export type CmsLocalizedBlockFields = {
   ctaHref?: string
   ctaSubtext?: string
   pricingNote?: string
+  disclaimer?: string
   statChips?: CmsStatChip[]
 }
 
 export type CmsLocalizedBlockItemFields = {
   title?: string
   body?: string
+  subtitle?: string
   label?: string
   caption?: string
   period?: string
   shortDescription?: string
   services?: string[]
+  features?: CmsPackageFeature[]
   keyMetrics?: Array<{
     value: string
     label: string
@@ -36,6 +44,8 @@ export type CmsLocalizedBlockItemFields = {
   }>
   ctaText?: string
   caseStudyLabel?: string
+  priceLabel?: string
+  priceValue?: string
   featuredStats?: CmsStatChip[]
   proofPoint?: string
   testimonialQuote?: string
@@ -86,9 +96,11 @@ export type CmsBlockItem = {
   href?: string
   label?: string
   caseStudyLabel?: string
+  subtitle?: string
   period?: string
   shortDescription?: string
   services?: string[]
+  features?: CmsPackageFeature[]
   keyMetrics?: Array<{
     value: string
     label: string
@@ -101,6 +113,12 @@ export type CmsBlockItem = {
   }
   ctaText?: string
   caseStudyLink?: string
+  priceLabel?: string
+  priceValue?: string
+  leftBackgroundUrl?: string
+  rightBackgroundUrl?: string
+  overlayOpacity?: string
+  bannerImageUrl?: string
   showOnHomepage?: boolean
   homepageOrder?: string
   featuredStats?: CmsStatChip[]
@@ -131,7 +149,12 @@ export type CmsBlock = {
   ctaHref?: string
   ctaSubtext?: string
   pricingNote?: string
+  disclaimer?: string
   statChips?: CmsStatChip[]
+  showCtaSubtext?: boolean
+  showStatChips?: boolean
+  layout?: 'cards' | 'horizontal'
+  autoSlideSeconds?: string
   items?: CmsBlockItem[]
   locales?: Partial<Record<BrandLang, CmsLocalizedBlockFields>>
 }

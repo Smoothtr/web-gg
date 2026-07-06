@@ -282,20 +282,18 @@ function getStoryPreviewTheme(story: CaseStudy) {
 
 function getPreviewPopoverStyle(target: HTMLElement): CSSProperties {
   const rect = target.getBoundingClientRect()
-  const width = Math.min(window.innerWidth * 0.92, 420)
+  const width = Math.min(window.innerWidth - 32, 380)
   const left = Math.min(Math.max(rect.left + rect.width / 2 - width / 2, 16), window.innerWidth - width - 16)
-  const showBelow = rect.top < 360
-  const top = showBelow ? rect.bottom + 14 : rect.top - 14
-  const availableHeight = showBelow ? window.innerHeight - top - 16 : top - 16
+  const openUp = rect.top + rect.height / 2 > window.innerHeight / 2
+  const top = openUp ? rect.top - 12 : rect.bottom + 12
   return {
     left,
     top,
     width,
-    maxHeight: Math.max(260, Math.min(520, availableHeight)),
-    overflowY: 'auto',
-    borderRadius: 24,
-    overscrollBehavior: 'contain',
-    transform: showBelow ? 'none' : 'translateY(-100%)',
+    maxHeight: 'min(560px, 85vh)',
+    borderRadius: 22,
+    transform: openUp ? 'translateY(-100%)' : 'none',
+    transformOrigin: openUp ? '50% 100%' : '50% 0%',
   }
 }
 
@@ -317,11 +315,11 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
 
   return (
     <article
-      className="pointer-events-auto relative overflow-hidden rounded-[24px] border border-white/70 text-on-surface ring-1 ring-white/60 backdrop-blur-xl"
+      className="pointer-events-auto relative flex max-h-[min(560px,85vh)] flex-col overflow-hidden rounded-[22px] border border-white/70 text-on-surface ring-1 ring-white/60 backdrop-blur-xl"
       style={{ background: theme.shell, boxShadow: `0 28px 90px ${theme.glow}` }}
     >
       <div className="absolute inset-0 opacity-70" style={{ background: `radial-gradient(circle at 18% 12%, rgba(255,255,255,0.9), transparent 30%), radial-gradient(circle at 86% 22%, ${theme.glow}, transparent 34%)` }} aria-hidden="true" />
-      <div className="relative m-3 aspect-video overflow-hidden rounded-[20px] bg-surface-container-low shadow-[0_18px_44px_rgba(43,23,33,0.18)]">
+      <div className="relative m-3 aspect-video max-h-[180px] shrink-0 overflow-hidden rounded-[18px] bg-surface-container-low shadow-[0_18px_44px_rgba(43,23,33,0.18)]">
         {images.map((imageUrl, index) => (
           <img
             key={`${story.id}-preview-${imageUrl}-${index}`}
@@ -342,7 +340,7 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
           </div>
         )}
       </div>
-      <div className="relative m-3 mt-0 rounded-[20px] border border-white/65 bg-white/[0.86] p-4 shadow-[0_18px_44px_rgba(43,23,33,0.12)] md:p-5">
+      <div className="relative m-3 mt-0 flex min-h-0 flex-1 flex-col rounded-[18px] border border-white/65 bg-white/[0.88] p-4 shadow-[0_18px_44px_rgba(43,23,33,0.12)]">
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0">
             <p className="text-[10px] font-black uppercase tracking-[0.18em]" style={{ color: theme.accent }}>{story.category}</p>
@@ -352,10 +350,10 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
         </div>
         <p className="mt-3 line-clamp-2 text-sm font-semibold leading-relaxed text-on-surface-variant">{story.shortDescription}</p>
         {stats.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
+          <div className="mt-4 grid gap-1.5">
             {stats.map((stat) => (
               <span key={`${story.id}-preview-stat-${stat.value}-${stat.label}`} className="rounded-full bg-gradient-to-r from-primary/12 via-tertiary/10 to-secondary/12 px-3 py-1.5 text-xs font-black text-primary">
-                {stat.value}{stat.label ? ` ${stat.label}` : ''}
+                <strong>{stat.value}</strong>{stat.label ? ` ${stat.label}` : ''}
               </span>
             ))}
           </div>
@@ -367,10 +365,11 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
               {service}
             </span>
           ))}
+          {story.services.length > 2 && <span className="rounded-full bg-surface-container/80 px-2.5 py-1">+{story.services.length - 2}</span>}
         </div>
         <a
           href={href}
-          className="btn-shine mt-5 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-4 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] transition hover:opacity-95"
+          className="btn-shine mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-4 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] transition hover:opacity-95"
         >
           About this one
           <ArrowUpRight size={15} strokeWidth={2.5} aria-hidden="true" />
@@ -385,14 +384,43 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
   const showcaseStories = getHomepageCaseStudies(stories)
   const [bannerIndex, setBannerIndex] = useState(0)
   const [previewStory, setPreviewStory] = useState<StoryPreviewState | null>(null)
+  const [canHover, setCanHover] = useState(false)
+  const hoverOpenTimer = useRef<number | null>(null)
+  const hoverCloseTimer = useRef<number | null>(null)
+  const pauseUntilRef = useRef(0)
+
+  useEffect(() => {
+    setCanHover(window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false)
+  }, [])
 
   useEffect(() => {
     if (showcaseStories.length < 2) return
     const interval = window.setInterval(() => {
+      if (Date.now() < pauseUntilRef.current) return
       setBannerIndex((index) => (index + 1) % showcaseStories.length)
     }, 3600)
     return () => window.clearInterval(interval)
   }, [showcaseStories.length])
+
+  useEffect(() => {
+    const rail = railRef.current
+    if (!rail || canHover) return
+    const reduced = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+    if (reduced) return
+    let raf = 0
+    let last = performance.now()
+    const tick = (now: number) => {
+      const delta = now - last
+      last = now
+      if (Date.now() >= pauseUntilRef.current) {
+        rail.scrollLeft += (delta / 1000) * 28
+        if (rail.scrollLeft >= rail.scrollWidth - rail.clientWidth - 2) rail.scrollLeft = 0
+      }
+      raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [canHover, showcaseStories.length])
 
   if (!showcaseStories.length) return null
 
@@ -407,12 +435,30 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
     rail.scrollBy({ left: direction * Math.max(280, rail.clientWidth * 0.82), behavior: 'smooth' })
   }
 
+  function clearPreviewTimers() {
+    if (hoverOpenTimer.current) window.clearTimeout(hoverOpenTimer.current)
+    if (hoverCloseTimer.current) window.clearTimeout(hoverCloseTimer.current)
+  }
+
   function showPreview(story: CaseStudy, target: HTMLElement) {
-    setPreviewStory({ story, style: getPreviewPopoverStyle(target) })
+    if (!canHover) return
+    clearPreviewTimers()
+    hoverOpenTimer.current = window.setTimeout(() => {
+      setPreviewStory({ story, style: getPreviewPopoverStyle(target) })
+    }, 300)
+  }
+
+  function closePreviewSoon() {
+    clearPreviewTimers()
+    hoverCloseTimer.current = window.setTimeout(() => setPreviewStory(null), 150)
+  }
+
+  function pauseAuto(ms = 5000) {
+    pauseUntilRef.current = Date.now() + ms
   }
 
   return (
-    <section className="relative overflow-visible bg-surface-container px-5 py-8 md:py-12 lg:px-10" onMouseLeave={() => setPreviewStory(null)}>
+    <section className="relative overflow-visible bg-surface-container px-5 py-8 md:py-12 lg:px-10" onMouseLeave={closePreviewSoon}>
       <div className="mx-auto max-w-6xl">
         <a
           href={activeStoryHref}
@@ -476,7 +522,7 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
               </button>
             </>
           )}
-          <div ref={railRef} className="case-study-rail flex snap-x gap-2 overflow-x-auto scroll-smooth pb-2">
+          <div ref={railRef} className="case-study-rail flex snap-x gap-2 overflow-x-auto scroll-smooth pb-2" onPointerDown={() => pauseAuto()} onTouchStart={() => pauseAuto()}>
             {showcaseStories.map((story, index) => (
               <button
                 key={`${story.id}-rail`}
@@ -486,9 +532,15 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
                 style={{ '--ri': index } as CSSProperties}
                 onMouseEnter={(event) => showPreview(story, event.currentTarget)}
                 onFocus={(event) => showPreview(story, event.currentTarget)}
-                onClick={(event) => showPreview(story, event.currentTarget)}
+                onMouseLeave={closePreviewSoon}
+                onClick={(event) => {
+                  pauseAuto()
+                  setBannerIndex(index)
+                  if (!canHover) window.location.href = resolveStoryHref(lang, story.id, story.id)
+                  else showPreview(story, event.currentTarget)
+                }}
                 className={[
-                  'group relative aspect-[16/10] shrink-0 basis-[82%] snap-start overflow-hidden rounded-[16px] bg-[#180b11] text-left shadow-[0_14px_40px_rgba(80,20,50,0.13)] outline-none ring-1 transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]',
+                  'group relative aspect-[16/10] shrink-0 basis-[42vw] snap-start overflow-hidden rounded-[16px] bg-[#180b11] text-left shadow-[0_14px_40px_rgba(80,20,50,0.13)] outline-none ring-1 transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2.25)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]',
                   index === activeBannerIndex ? 'ring-primary/70' : 'ring-white/70',
                 ].join(' ')}
                 aria-label={`Preview ${story.brandName}`}
@@ -517,15 +569,10 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
         </div>
       </div>
 
-      {previewStory && (
+      {previewStory && canHover && (
         <>
           <div className="pointer-events-none fixed z-[80] hidden md:block" style={previewStory.style}>
             <CaseStudyPreviewPopover story={previewStory.story} lang={lang} />
-          </div>
-          <div className="fixed inset-0 z-[80] flex items-end bg-black/42 p-4 backdrop-blur-sm md:hidden" onClick={() => setPreviewStory(null)}>
-            <div className="mx-auto w-full max-w-[420px]" onClick={(event) => event.stopPropagation()}>
-              <CaseStudyPreviewPopover story={previewStory.story} lang={lang} />
-            </div>
           </div>
         </>
       )}
@@ -534,14 +581,21 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
 }
 
 function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
-  const items = (block?.items ?? []).filter((item) => item.published !== false && item.title.trim()).slice(0, 5)
+  const rowRef = useRef<HTMLDivElement | null>(null)
+  const items = (block?.items ?? []).filter((item) => item.published !== false && (item.thumbnailUrl?.trim() || item.imageUrl?.trim() || item.title.trim()))
   if (!block || (!block.heading.trim() && !block.body.trim() && !items.length)) return null
+
+  function scrollRow(direction: -1 | 1) {
+    const row = rowRef.current
+    if (!row) return
+    row.scrollBy({ left: direction * Math.max(280, row.clientWidth * 0.8), behavior: 'smooth' })
+  }
 
   return (
     <section className="relative overflow-hidden bg-[#180712] px-5 py-14 text-white md:py-20 lg:px-10">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(219,39,119,0.34),transparent_34%),radial-gradient(circle_at_86%_24%,rgba(245,158,11,0.24),transparent_30%),linear-gradient(135deg,rgba(255,122,168,0.1),rgba(239,68,68,0.08))]" aria-hidden="true" />
-      <div className="relative mx-auto grid max-w-6xl gap-10 lg:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)] lg:items-center">
-        <div>
+      <div className="relative mx-auto max-w-6xl">
+        <div className="max-w-3xl">
           <p data-reveal className="text-[11px] font-black uppercase tracking-[0.2em] text-white/54">Red flags</p>
           <h2 data-reveal className="mt-4 max-w-xl font-serif text-[38px] font-normal leading-[0.98] md:text-[58px]">
             {block.heading || 'Sound familiar?'}
@@ -552,23 +606,48 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
             </p>
           )}
         </div>
-        <div className="grid gap-3">
+        <div className="red-flags-row group/row relative mt-8">
+          {items.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => scrollRow(-1)}
+                className="absolute left-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/72 text-on-surface opacity-60 shadow-[0_16px_36px_rgba(0,0,0,0.26)] backdrop-blur-md transition hover:bg-white hover:opacity-100 md:opacity-0 md:group-hover/row:opacity-100"
+                aria-label="Previous red flags"
+              >
+                <ChevronLeft size={20} strokeWidth={2.6} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => scrollRow(1)}
+                className="absolute right-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/72 text-on-surface opacity-60 shadow-[0_16px_36px_rgba(0,0,0,0.26)] backdrop-blur-md transition hover:bg-white hover:opacity-100 md:opacity-0 md:group-hover/row:opacity-100"
+                aria-label="Next red flags"
+              >
+                <ChevronRight size={20} strokeWidth={2.6} aria-hidden="true" />
+              </button>
+            </>
+          )}
+          <div ref={rowRef} className="red-flags-scroll flex snap-x gap-2.5 overflow-x-auto scroll-smooth pb-2">
           {items.map((item, index) => (
-            <article
+            <a
               key={`${item.title}-${index}`}
+              href={item.href?.trim() || undefined}
               data-reveal="tile-in"
-              data-tile-direction={index % 2 ? 'right' : 'bottom'}
+              data-tile-direction="bottom"
               style={{ '--ri': index } as CSSProperties}
-              className="relative ml-auto w-[min(100%,620px)] rounded-[24px] border border-white/12 bg-white/[0.08] p-4 shadow-[0_22px_70px_rgba(0,0,0,0.22)] backdrop-blur-xl"
+              className="red-flag-poster group/poster relative aspect-video shrink-0 basis-[78vw] snap-start overflow-hidden rounded-lg border border-white/12 bg-white/[0.08] shadow-[0_22px_70px_rgba(0,0,0,0.22)] outline-none transition duration-300 hover:z-10 hover:scale-[1.06] hover:shadow-[0_30px_90px_rgba(219,39,119,0.28)] focus-visible:ring-2 focus-visible:ring-white sm:basis-[48vw] md:basis-[30vw] lg:basis-[calc((100%_-_40px)/4.5)]"
+              aria-label={item.title}
             >
-              <div className="mb-3 flex items-center gap-1.5" aria-hidden="true">
-                <span className="h-2 w-2 rounded-full bg-[#ff7aa8]" />
-                <span className="h-2 w-2 rounded-full bg-[#f59e0b]" />
-                <span className="h-2 w-2 rounded-full bg-white/36" />
-              </div>
-              <p className="text-[15px] font-bold leading-relaxed text-white/88 md:text-[17px]">{item.title}</p>
-            </article>
+              {item.thumbnailUrl || item.imageUrl ? (
+                <img src={item.thumbnailUrl || item.imageUrl} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover/poster:scale-[1.04]" />
+              ) : (
+                <div className="flex h-full w-full items-end bg-gradient-to-br from-primary via-red-500 to-secondary p-4">
+                  <p className="text-[15px] font-black leading-tight text-white md:text-[18px]">{item.title}</p>
+                </div>
+              )}
+            </a>
           ))}
+          </div>
         </div>
       </div>
     </section>
@@ -603,72 +682,185 @@ function splitPeopleRoles(value?: string) {
 
 function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
   const members = (block?.items ?? []).filter((item) => item.published !== false).slice(0, 6)
+  const railRef = useRef<HTMLDivElement | null>(null)
+  const [activeIndex, setActiveIndex] = useState(0)
+  const [previewMember, setPreviewMember] = useState<{ member: CmsBlockItem; style: CSSProperties } | null>(null)
+  const [canHover, setCanHover] = useState(false)
+  const hoverOpenTimer = useRef<number | null>(null)
+  const hoverCloseTimer = useRef<number | null>(null)
+  const pauseUntilRef = useRef(0)
+  const hasPeople = Boolean(block && members.length)
+  const autoSlideSeconds = Math.max(2.5, Number.parseFloat(block?.autoSlideSeconds ?? '5') || 5)
+
+  useEffect(() => {
+    setCanHover(window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false)
+  }, [])
+
+  useEffect(() => {
+    if (!hasPeople) return
+    if (members.length < 2) return
+    const interval = window.setInterval(() => {
+      if (Date.now() < pauseUntilRef.current) return
+      setActiveIndex((index) => (index + 1) % members.length)
+    }, autoSlideSeconds * 1000)
+    return () => window.clearInterval(interval)
+  }, [autoSlideSeconds, hasPeople, members.length])
+
   if (!block || !members.length) return null
+
   const closingLine1 = block.closingLine1 || 'We quit our 9-5 and started our own business.'
   const closingLine2 = block.closingLine2 || "Isn't it your turn now?"
+  const activeMember = members[activeIndex % members.length] ?? members[0]
+  const activeRoles = splitPeopleRoles(activeMember.label)
+  const activeBanner = activeMember.bannerImageUrl || getPeopleAvatarImages(activeMember)[0] || '/logo-gg.png'
+
+  function pauseAuto(ms = 5000) {
+    pauseUntilRef.current = Date.now() + ms
+  }
+
+  function moveRail(direction: -1 | 1) {
+    const rail = railRef.current
+    if (!rail) return
+    pauseAuto()
+    rail.scrollBy({ left: direction * Math.max(220, rail.clientWidth * 0.8), behavior: 'smooth' })
+    setActiveIndex((index) => (index + direction + members.length) % members.length)
+  }
+
+  function clearPreviewTimers() {
+    if (hoverOpenTimer.current) window.clearTimeout(hoverOpenTimer.current)
+    if (hoverCloseTimer.current) window.clearTimeout(hoverCloseTimer.current)
+  }
+
+  function showMemberPreview(member: CmsBlockItem, target: HTMLElement) {
+    if (!canHover) return
+    clearPreviewTimers()
+    hoverOpenTimer.current = window.setTimeout(() => {
+      setPreviewMember({ member, style: getPreviewPopoverStyle(target) })
+    }, 300)
+  }
+
+  function closeMemberPreviewSoon() {
+    clearPreviewTimers()
+    hoverCloseTimer.current = window.setTimeout(() => setPreviewMember(null), 150)
+  }
 
   return (
-    <section className="px-5 py-12 md:py-16 lg:px-10">
+    <section className="px-5 py-12 md:py-16 lg:px-10" onMouseLeave={closeMemberPreviewSoon}>
       <div className="mx-auto max-w-6xl">
-        <SectionHeader title={block.heading || 'The One People'} intro={block.body} align="center" />
-        <div className="people-card-grid grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-7">
+        <SectionHeader title={block.heading || 'The One People'} intro={block.body} align="left" />
+        <div data-reveal="scale" className="group relative aspect-[16/8] overflow-hidden rounded-[24px] bg-[#190b12] text-white shadow-[0_24px_70px_rgba(80,20,50,0.16)] ring-1 ring-white/70 md:aspect-[16/6]">
+          <img
+            src={activeBanner}
+            alt={`${activeMember.title} banner`}
+            className={`absolute inset-0 h-full w-full transition duration-700 ${
+              isLogoLikeImage(activeBanner) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-12 md:p-20' : 'object-cover'
+            }`}
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/20 to-transparent" aria-hidden="true" />
+          <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
+            <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/68">The One People</p>
+            <h3 className="mt-2 max-w-2xl text-[30px] font-extrabold leading-tight md:text-[48px]">{activeMember.title}</h3>
+            {activeRoles.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {activeRoles.slice(0, 4).map((role) => (
+                  <span key={`${activeMember.title}-${role}`} className="rounded-full border border-white/24 bg-white/18 px-3 py-1.5 text-xs font-black text-white backdrop-blur-md">
+                    {role}
+                  </span>
+                ))}
+              </div>
+            )}
+            {activeMember.body && <p className="mt-3 max-w-2xl text-sm font-semibold italic leading-relaxed text-white/80 md:text-base">{formatPeopleQuote(activeMember.body)}</p>}
+          </div>
+        </div>
+        <div className="relative mt-3">
+          {members.length > 1 && (
+            <>
+              <button
+                type="button"
+                onClick={() => moveRail(-1)}
+                className="absolute left-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-on-surface shadow-[0_16px_36px_rgba(80,20,50,0.2)] transition hover:bg-primary hover:text-white md:inline-flex"
+                aria-label="Previous people"
+              >
+                <ChevronLeft size={20} strokeWidth={2.6} aria-hidden="true" />
+              </button>
+              <button
+                type="button"
+                onClick={() => moveRail(1)}
+                className="absolute right-3 top-1/2 z-20 hidden h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/92 text-on-surface shadow-[0_16px_36px_rgba(80,20,50,0.2)] transition hover:bg-primary hover:text-white md:inline-flex"
+                aria-label="Next people"
+              >
+                <ChevronRight size={20} strokeWidth={2.6} aria-hidden="true" />
+              </button>
+            </>
+          )}
+          <div ref={railRef} className="case-study-rail flex snap-x gap-2 overflow-x-auto scroll-smooth pb-2" onPointerDown={() => pauseAuto()} onTouchStart={() => pauseAuto()}>
           {members.map((member, index) => {
             const avatarImages = getPeopleAvatarImages(member)
-            const carouselDuration = `${Math.max(avatarImages.length, 1) * 2200}ms`
-            const quote = formatPeopleQuote(member.body)
-            const roles = splitPeopleRoles(member.label)
+            const thumbnail = member.thumbnailUrl || avatarImages[0] || '/logo-gg.png'
+            const active = index === activeIndex % members.length
             return (
-              <article
+              <button
                 key={`${member.title}-${index}`}
                 data-reveal="people-card"
+                type="button"
+                onMouseEnter={(event) => showMemberPreview(member, event.currentTarget)}
+                onMouseLeave={closeMemberPreviewSoon}
+                onFocus={(event) => showMemberPreview(member, event.currentTarget)}
+                onClick={() => {
+                  pauseAuto()
+                  setActiveIndex(index)
+                }}
                 style={{ '--ri': index } as CSSProperties}
-                className="people-card group min-w-0 overflow-hidden rounded-[20px] border border-white/70 bg-white/90 shadow-[0_18px_42px_rgba(80,20,50,0.12)] backdrop-blur-md transition duration-300 hover:-translate-y-1.5 hover:shadow-[0_30px_70px_rgba(219,39,119,0.18)] md:rounded-[28px]"
+                className={[
+                  'group relative aspect-[16/10] shrink-0 basis-[42vw] snap-start overflow-hidden rounded-[16px] bg-[#180b11] text-left shadow-[0_14px_40px_rgba(80,20,50,0.13)] outline-none ring-1 transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2.25)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]',
+                  active ? 'ring-primary/80' : 'ring-white/70',
+                ].join(' ')}
               >
-                <div className="relative aspect-square overflow-hidden bg-surface-container-low">
-                  {avatarImages.length === 1 ? (
-                    <img src={avatarImages[0]} alt={member.imageAlt || member.title} className="h-full w-full object-cover" />
-                  ) : (
-                    avatarImages.map((imageUrl, avatarIndex) => (
-                      <img
-                        key={`${member.title}-${imageUrl}-${avatarIndex}`}
-                        src={imageUrl}
-                        alt={avatarIndex === 0 ? member.imageAlt || member.title : ''}
-                        aria-hidden={avatarIndex === 0 ? undefined : true}
-                        className="people-avatar-slide"
-                        style={{
-                          '--avatar-delay': `${avatarIndex * 2200}ms`,
-                          '--avatar-duration': carouselDuration,
-                        } as CSSProperties}
-                      />
-                    ))
-                  )}
+                <img
+                  src={thumbnail}
+                  alt=""
+                  aria-hidden="true"
+                  className={`absolute inset-0 h-full w-full transition duration-500 group-hover:scale-[1.06] ${
+                    isLogoLikeImage(thumbnail) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-7' : 'object-cover'
+                  }`}
+                />
+                <div className={`absolute inset-0 bg-gradient-to-t ${active ? 'from-black/82 via-black/18 to-transparent' : 'from-white/88 via-white/46 to-white/12 group-hover:from-black/76 group-hover:via-black/12 group-hover:to-transparent'}`} aria-hidden="true" />
+                <div className="absolute inset-x-0 bottom-0 p-4">
+                  <h3 className={`line-clamp-1 text-[17px] font-extrabold leading-tight ${active ? 'text-white' : 'text-on-surface group-hover:text-white'}`}>{member.title}</h3>
                 </div>
-                <div className="p-3 text-left md:p-5">
-                  <h3 className="text-[15px] font-black leading-tight text-primary sm:text-[17px] md:text-[20px]">{member.title}</h3>
-                  {roles.length > 0 && (
-                    <div className="mt-3 flex flex-wrap gap-1.5">
-                      {roles.map((role) => (
-                        <span key={`${member.title}-${role}`} className="rounded-full bg-gradient-to-r from-primary/10 via-tertiary/10 to-secondary/10 px-2 py-1 text-[10px] font-black leading-none text-primary md:text-[11px]">
-                          {role}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                  {quote && (
-                    <blockquote className="mt-3 border-l-2 border-primary/35 pl-3 md:mt-4">
-                      <p className="mt-1 line-clamp-4 text-[11px] font-semibold italic leading-relaxed text-on-surface-variant md:text-[13px]">{quote}</p>
-                    </blockquote>
-                  )}
-                  {member.proofPoint && (
-                    <p className="mt-3 rounded-2xl bg-gradient-to-r from-primary/10 via-tertiary/10 to-secondary/10 px-3 py-2 text-[11px] font-black leading-snug text-primary md:text-[12px]">
-                      {member.proofPoint}
-                    </p>
-                  )}
-                </div>
-              </article>
+              </button>
             )
           })}
+          </div>
         </div>
+        {previewMember && canHover && (
+          <div className="pointer-events-none fixed z-[80] hidden md:block" style={previewMember.style}>
+            {(() => {
+              const member = previewMember.member
+              const image = member.bannerImageUrl || member.thumbnailUrl || getPeopleAvatarImages(member)[0] || '/logo-gg.png'
+              const roles = splitPeopleRoles(member.label)
+              return (
+                <article className="pointer-events-auto flex max-h-[min(520px,82vh)] flex-col overflow-hidden rounded-[22px] border border-white/70 bg-white/[0.92] text-on-surface shadow-[0_28px_90px_rgba(219,39,119,0.28)] ring-1 ring-white/60 backdrop-blur-xl">
+                  <div className="m-3 aspect-video max-h-[180px] shrink-0 overflow-hidden rounded-[18px] bg-surface-container-low">
+                    <img src={image} alt={`${member.title} preview`} className={`h-full w-full ${isLogoLikeImage(image) ? 'object-contain p-10' : 'object-cover'}`} />
+                  </div>
+                  <div className="m-3 mt-0 rounded-[18px] border border-primary/10 bg-white/88 p-4">
+                    <h3 className="text-[22px] font-extrabold leading-tight text-on-surface">{member.title}</h3>
+                    {roles.length > 0 && (
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {roles.slice(0, 4).map((role) => (
+                          <span key={`${member.title}-popup-${role}`} className="rounded-full bg-gradient-to-r from-primary/10 via-tertiary/10 to-secondary/10 px-2.5 py-1 text-[11px] font-black text-primary">{role}</span>
+                        ))}
+                      </div>
+                    )}
+                    {member.body && <p className="mt-3 line-clamp-3 text-sm font-semibold italic leading-relaxed text-on-surface-variant">{formatPeopleQuote(member.body)}</p>}
+                    {member.proofPoint && <p className="mt-3 rounded-2xl bg-primary/10 px-3 py-2 text-xs font-black text-primary">{member.proofPoint}</p>}
+                  </div>
+                </article>
+              )
+            })()}
+          </div>
+        )}
         <div className="mx-auto mt-16 max-w-3xl text-center">
           <p className="home-people-closing-one text-[24px] italic leading-tight text-on-surface/85 md:text-[28px]">{closingLine1}</p>
           <p className="home-people-closing-two mt-3 bg-gradient-to-r from-primary via-tertiary to-secondary bg-clip-text text-[28px] font-semibold leading-tight text-transparent md:text-[44px]">
@@ -800,6 +992,8 @@ export default function BrandHomePage({
   const heroDelays = getHeroAnimationDelays(heroWordCount, showHeroDivider)
   const heroStatChips = (heroBlock?.statChips ?? []).filter((chip) => chip.value.trim() || chip.label.trim()).slice(0, 3)
   const heroCtaSubtext = heroBlock?.ctaSubtext?.trim()
+  const showHeroCtaSubtext = heroBlock?.showCtaSubtext === true && Boolean(heroCtaSubtext)
+  const showHeroStatChips = heroBlock?.showStatChips === true && heroStatChips.length > 0
   const closingFaqItems = getHomeClosingFaqItems(cmsPage, lang)
   const homeSchemas = [organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(cmsPage, lang)].filter(Boolean)
   const packageItems: CmsBlockItem[] = packagesBlock?.items?.length
@@ -829,7 +1023,7 @@ export default function BrandHomePage({
         <div className="absolute inset-0 tech-grid opacity-35 pointer-events-none" aria-hidden="true" />
         <div className="noise-overlay" aria-hidden="true" />
         <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-surface-container" aria-hidden="true" />
-        <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-5 pb-10 pt-28 text-center lg:px-10">
+        <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-5 pb-14 pt-28 text-center lg:px-10">
           <h1
             className={[
               'hero-word-title home-hero-title-serif text-[clamp(38px,10vw,52px)] font-normal not-italic leading-[0.98] md:text-[clamp(54px,6vw,86px)]',
@@ -863,7 +1057,7 @@ export default function BrandHomePage({
           >
             {resolvePrimaryBookingCtaLabel(heroBlock?.ctaLabel)}
           </button>
-          {heroCtaSubtext && (
+          {showHeroCtaSubtext && (
             <p
               style={{ '--hero-delay': `${heroDelays.cta + 140}ms` } as CSSProperties}
               className={`home-hero-item mt-3 max-w-xl text-xs font-bold md:text-sm ${heroTextMode === 'dark' ? 'text-on-surface-variant' : 'text-white/76'}`}
@@ -871,7 +1065,7 @@ export default function BrandHomePage({
               {heroCtaSubtext}
             </p>
           )}
-          {heroStatChips.length > 0 && (
+          {showHeroStatChips && (
             <div
               style={{ '--hero-delay': `${heroDelays.cta + 230}ms` } as CSSProperties}
               className="home-hero-item mt-5 flex flex-wrap justify-center gap-2"
@@ -896,12 +1090,17 @@ export default function BrandHomePage({
             intro={packagesBlock?.body || (lang === 'vi' ? 'Chọn nhịp tăng trưởng phù hợp với giai đoạn của bạn.' : 'Choose the growth system that fits your stage.')}
             align="center"
           />
+          <PackageCards items={packageItems} lang={lang} layout={packagesBlock?.layout === 'cards' ? 'cards' : 'horizontal'} />
           {packagesBlock?.pricingNote && (
-            <div className="mx-auto mb-6 max-w-3xl whitespace-pre-line text-center text-sm leading-relaxed text-on-surface-variant">
+            <p className="mx-auto mt-6 max-w-3xl rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-center text-sm font-bold leading-relaxed text-on-surface-variant">
               {packagesBlock.pricingNote}
-            </div>
+            </p>
           )}
-          <PackageCards items={packageItems} lang={lang} />
+          {packagesBlock?.disclaimer && (
+            <p className="mx-auto mt-6 max-w-[720px] whitespace-pre-line text-center text-[12px] italic leading-relaxed text-on-surface-variant/60 md:text-[13px]">
+              {packagesBlock.disclaimer}
+            </p>
+          )}
         </div>
       </section>
 

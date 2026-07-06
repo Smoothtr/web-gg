@@ -26,7 +26,7 @@ import { getUnsupportedPreviewVideoMessage } from '../../cms/videoValidation'
 
 type UpdateBlockItem = (pageId: string, blockId: string, itemIndex: number, patch: Partial<CmsBlockItem>) => void
 type BlockTextKey = Exclude<keyof CmsLocalizedBlockFields, 'statChips'>
-type ItemTextKey = Exclude<keyof CmsLocalizedBlockItemFields, 'services' | 'keyMetrics' | 'featuredStats' | 'storyDetail'>
+type ItemTextKey = Exclude<keyof CmsLocalizedBlockItemFields, 'services' | 'features' | 'keyMetrics' | 'featuredStats' | 'storyDetail'>
 
 const storyMetricSlots = Array.from({ length: 10 }, (_, index) => index)
 const packageDetailPageIds = new Set(['the-one-start', 'the-one-system', 'the-one-scale'])
@@ -121,6 +121,10 @@ function getItemTextValue(item: CmsBlockItem, lang: BrandLang, key: ItemTextKey)
 
 function getItemServices(item: CmsBlockItem, lang: BrandLang) {
   return lang === 'vi' ? item.services : item.locales?.[lang]?.services
+}
+
+function getItemFeatures(item: CmsBlockItem, lang: BrandLang) {
+  return lang === 'vi' ? item.features : item.locales?.[lang]?.features
 }
 
 function getItemKeyMetrics(item: CmsBlockItem, lang: BrandLang) {
@@ -342,6 +346,42 @@ function PeopleItemEditor({
         />
       </section>
 
+      <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+        <div className="mb-3">
+          <p className="text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Spotlight images</p>
+          <p className="mt-1 text-xs leading-relaxed text-on-surface-variant/75">
+            Banner image hien trong khung lon The One People. Thumbnail image hien tren thanh member ben duoi.
+          </p>
+        </div>
+        <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
+          <div className="grid gap-4">
+            <Field label="Banner image URL">
+              <div className="grid gap-2">
+                <TextInput value={item.bannerImageUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { bannerImageUrl: value })} />
+                <ImageUploadButton
+                  folder={`cms/pages/${pageId}/${blockId}/people/${index + 1}/banner`}
+                  onUploaded={(url) => updateBlockItem(pageId, blockId, index, { bannerImageUrl: url })}
+                  onError={onUploadError}
+                  label={item.bannerImageUrl ? 'Thay banner' : 'Upload banner'}
+                />
+              </div>
+            </Field>
+            <Field label="Thumbnail image URL">
+              <div className="grid gap-2">
+                <TextInput value={item.thumbnailUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { thumbnailUrl: value })} />
+                <ImageUploadButton
+                  folder={`cms/pages/${pageId}/${blockId}/people/${index + 1}/thumbnail`}
+                  onUploaded={(url) => updateBlockItem(pageId, blockId, index, { thumbnailUrl: url })}
+                  onError={onUploadError}
+                  label={item.thumbnailUrl ? 'Thay thumbnail' : 'Upload thumbnail'}
+                />
+              </div>
+            </Field>
+          </div>
+          <MediaPreview url={item.bannerImageUrl || item.thumbnailUrl || item.imageUrl} alt={item.imageAlt || item.title} />
+        </div>
+      </section>
+
       <label className="inline-flex w-fit items-center gap-2 rounded-xl border border-outline-variant/45 bg-surface px-3 py-2 text-xs font-extrabold text-on-surface-variant">
         <input
           type="checkbox"
@@ -389,13 +429,37 @@ function PackageItemEditor({
   onUploadError: (message: string) => void
 }) {
   const title = getItemTextValue(item, activeLang, 'title')
+  const subtitle = getItemTextValue(item, activeLang, 'subtitle')
   const label = getItemTextValue(item, activeLang, 'label')
   const ctaText = getItemTextValue(item, activeLang, 'ctaText')
   const caseStudyLabel = getItemTextValue(item, activeLang, 'caseStudyLabel')
+  const priceLabel = getItemTextValue(item, activeLang, 'priceLabel')
+  const priceValue = getItemTextValue(item, activeLang, 'priceValue')
   const body = getItemTextValue(item, activeLang, 'body')
+  const features = getItemFeatures(item, activeLang) ?? []
+  const duplicateFeatureLabels = features
+    .map((feature) => feature.label.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((labelValue, labelIndex, labels) => labels.indexOf(labelValue) !== labelIndex)
 
   function updateText(patch: CmsLocalizedBlockItemFields) {
     updateBlockItem(pageId, blockId, index, patchItemText(item, activeLang, patch))
+  }
+
+  function updateFeature(featureIndex: number, patch: { label?: string; text?: string }) {
+    const next = [...features]
+    while (next.length <= featureIndex) next.push({ label: '', text: '' })
+    next[featureIndex] = { ...next[featureIndex], ...patch }
+    updateText({ features: next })
+  }
+
+  function moveFeature(featureIndex: number, direction: -1 | 1) {
+    const targetIndex = featureIndex + direction
+    if (targetIndex < 0 || targetIndex >= features.length) return
+    const next = [...features]
+    const [feature] = next.splice(featureIndex, 1)
+    next.splice(targetIndex, 0, feature)
+    updateText({ features: next })
   }
 
   return (
@@ -406,6 +470,9 @@ function PackageItemEditor({
       <div className="grid gap-4 md:grid-cols-2">
         <Field label="Package name">
           <TextInput value={title} onChange={(value) => updateText({ title: value })} />
+        </Field>
+        <Field label="Subtitle">
+          <TextInput value={subtitle} onChange={(value) => updateText({ subtitle: value })} />
         </Field>
         <Field label="Badge / label">
           <TextInput value={label} onChange={(value) => updateText({ label: value })} placeholder="Most Popular" />
@@ -421,6 +488,12 @@ function PackageItemEditor({
         </Field>
         <Field label="Case study button text">
           <TextInput value={caseStudyLabel} onChange={(value) => updateText({ caseStudyLabel: value })} placeholder="See case studies" />
+        </Field>
+        <Field label="Price label">
+          <TextInput value={priceLabel} onChange={(value) => updateText({ priceLabel: value })} placeholder="MONTHLY SETUP" />
+        </Field>
+        <Field label="Price value">
+          <TextInput value={priceValue} onChange={(value) => updateText({ priceValue: value })} placeholder="15,000,000 VND/month" />
         </Field>
       </div>
       <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
@@ -442,9 +515,78 @@ function PackageItemEditor({
           <Field label="Image alt">
             <TextInput value={item.imageAlt ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { imageAlt: value })} />
           </Field>
+          <Field label="Left panel background URL">
+            <div className="grid gap-2">
+              <TextInput value={item.leftBackgroundUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { leftBackgroundUrl: value })} />
+              <ImageUploadButton
+                folder={`cms/pages/${pageId}/${blockId}/packages/${index + 1}/left-background`}
+                onUploaded={(url) => updateBlockItem(pageId, blockId, index, { leftBackgroundUrl: url })}
+                onError={onUploadError}
+                label={item.leftBackgroundUrl ? 'Thay left bg' : 'Upload left bg'}
+              />
+            </div>
+          </Field>
+          <Field label="Right panel background URL">
+            <div className="grid gap-2">
+              <TextInput value={item.rightBackgroundUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { rightBackgroundUrl: value })} />
+              <ImageUploadButton
+                folder={`cms/pages/${pageId}/${blockId}/packages/${index + 1}/right-background`}
+                onUploaded={(url) => updateBlockItem(pageId, blockId, index, { rightBackgroundUrl: url })}
+                onError={onUploadError}
+                label={item.rightBackgroundUrl ? 'Thay right bg' : 'Upload right bg'}
+              />
+            </div>
+          </Field>
+          <Field label="Overlay opacity" hint="0.18 - 0.78. De trong = auto.">
+            <TextInput value={item.overlayOpacity ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { overlayOpacity: value })} placeholder="0.46" />
+          </Field>
         </div>
         <MediaPreview url={item.imageUrl} alt={item.imageAlt} />
       </div>
+      <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Feature rows</p>
+            <p className="mt-1 text-xs leading-relaxed text-on-surface-variant/75">Moi row gom label + text. Tranh trung label trong cung mot goi.</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => updateText({ features: [...features, { label: 'CONTENT ENGINE', text: '' }] })}
+            className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-xs font-extrabold text-primary"
+          >
+            <Plus size={15} /> Add row
+          </button>
+        </div>
+        {duplicateFeatureLabels.length > 0 && (
+          <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
+            Duplicate feature label detected: {Array.from(new Set(duplicateFeatureLabels)).join(', ')}
+          </p>
+        )}
+        <div className="grid gap-3">
+          {features.map((feature, featureIndex) => (
+            <div key={`${featureIndex}-${feature.label}`} className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface p-3 md:grid-cols-[0.8fr_1.4fr_auto]">
+              <TextInput value={feature.label} onChange={(value) => updateFeature(featureIndex, { label: value })} placeholder="CONTENT ENGINE" />
+              <TextInput value={feature.text} onChange={(value) => updateFeature(featureIndex, { text: value })} placeholder="Feature detail" />
+              <div className="flex items-center gap-1">
+                <button type="button" onClick={() => moveFeature(featureIndex, -1)} disabled={featureIndex === 0} className="rounded-lg border border-outline-variant px-2.5 py-2 text-on-surface-variant disabled:opacity-40" aria-label="Move feature up">
+                  <ArrowUp size={14} />
+                </button>
+                <button type="button" onClick={() => moveFeature(featureIndex, 1)} disabled={featureIndex === features.length - 1} className="rounded-lg border border-outline-variant px-2.5 py-2 text-on-surface-variant disabled:opacity-40" aria-label="Move feature down">
+                  <ArrowDown size={14} />
+                </button>
+                <button type="button" onClick={() => updateText({ features: features.filter((_, itemIndex) => itemIndex !== featureIndex) })} className="rounded-lg border border-red-200 px-2.5 py-2 text-red-700" aria-label="Remove feature">
+                  <Trash2 size={14} />
+                </button>
+              </div>
+            </div>
+          ))}
+          {features.length === 0 && (
+            <p className="rounded-xl border border-dashed border-outline-variant/50 bg-surface px-4 py-3 text-xs font-semibold text-on-surface-variant">
+              Chua co feature row. Neu de trong, front-end tam parse tu Body cu.
+            </p>
+          )}
+        </div>
+      </section>
       <Field label="Package content">
         <TextArea value={body} onChange={(value) => updateText({ body: value })} minHeight={180} />
       </Field>
@@ -491,6 +633,55 @@ function FaqItemEditor({
       <Field label="Answer">
         <TextArea value={answer} onChange={(value) => updateText({ body: value })} minHeight={120} />
       </Field>
+    </div>
+  )
+}
+
+function RedFlagItemEditor({
+  pageId,
+  blockId,
+  index,
+  item,
+  activeLang,
+  updateBlockItem,
+  onUploadError,
+}: {
+  pageId: string
+  blockId: string
+  index: number
+  item: CmsBlockItem
+  activeLang: BrandLang
+  updateBlockItem: UpdateBlockItem
+  onUploadError: (message: string) => void
+}) {
+  const title = getItemTextValue(item, activeLang, 'title')
+
+  function updateText(patch: CmsLocalizedBlockItemFields) {
+    updateBlockItem(pageId, blockId, index, patchItemText(item, activeLang, patch))
+  }
+
+  return (
+    <div className="grid gap-4">
+      <Field label="Poster title / alt text">
+        <TextInput value={title} onChange={(value) => updateText({ title: value })} />
+      </Field>
+      <Field label="Optional href">
+        <TextInput value={item.href ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { href: value })} placeholder="/the-one#curnon" />
+      </Field>
+      <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
+        <Field label="Thumbnail URL" hint="Poster 16:9 do PO upload. Neu de trong, site se dung fallback gradient/title.">
+          <div className="grid gap-2">
+            <TextInput value={item.thumbnailUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { thumbnailUrl: value })} />
+            <ImageUploadButton
+              folder={`cms/pages/${pageId}/${blockId}/red-flag-posters`}
+              onUploaded={(url) => updateBlockItem(pageId, blockId, index, { thumbnailUrl: url })}
+              onError={onUploadError}
+              label={item.thumbnailUrl ? 'Thay poster' : 'Upload poster'}
+            />
+          </div>
+        </Field>
+        <MediaPreview url={item.thumbnailUrl} alt={title || item.title} />
+      </div>
     </div>
   )
 }
@@ -1027,6 +1218,7 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
   const adminSectionLabel = getAdminSectionLabel(pageId, block, blockIndex)
   const isStoryBlock = pageId === 'the-one' && block.id === 'stories'
   const isPeopleBlock = pageId === 'homepage' && block.id === 'people'
+  const isRedFlagsBlock = pageId === 'homepage' && block.id === 'red-flags'
   const isHomepageHero = pageId === 'homepage' && block.id === 'hero'
   const isHomepageClosing = pageId === 'homepage' && block.id === 'closing'
   const isPackageList = isPackageListBlock(pageId, block.id)
@@ -1044,6 +1236,7 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
   const blockCtaLabel = getBlockTextValue(currentBlock, activeLang, 'ctaLabel')
   const blockCtaSubtext = getBlockTextValue(currentBlock, activeLang, 'ctaSubtext')
   const blockPricingNote = getBlockTextValue(currentBlock, activeLang, 'pricingNote')
+  const blockDisclaimer = getBlockTextValue(currentBlock, activeLang, 'disclaimer')
   const blockSubtitle = getBlockTextValue(currentBlock, activeLang, 'subtitle')
   const blockClosingLine1 = getBlockTextValue(currentBlock, activeLang, 'closingLine1')
   const blockClosingLine2 = getBlockTextValue(currentBlock, activeLang, 'closingLine2')
@@ -1162,6 +1355,29 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
             )}
           </div>
 
+          {isHomepageHero && (
+            <div className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4 md:grid-cols-2">
+              <label className="inline-flex w-fit items-center gap-2 rounded-lg border border-outline-variant/45 bg-surface px-3 py-2 text-xs font-extrabold text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={block.showCtaSubtext === true}
+                  onChange={(event) => updateBlock(pageId, blockId, { showCtaSubtext: event.target.checked })}
+                  className="h-4 w-4 accent-primary"
+                />
+                Show CTA subtext
+              </label>
+              <label className="inline-flex w-fit items-center gap-2 rounded-lg border border-outline-variant/45 bg-surface px-3 py-2 text-xs font-extrabold text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={block.showStatChips === true}
+                  onChange={(event) => updateBlock(pageId, blockId, { showStatChips: event.target.checked })}
+                  className="h-4 w-4 accent-primary"
+                />
+                Show hero stat chips
+              </label>
+            </div>
+          )}
+
           {showBlockHeading && (
           <Field label={isFaqBlock ? 'FAQ title' : 'Heading'}>
             <TextInput value={blockHeading} onChange={(value) => updateBlockText({ heading: value })} />
@@ -1196,9 +1412,30 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
           )}
 
           {isPackageList && (
-            <Field label="Pricing note" hint="Dòng minh bạch dưới các package cards.">
-              <TextArea value={blockPricingNote} onChange={(value) => updateBlockText({ pricingNote: value })} minHeight={86} />
-            </Field>
+            <div className="grid gap-4 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+              <Field label="Layout" hint="cards = 3 cot cu, horizontal = 3 hang ngang moi.">
+                <div className="inline-flex w-fit rounded-xl border border-outline-variant/45 bg-surface p-1">
+                  {(['horizontal', 'cards'] as const).map((layout) => (
+                    <button
+                      key={layout}
+                      type="button"
+                      onClick={() => updateBlock(pageId, blockId, { layout })}
+                      className={`rounded-lg px-4 py-2 text-xs font-extrabold transition-colors ${
+                        (block.layout ?? 'horizontal') === layout ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-primary'
+                      }`}
+                    >
+                      {layout}
+                    </button>
+                  ))}
+                </div>
+              </Field>
+              <Field label="Pricing note" hint="Dong minh bach duoi cac package cards.">
+                <TextArea value={blockPricingNote} onChange={(value) => updateBlockText({ pricingNote: value })} minHeight={86} />
+              </Field>
+              <Field label="Disclaimer" hint="Chu nho nghieng hien duoi cung khu pricing.">
+                <TextArea value={blockDisclaimer} onChange={(value) => updateBlockText({ disclaimer: value })} minHeight={86} />
+              </Field>
+            </div>
           )}
 
           {pageId === 'homepage' && block.id === 'what-is' && (
@@ -1219,6 +1456,9 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
 
           {isPeopleBlock && (
             <div className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+              <Field label="Auto-slide seconds" hint="Default 5. Dung cho banner The One People.">
+                <TextInput value={block.autoSlideSeconds ?? ''} onChange={(value) => updateBlock(pageId, blockId, { autoSlideSeconds: value })} placeholder="5" />
+              </Field>
               <Field label="Closing line 1">
                 <TextInput value={blockClosingLine1} onChange={(value) => updateBlockText({ closingLine1: value })} />
               </Field>
@@ -1393,6 +1633,8 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                       <PackageItemEditor pageId={pageId} blockId={blockId} index={index} item={item} activeLang={activeLang} updateBlockItem={updateBlockItem} onUploadError={setUploadError} />
                     ) : isFaqBlock ? (
                       <FaqItemEditor pageId={pageId} blockId={blockId} index={index} item={item} activeLang={activeLang} updateBlockItem={updateBlockItem} />
+                    ) : isRedFlagsBlock ? (
+                      <RedFlagItemEditor pageId={pageId} blockId={blockId} index={index} item={item} activeLang={activeLang} updateBlockItem={updateBlockItem} onUploadError={setUploadError} />
                     ) : isBasicCards ? (
                       <BasicCardItemEditor pageId={pageId} blockId={blockId} index={index} item={item} activeLang={activeLang} updateBlockItem={updateBlockItem} onUploadError={setUploadError} />
                     ) : (
