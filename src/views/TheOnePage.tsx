@@ -24,6 +24,12 @@ import type { CaseStudy, CaseStudyMetric } from '../data/caseStudies'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 
 type SocialKey = 'facebook' | 'instagram' | 'tiktok' | 'website'
+type MetricLayoutSlot = {
+  column: number
+  row: number
+  columnSpan: number
+  rowSpan: number
+}
 
 const socialPlatforms: Array<{ key: SocialKey; label: string; Icon: typeof Instagram }> = [
   { key: 'facebook', label: 'Facebook', Icon: Facebook },
@@ -40,6 +46,121 @@ const storyLogoById: Record<string, string> = {
   curnon: '/logo-curnon.png',
   'annita-studios': '/logo-annita.png',
 }
+
+const metricLayoutMaps: Array<{ slots: MetricLayoutSlot[] }> = [
+  {
+    slots: [
+      { column: 1, row: 1, columnSpan: 3, rowSpan: 2 },
+      { column: 4, row: 4, columnSpan: 3, rowSpan: 2 },
+      { column: 4, row: 1, columnSpan: 1, rowSpan: 1 },
+      { column: 5, row: 1, columnSpan: 2, rowSpan: 1 },
+      { column: 4, row: 2, columnSpan: 1, rowSpan: 1 },
+      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 1, row: 4, columnSpan: 1, rowSpan: 2 },
+      { column: 2, row: 4, columnSpan: 2, rowSpan: 1 },
+      { column: 2, row: 5, columnSpan: 2, rowSpan: 1 },
+    ],
+  },
+  {
+    slots: [
+      { column: 3, row: 1, columnSpan: 3, rowSpan: 2 },
+      { column: 1, row: 4, columnSpan: 3, rowSpan: 2 },
+      { column: 6, row: 1, columnSpan: 1, rowSpan: 1 },
+      { column: 6, row: 2, columnSpan: 1, rowSpan: 1 },
+      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 4, row: 4, columnSpan: 1, rowSpan: 2 },
+      { column: 5, row: 4, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 5, columnSpan: 2, rowSpan: 1 },
+    ],
+  },
+  {
+    slots: [
+      { column: 1, row: 1, columnSpan: 2, rowSpan: 2 },
+      { column: 4, row: 1, columnSpan: 3, rowSpan: 2 },
+      { column: 3, row: 1, columnSpan: 1, rowSpan: 1 },
+      { column: 3, row: 2, columnSpan: 1, rowSpan: 1 },
+      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 1, row: 4, columnSpan: 1, rowSpan: 2 },
+      { column: 4, row: 4, columnSpan: 1, rowSpan: 2 },
+      { column: 5, row: 4, columnSpan: 2, rowSpan: 2 },
+    ],
+  },
+  {
+    slots: [
+      { column: 2, row: 1, columnSpan: 3, rowSpan: 2 },
+      { column: 1, row: 4, columnSpan: 3, rowSpan: 2 },
+      { column: 1, row: 1, columnSpan: 1, rowSpan: 1 },
+      { column: 1, row: 2, columnSpan: 1, rowSpan: 1 },
+      { column: 1, row: 3, columnSpan: 3, rowSpan: 1 },
+      { column: 4, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 6, row: 3, columnSpan: 1, rowSpan: 1 },
+      { column: 4, row: 4, columnSpan: 1, rowSpan: 2 },
+      { column: 5, row: 4, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 5, columnSpan: 2, rowSpan: 1 },
+    ],
+  },
+  {
+    slots: [
+      { column: 3, row: 1, columnSpan: 3, rowSpan: 2 },
+      { column: 4, row: 4, columnSpan: 3, rowSpan: 2 },
+      { column: 1, row: 1, columnSpan: 2, rowSpan: 1 },
+      { column: 6, row: 1, columnSpan: 1, rowSpan: 1 },
+      { column: 1, row: 2, columnSpan: 2, rowSpan: 1 },
+      { column: 6, row: 2, columnSpan: 1, rowSpan: 1 },
+      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 3, row: 4, columnSpan: 1, rowSpan: 2 },
+      { column: 1, row: 5, columnSpan: 2, rowSpan: 1 },
+    ],
+  },
+  {
+    slots: [
+      { column: 1, row: 1, columnSpan: 2, rowSpan: 2 },
+      { column: 5, row: 4, columnSpan: 2, rowSpan: 2 },
+      { column: 3, row: 1, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 1, columnSpan: 2, rowSpan: 1 },
+      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 2, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 1, row: 4, columnSpan: 1, rowSpan: 2 },
+      { column: 2, row: 4, columnSpan: 2, rowSpan: 1 },
+      { column: 4, row: 4, columnSpan: 1, rowSpan: 2 },
+    ],
+  },
+  {
+    slots: [
+      { column: 1, row: 1, columnSpan: 3, rowSpan: 2 },
+      { column: 3, row: 4, columnSpan: 2, rowSpan: 2 },
+      { column: 4, row: 1, columnSpan: 2, rowSpan: 1 },
+      { column: 6, row: 1, columnSpan: 1, rowSpan: 1 },
+      { column: 4, row: 2, columnSpan: 1, rowSpan: 1 },
+      { column: 5, row: 2, columnSpan: 2, rowSpan: 1 },
+      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 1, row: 4, columnSpan: 2, rowSpan: 1 },
+    ],
+  },
+  {
+    slots: [
+      { column: 1, row: 3, columnSpan: 2, rowSpan: 2 },
+      { column: 4, row: 4, columnSpan: 3, rowSpan: 2 },
+      { column: 1, row: 1, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 1, columnSpan: 2, rowSpan: 1 },
+      { column: 1, row: 2, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 2, columnSpan: 2, rowSpan: 1 },
+      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
+      { column: 3, row: 4, columnSpan: 1, rowSpan: 2 },
+      { column: 1, row: 5, columnSpan: 2, rowSpan: 1 },
+    ],
+  },
+]
 
 const storyThemesById: Record<string, { gradient: string; accent: string; accentSoft: string; tile: string; featured: string }> = {
   phinoi: {
@@ -120,6 +241,26 @@ function metricKey(metric: CaseStudyMetric) {
   return `${metric.value.trim().toLowerCase()}::${metric.label.trim().toLowerCase()}`
 }
 
+function stableHash(value: string) {
+  let hash = 0
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0
+  }
+  return hash
+}
+
+function getStoryLayoutVariants(stories: CaseStudy[]) {
+  const variants = new Map<string, number>()
+  let previous = -1
+  stories.forEach((story) => {
+    let variant = stableHash(story.id || story.brandName) % metricLayoutMaps.length
+    if (variant === previous) variant = (variant + 1) % metricLayoutMaps.length
+    variants.set(story.id, variant)
+    previous = variant
+  })
+  return variants
+}
+
 function getStoryTheme(story: CaseStudy, storyIndex: number) {
   const fallbackThemes = Object.values(storyThemesById)
   return storyThemesById[story.id] ?? fallbackThemes[storyIndex % fallbackThemes.length]
@@ -128,11 +269,23 @@ function getStoryTheme(story: CaseStudy, storyIndex: number) {
 function getMetricDensity(value: string) {
   const compactLength = value.replace(/\s+/g, '').length
   if (compactLength >= 11) return 'is-dense-value'
+  if ((/[→–]/.test(value) || /\s/.test(value.trim())) && compactLength >= 6) return 'is-long-value'
   if (compactLength >= 8) return 'is-long-value'
   return ''
 }
 
-function buildMetricTiles(story: CaseStudy) {
+function getMetricSlotStyle(slot: MetricLayoutSlot): CSSProperties {
+  return {
+    gridColumn: `${slot.column} / span ${slot.columnSpan}`,
+    gridRow: `${slot.row} / span ${slot.rowSpan}`,
+  }
+}
+
+function getMetricSlotClass(slot: MetricLayoutSlot) {
+  return `is-tile-${slot.columnSpan}x${slot.rowSpan}`
+}
+
+function buildMetricTiles(story: CaseStudy, layoutVariant: number) {
   const metricItems = story.keyMetrics.filter((metric) => metric.value.trim() || metric.label.trim())
   const serviceItems: CaseStudyMetric[] = story.services.map((service) => ({ value: initials(service), label: service }))
   const fallbackItems: CaseStudyMetric[] = [
@@ -156,12 +309,18 @@ function buildMetricTiles(story: CaseStudy) {
 
   const featuredMetrics = uniqueMetrics.filter((metric) => metric.featured).slice(0, 2)
   const ordered = [...featuredMetrics, ...uniqueMetrics.filter((metric) => !featuredMetrics.includes(metric))].slice(0, 10)
+  const layout = metricLayoutMaps[layoutVariant % metricLayoutMaps.length] ?? metricLayoutMaps[0]
 
-  return ordered.map((metric, index) => ({
-    ...metric,
-    className: getMetricDensity(metric.value),
-    featured: index < 2,
-  }))
+  return ordered.map((metric, index) => {
+    const slot = layout.slots[index] ?? layout.slots[layout.slots.length - 1]
+
+    return {
+      ...metric,
+      className: [getMetricDensity(metric.value), getMetricSlotClass(slot)].filter(Boolean).join(' '),
+      featured: index < 2,
+      tileStyle: getMetricSlotStyle(slot),
+    }
+  })
 }
 
 function carouselImagesForStory(story: CaseStudy) {
@@ -239,7 +398,7 @@ function StoriesBar({
   onStoryClick: (story: CaseStudy) => void
 }) {
   return (
-    <section className={`ig-stories-bar sticky top-[88px] z-30 border-y border-white/65 bg-white/[0.72] px-4 shadow-[0_14px_40px_rgba(219,39,119,0.08)] backdrop-blur-xl ${compact ? 'is-compact' : ''} ${mobile ? 'is-mobile' : ''}`}>
+    <section className={`ig-stories-bar sticky z-30 border-y border-white/65 bg-white/[0.72] px-4 shadow-[0_14px_40px_rgba(219,39,119,0.08)] backdrop-blur-xl ${compact ? 'is-compact' : ''} ${mobile ? 'is-mobile' : ''}`}>
       <div className="mx-auto max-w-[900px]">
         {!mobile && <h1 className="ig-stories-title ig-script-title text-center text-[46px] leading-none text-on-surface md:text-[58px]">{heading}</h1>}
         <div className="ig-stories-row flex max-w-full gap-4 overflow-x-auto overscroll-x-contain pb-1">
@@ -270,11 +429,11 @@ function PostMoreMenu({ story, onCopy }: { story: CaseStudy; onCopy: (story: Cas
   )
 }
 
-function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) {
+function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; index: number; layoutVariant: number }) {
   const frameRef = useRef<HTMLDivElement | null>(null)
   const touchStartX = useRef(0)
   const images = useMemo(() => carouselImagesForStory(story), [story])
-  const metricTiles = useMemo(() => buildMetricTiles(story), [story])
+  const metricTiles = useMemo(() => buildMetricTiles(story, layoutVariant), [layoutVariant, story])
   const theme = useMemo(() => getStoryTheme(story, index), [index, story])
   const [activeImage, setActiveImage] = useState(0)
   const [inView, setInView] = useState(true)
@@ -369,7 +528,6 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
           className="absolute inset-0 h-full w-full object-contain p-12 opacity-[0.14] mix-blend-screen sm:p-16"
         />
       )}
-      <div className="absolute inset-0 bg-[linear-gradient(180deg,rgba(20,8,16,0.42),rgba(20,8,16,0.14)_42%,rgba(20,8,16,0.72))]" aria-hidden="true" />
 
       {images.length > 1 && (
         <>
@@ -382,7 +540,7 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
               <ChevronRight size={16} />
             </button>
           </div>
-          <div className="absolute inset-x-0 bottom-4 z-20 flex justify-center gap-1.5">
+          <div className="story-media-dots absolute inset-x-0 z-20 flex justify-center gap-1.5">
             {images.map((image, imageIndex) => (
               <button
                 type="button"
@@ -399,13 +557,13 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
         </>
       )}
 
-      <div className="relative z-10 grid h-full min-w-0 grid-cols-[repeat(4,minmax(0,1fr))] grid-rows-[repeat(7,minmax(0,1fr))] gap-1.5 p-2 sm:gap-2 sm:p-4">
-        <div className="story-metric-grid col-span-4 row-span-5 min-w-0 sm:row-span-3">
+      <div className="story-media-content-grid relative z-10 h-full min-w-0">
+        <div className="story-metric-grid min-w-0">
           {metricTiles.map((metric, metricIndex) => (
             <div
               key={`${story.id}-metric-${metricIndex}`}
               className={`story-glass-tile ${metric.className} ${metric.featured ? 'is-featured' : ''}`}
-              style={{ '--ri': metricIndex } as CSSProperties}
+              style={{ '--ri': metricIndex, ...metric.tileStyle } as CSSProperties}
             >
               <span className="story-metric-kicker">{String(metricIndex + 1).padStart(2, '0')}</span>
               <span className={`story-metric-value ${metric.featured ? 'is-featured' : ''}`}>{metric.value || initials(metric.label)}</span>
@@ -414,15 +572,20 @@ function StoryMediaFrame({ story, index }: { story: CaseStudy; index: number }) 
           ))}
         </div>
 
-        <div className="story-glass-tile col-span-4 row-span-1 justify-end text-left sm:row-span-3">
-          <span className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-white/78">{story.category}</span>
-          <p className="mt-1 line-clamp-2 text-[12px] font-semibold leading-relaxed text-white sm:text-sm">{story.shortDescription}</p>
+        <div className="story-summary-glass">
+          <span className="story-summary-kicker">{story.category}</span>
+          <p className="story-summary-copy">{story.shortDescription}</p>
+          <div className="story-summary-tags" aria-label="Services">
+            {story.services.slice(0, 4).map((service) => (
+              <span key={`${story.id}-summary-${service}`}>{service}</span>
+            ))}
+          </div>
         </div>
 
         <button
           type="button"
           onClick={() => openBookingModal('story-media')}
-          className="col-span-4 row-span-1 self-end rounded-full border border-white/38 bg-white/20 px-4 py-3 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(0,0,0,0.18)] backdrop-blur-xl transition hover:bg-white/28"
+          className="story-media-cta"
         >
           About this story
         </button>
@@ -471,11 +634,13 @@ function PostSocialLinks({ story }: { story: CaseStudy }) {
 function InstagramPost({
   story,
   index,
+  layoutVariant,
   highlighted,
   onCopy,
 }: {
   story: CaseStudy
   index: number
+  layoutVariant: number
   highlighted: boolean
   onCopy: (story: CaseStudy) => void
 }) {
@@ -485,7 +650,7 @@ function InstagramPost({
     <div data-reveal="scale" style={{ '--ri': index } as CSSProperties}>
     <article
       id={story.id}
-      className={`story-post w-full max-w-full scroll-mt-56 overflow-hidden rounded-[28px] border bg-white shadow-[0_24px_70px_rgba(219,39,119,0.12)] transition duration-500 ${highlighted ? 'is-highlighted' : ''}`}
+      className={`story-post w-full max-w-full overflow-hidden rounded-[28px] border bg-white shadow-[0_24px_70px_rgba(219,39,119,0.12)] transition duration-500 ${highlighted ? 'is-highlighted' : ''}`}
     >
       <header className="flex items-center gap-3 border-b border-outline-variant/35 px-4 py-3">
         <img src={getStoryLogo(story)} alt={getDisplayName(story)} className="h-11 w-11 rounded-full border border-outline-variant/45 object-contain" />
@@ -501,7 +666,7 @@ function InstagramPost({
         <PostMoreMenu story={story} onCopy={onCopy} />
       </header>
 
-      <StoryMediaFrame story={story} index={index} />
+      <StoryMediaFrame story={story} index={index} layoutVariant={layoutVariant} />
 
       <footer className="px-4 pb-4 pt-3">
         <PostSocialLinks story={story} />
@@ -522,7 +687,6 @@ function InstagramPost({
             )}
           </figure>
         )}
-        <p className="mt-2 text-xs font-bold uppercase tracking-[0.08em] text-on-surface-variant">{story.category}</p>
       </footer>
     </article>
     </div>
@@ -615,9 +779,11 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
   const [toast, setToast] = useState('')
   const [compactStories, setCompactStories] = useState(false)
   const [isMobileStories, setIsMobileStories] = useState(false)
+  const [storiesOffsets, setStoriesOffsets] = useState({ anchorOffset: 168, pageTopPadding: 80, stickyTop: 80 })
   const storyHeading = heroBlock?.heading?.trim() || 'The One Stories'
   const storyIntro = heroBlock?.body?.trim()
   const finalCtaLabel = heroBlock?.ctaLabel?.trim() || 'How about our stories?'
+  const storyLayoutVariants = useMemo(() => getStoryLayoutVariants(orderedCaseStudies), [orderedCaseStudies])
 
   useScrollReveal()
 
@@ -659,6 +825,52 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
   }, [])
 
   useEffect(() => {
+    let frame = 0
+    let resizeObserver: ResizeObserver | undefined
+    const sync = () => {
+      if (frame) window.cancelAnimationFrame(frame)
+      frame = window.requestAnimationFrame(() => {
+        const header = document.querySelector('header')
+        const bar = document.querySelector('.ig-stories-bar')
+        const headerStyle = header ? window.getComputedStyle(header) : undefined
+        const headerRect = header?.getBoundingClientRect()
+        const headerTop = Number.parseFloat(headerStyle?.top ?? '0') || 0
+        const headerHeight = headerRect?.height ?? 80
+        const pageTopPadding = Math.max(0, Math.round(headerTop + headerHeight))
+        const position = headerStyle?.position
+        const visibleHeaderBottom = Math.round(headerRect?.bottom ?? pageTopPadding)
+        const stickyTop = position === 'fixed' || position === 'sticky'
+          ? Math.max(0, visibleHeaderBottom)
+          : Math.max(0, Math.min(pageTopPadding, visibleHeaderBottom))
+        const barHeight = Math.round(bar?.getBoundingClientRect().height ?? (isMobileStories ? 56 : compactStories ? 56 : 150))
+        const anchorOffset = stickyTop + barHeight + 16
+        setStoriesOffsets((current) => (
+          current.stickyTop === stickyTop && current.anchorOffset === anchorOffset && current.pageTopPadding === pageTopPadding
+            ? current
+            : { anchorOffset, pageTopPadding, stickyTop }
+        ))
+      })
+    }
+
+    sync()
+    if ('ResizeObserver' in window) {
+      resizeObserver = new ResizeObserver(sync)
+      const header = document.querySelector('header')
+      const bar = document.querySelector('.ig-stories-bar')
+      if (header) resizeObserver.observe(header)
+      if (bar) resizeObserver.observe(bar)
+    }
+    window.addEventListener('scroll', sync, { passive: true })
+    window.addEventListener('resize', sync)
+    return () => {
+      window.removeEventListener('scroll', sync)
+      window.removeEventListener('resize', sync)
+      resizeObserver?.disconnect()
+      if (frame) window.cancelAnimationFrame(frame)
+    }
+  }, [compactStories, isMobileStories])
+
+  useEffect(() => {
     const scrollToHash = () => {
       const id = decodeURIComponent(window.location.hash.slice(1))
       if (!id) return
@@ -697,7 +909,14 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
     <BrandLayout lang={lang} siteSettings={siteSettings} flushTop mobileHeaderTitle={isMobileStories ? storyHeading : undefined}>
       <SeoHead meta={getLocalizedPageMeta(cmsPage, lang, c.meta)} schema={[organizationSchema, websiteSchema]} lang={lang} />
 
-      <article className="the-one-page min-h-screen overflow-x-clip bg-[linear-gradient(180deg,#fff5f7_0%,#ffe4ec_35%,#fff1c8_100%)] pb-16 pt-24">
+      <article
+        className="the-one-page min-h-screen overflow-x-clip bg-[linear-gradient(180deg,#fff5f7_0%,#ffe4ec_35%,#fff1c8_100%)] pb-16"
+        style={{
+          '--stories-sticky-top': `${storiesOffsets.stickyTop}px`,
+          '--story-anchor-offset': `${storiesOffsets.anchorOffset}px`,
+          paddingTop: storiesOffsets.pageTopPadding,
+        } as CSSProperties}
+      >
         <StoriesBar
           heading={storyHeading}
           compact={compactStories}
@@ -720,6 +939,7 @@ export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lan
                 key={story.id}
                 story={story}
                 index={index}
+                layoutVariant={storyLayoutVariants.get(story.id) ?? 0}
                 highlighted={highlightedId === story.id}
                 onCopy={handleCopy}
               />
