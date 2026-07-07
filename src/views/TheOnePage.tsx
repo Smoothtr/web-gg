@@ -30,6 +30,24 @@ type MetricLayoutSlot = {
   columnSpan: number
   rowSpan: number
 }
+type StoryGlassTone = 'tone-on-dark' | 'tone-on-medium' | 'tone-on-light'
+type MetricTile = CaseStudyMetric & {
+  className: string
+  compactLabel: string
+  displayLabel: string
+  featured: boolean
+  fullLabel: string
+  mobileLabel: string
+  slot: MetricLayoutSlot
+  tileStyle: CSSProperties
+}
+
+const summaryLayoutSlot: MetricLayoutSlot = { column: 1, row: 6, columnSpan: 6, rowSpan: 2 }
+const fallbackToneState: { metrics: StoryGlassTone[]; summary: StoryGlassTone } = {
+  metrics: Array.from({ length: 10 }, () => 'tone-on-medium' as StoryGlassTone),
+  summary: 'tone-on-medium',
+}
+const luminanceCache = new Map<string, Promise<ImageData | null>>()
 
 const socialPlatforms: Array<{ key: SocialKey; label: string; Icon: typeof Instagram }> = [
   { key: 'facebook', label: 'Facebook', Icon: Facebook },
@@ -249,12 +267,21 @@ function stableHash(value: string) {
   return hash
 }
 
+function parseLayoutVariant(value: string | undefined) {
+  const trimmed = value?.trim().toLowerCase()
+  if (!trimmed || trimmed === 'auto') return undefined
+  const numeric = Number.parseInt(trimmed, 10)
+  if (!Number.isFinite(numeric)) return undefined
+  if (numeric >= 1 && numeric <= metricLayoutMaps.length) return numeric - 1
+  return undefined
+}
+
 function getStoryLayoutVariants(stories: CaseStudy[]) {
   const variants = new Map<string, number>()
   let previous = -1
   stories.forEach((story) => {
-    let variant = stableHash(story.id || story.brandName) % metricLayoutMaps.length
-    if (variant === previous) variant = (variant + 1) % metricLayoutMaps.length
+    let variant = parseLayoutVariant(story.layoutVariant) ?? (stableHash(story.id || story.brandName) % metricLayoutMaps.length)
+    if (parseLayoutVariant(story.layoutVariant) === undefined && variant === previous) variant = (variant + 1) % metricLayoutMaps.length
     variants.set(story.id, variant)
     previous = variant
   })
@@ -274,6 +301,79 @@ function getMetricDensity(value: string) {
   return ''
 }
 
+function getMetricLabelDensity(label: string) {
+  const length = label.trim().length
+  if (length >= 46) return 'is-dense-label'
+  if (length >= 34) return 'is-long-label'
+  return ''
+}
+
+function getSlotArea(slot: MetricLayoutSlot) {
+  return slot.columnSpan * slot.rowSpan
+}
+
+function getSlotSortScore(slot: MetricLayoutSlot) {
+  return getSlotArea(slot) * 100 + slot.columnSpan * 10 - slot.row * 6 - slot.column
+}
+
+function getMetricWeight(metric: CaseStudyMetric) {
+  return metric.label.trim().length + metric.value.trim().length * 1.5
+}
+
+function isSmallMetricSlot(slot: MetricLayoutSlot) {
+  return slot.columnSpan === 1 && slot.rowSpan === 1
+}
+
+function createAutoShortLabel(label: string, maxLength: number) {
+  const normalized = label.replace(/\s+/g, ' ').trim()
+  if (normalized.length <= maxLength) return normalized
+  const primaryPhrase = normalized
+    .split(/\s+[·|+]\s+|\s+vs\s+|\s+from\s+|,\s+|\s+\(/i)
+    .map((part) => part.trim())
+    .find((part) => part.length >= 8) || normalized
+  const words = primaryPhrase.split(/\s+/)
+  const nextWords: string[] = []
+  words.forEach((word) => {
+    const draft = [...nextWords, word].join(' ')
+    if (draft.length <= maxLength) nextWords.push(word)
+  })
+  return (nextWords.join(' ') || primaryPhrase.slice(0, maxLength)).trim()
+}
+
+function getDisplayMetricLabel(metric: CaseStudyMetric, slot: MetricLayoutSlot) {
+  const shortLabel = metric.shortLabel?.trim()
+  if (shortLabel && (getSlotArea(slot) <= 2 || metric.label.trim().length > 38)) return shortLabel
+  if (getSlotArea(slot) <= 2) return createAutoShortLabel(metric.label, slot.columnSpan === 1 ? 28 : 34)
+  return metric.label
+}
+
+function getMobileMetricLabel(metric: CaseStudyMetric, slot: MetricLayoutSlot) {
+  const shortLabel = metric.shortLabel?.trim()
+  if (shortLabel) return createAutoShortLabel(shortLabel, 16)
+  const area = getSlotArea(slot)
+  if (area <= 1) return createAutoShortLabel(metric.label, 12)
+  if (area <= 2) return createAutoShortLabel(metric.label, 14)
+  if (area <= 3) return createAutoShortLabel(metric.label, 18)
+  return createAutoShortLabel(metric.label, 22)
+}
+
+function getCompactMetricLabel(metric: CaseStudyMetric, slot: MetricLayoutSlot) {
+  const shortLabel = metric.shortLabel?.trim()
+  if (shortLabel) return createAutoShortLabel(shortLabel, 12)
+  const area = getSlotArea(slot)
+  if (area <= 1) return createAutoShortLabel(metric.label, 8)
+  if (area <= 2) return createAutoShortLabel(metric.label, 10)
+  if (area <= 3) return createAutoShortLabel(metric.label, 12)
+  return createAutoShortLabel(metric.label, 14)
+}
+
+function canMetricFitSmallSlot(metric: CaseStudyMetric, slot: MetricLayoutSlot) {
+  if (!isSmallMetricSlot(slot)) return true
+  const label = getDisplayMetricLabel(metric, slot).trim()
+  const value = metric.value.trim()
+  return label.length <= 28 && value.length <= 7
+}
+
 function getMetricSlotStyle(slot: MetricLayoutSlot): CSSProperties {
   return {
     gridColumn: `${slot.column} / span ${slot.columnSpan}`,
@@ -285,7 +385,7 @@ function getMetricSlotClass(slot: MetricLayoutSlot) {
   return `is-tile-${slot.columnSpan}x${slot.rowSpan}`
 }
 
-function buildMetricTiles(story: CaseStudy, layoutVariant: number) {
+function buildMetricTiles(story: CaseStudy, layoutVariant: number): MetricTile[] {
   const metricItems = story.keyMetrics.filter((metric) => metric.value.trim() || metric.label.trim())
   const serviceItems: CaseStudyMetric[] = story.services.map((service) => ({ value: initials(service), label: service }))
   const fallbackItems: CaseStudyMetric[] = [
@@ -310,17 +410,122 @@ function buildMetricTiles(story: CaseStudy, layoutVariant: number) {
   const featuredMetrics = uniqueMetrics.filter((metric) => metric.featured).slice(0, 2)
   const ordered = [...featuredMetrics, ...uniqueMetrics.filter((metric) => !featuredMetrics.includes(metric))].slice(0, 10)
   const layout = metricLayoutMaps[layoutVariant % metricLayoutMaps.length] ?? metricLayoutMaps[0]
+  const slotEntries = layout.slots.map((slot, index) => ({ index, slot }))
+  const slotsBySize = [...slotEntries].sort((left, right) => getSlotSortScore(right.slot) - getSlotSortScore(left.slot) || left.index - right.index)
+  const featuredSlots = slotsBySize.slice(0, 2)
+  const featuredSlotIndexes = new Set(featuredSlots.map((entry) => entry.index))
+  const remainingSlots = slotEntries
+    .filter((entry) => !featuredSlotIndexes.has(entry.index))
+    .sort((left, right) => getSlotSortScore(right.slot) - getSlotSortScore(left.slot) || left.index - right.index)
+  const remainingMetrics = ordered
+    .map((metric, index) => ({ metric, index }))
+    .filter(({ metric }) => !featuredMetrics.includes(metric))
+    .sort((left, right) => getMetricWeight(right.metric) - getMetricWeight(left.metric) || left.index - right.index)
 
-  return ordered.map((metric, index) => {
-    const slot = layout.slots[index] ?? layout.slots[layout.slots.length - 1]
+  const assignments = [
+    ...featuredMetrics.map((metric, index) => ({ metric, slotEntry: featuredSlots[index] ?? slotsBySize[index] })),
+    ...remainingMetrics.map(({ metric }, index) => ({ metric, slotEntry: remainingSlots[index] })),
+  ].filter((assignment): assignment is { metric: CaseStudyMetric; slotEntry: { index: number; slot: MetricLayoutSlot } } => Boolean(assignment.slotEntry))
 
-    return {
-      ...metric,
-      className: [getMetricDensity(metric.value), getMetricSlotClass(slot)].filter(Boolean).join(' '),
-      featured: index < 2,
-      tileStyle: getMetricSlotStyle(slot),
-    }
+  assignments.forEach((assignment, assignmentIndex) => {
+    const slot = assignment.slotEntry.slot
+    if (canMetricFitSmallSlot(assignment.metric, slot)) return
+    const slotArea = getSlotArea(slot)
+    const swapCandidate = assignments
+      .map((candidate, candidateIndex) => ({ ...candidate, candidateIndex }))
+      .filter((candidate) => candidate.candidateIndex !== assignmentIndex)
+      .filter((candidate) => !candidate.metric.featured)
+      .filter((candidate) => getSlotArea(candidate.slotEntry.slot) > slotArea && canMetricFitSmallSlot(candidate.metric, slot))
+      .sort((left, right) => {
+        const areaDelta = getSlotArea(left.slotEntry.slot) - getSlotArea(right.slotEntry.slot)
+        if (areaDelta !== 0) return areaDelta
+        return getMetricWeight(left.metric) - getMetricWeight(right.metric)
+      })[0]
+    if (!swapCandidate) return
+    const nextMetric = swapCandidate.metric
+    assignments[swapCandidate.candidateIndex].metric = assignment.metric
+    assignments[assignmentIndex].metric = nextMetric
   })
+
+  return assignments
+    .sort((left, right) => left.slotEntry.index - right.slotEntry.index)
+    .map(({ metric, slotEntry }) => {
+      const slot = slotEntry.slot
+      const displayLabel = getDisplayMetricLabel(metric, slot)
+
+      return {
+        ...metric,
+        className: [getMetricDensity(metric.value), getMetricLabelDensity(displayLabel), getMetricSlotClass(slot)].filter(Boolean).join(' '),
+        compactLabel: getCompactMetricLabel(metric, slot),
+        displayLabel,
+        featured: Boolean(metric.featured),
+        fullLabel: metric.label,
+        mobileLabel: getMobileMetricLabel(metric, slot),
+        slot,
+        tileStyle: getMetricSlotStyle(slot),
+      }
+    })
+}
+
+function getToneFromLuminance(luminance: number): StoryGlassTone {
+  if (luminance >= 0.62) return 'tone-on-light'
+  if (luminance >= 0.45) return 'tone-on-medium'
+  return 'tone-on-dark'
+}
+
+function loadLuminanceData(url: string) {
+  if (!luminanceCache.has(url)) {
+    luminanceCache.set(url, new Promise((resolve) => {
+      if (typeof window === 'undefined') {
+        resolve(null)
+        return
+      }
+      const image = new Image()
+      image.crossOrigin = 'anonymous'
+      image.onload = () => {
+        try {
+          const canvas = document.createElement('canvas')
+          canvas.width = 60
+          canvas.height = 75
+          const context = canvas.getContext('2d', { willReadFrequently: true })
+          if (!context) {
+            resolve(null)
+            return
+          }
+          context.drawImage(image, 0, 0, canvas.width, canvas.height)
+          resolve(context.getImageData(0, 0, canvas.width, canvas.height))
+        } catch {
+          resolve(null)
+        }
+      }
+      image.onerror = () => resolve(null)
+      image.src = url
+    }))
+  }
+  return luminanceCache.get(url) as Promise<ImageData | null>
+}
+
+function getAverageLuminance(imageData: ImageData, slot: MetricLayoutSlot) {
+  const { data, width, height } = imageData
+  const startX = Math.max(0, Math.floor(((slot.column - 1) / 6) * width))
+  const endX = Math.min(width, Math.ceil(((slot.column - 1 + slot.columnSpan) / 6) * width))
+  const startY = Math.max(0, Math.floor(((slot.row - 1) / 8) * height))
+  const endY = Math.min(height, Math.ceil(((slot.row - 1 + slot.rowSpan) / 8) * height))
+  let total = 0
+  let count = 0
+
+  for (let y = startY; y < endY; y += 1) {
+    for (let x = startX; x < endX; x += 1) {
+      const index = (y * width + x) * 4
+      const red = data[index] / 255
+      const green = data[index + 1] / 255
+      const blue = data[index + 2] / 255
+      total += 0.2126 * red + 0.7152 * green + 0.0722 * blue
+      count += 1
+    }
+  }
+
+  return count ? total / count : 0.5
 }
 
 function carouselImagesForStory(story: CaseStudy) {
@@ -431,6 +636,9 @@ function PostMoreMenu({ story, onCopy }: { story: CaseStudy; onCopy: (story: Cas
 
 function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; index: number; layoutVariant: number }) {
   const frameRef = useRef<HTMLDivElement | null>(null)
+  const summaryCopyRef = useRef<HTMLParagraphElement | null>(null)
+  const summarySheetRef = useRef<HTMLDivElement | null>(null)
+  const summaryCloseRef = useRef<HTMLButtonElement | null>(null)
   const touchStartX = useRef(0)
   const images = useMemo(() => carouselImagesForStory(story), [story])
   const metricTiles = useMemo(() => buildMetricTiles(story, layoutVariant), [layoutVariant, story])
@@ -439,6 +647,10 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
   const [inView, setInView] = useState(true)
   const [reducedMotion, setReducedMotion] = useState(false)
   const [pausedUntil, setPausedUntil] = useState(0)
+  const [glassTones, setGlassTones] = useState(fallbackToneState)
+  const [summaryExpanded, setSummaryExpanded] = useState(false)
+  const [summaryNeedsMore, setSummaryNeedsMore] = useState(false)
+  const summarySheetId = `${story.id}-summary-sheet`
   const frameStyle = {
     '--story-accent': theme.accent,
     '--story-accent-soft': theme.accentSoft,
@@ -465,13 +677,83 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
   }, [])
 
   useEffect(() => {
-    if (images.length <= 1 || !inView || reducedMotion) return
+    if (images.length <= 1 || !inView || reducedMotion || summaryExpanded) return
     const delay = Math.max(4500, pausedUntil - Date.now())
     const timer = window.setTimeout(() => {
       setActiveImage((current) => (current + 1) % images.length)
     }, delay)
     return () => window.clearTimeout(timer)
-  }, [activeImage, images.length, inView, pausedUntil, reducedMotion])
+  }, [activeImage, images.length, inView, pausedUntil, reducedMotion, summaryExpanded])
+
+  useEffect(() => {
+    let cancelled = false
+    const image = images[activeImage]
+    if (!image) {
+      setGlassTones(fallbackToneState)
+      return
+    }
+
+    void loadLuminanceData(image).then((imageData) => {
+      if (cancelled) return
+      if (!imageData) {
+        setGlassTones(fallbackToneState)
+        return
+      }
+      setGlassTones({
+        metrics: metricTiles.map((metric) => getToneFromLuminance(getAverageLuminance(imageData, metric.slot))),
+        summary: getToneFromLuminance(getAverageLuminance(imageData, summaryLayoutSlot)),
+      })
+    })
+
+    return () => {
+      cancelled = true
+    }
+  }, [activeImage, images, metricTiles])
+
+  useEffect(() => {
+    const element = summaryCopyRef.current
+    if (!element) return
+    const sync = () => setSummaryNeedsMore(element.scrollHeight > element.clientHeight + 2)
+    sync()
+    if (!('ResizeObserver' in window)) return
+    const observer = new ResizeObserver(sync)
+    observer.observe(element)
+    return () => observer.disconnect()
+  }, [story.shortDescription])
+
+  useEffect(() => {
+    if (!summaryExpanded) return
+    const previousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    window.setTimeout(() => summaryCloseRef.current?.focus(), 0)
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === 'Escape') {
+        setSummaryExpanded(false)
+        return
+      }
+      if (event.key !== 'Tab') return
+      const sheet = summarySheetRef.current
+      if (!sheet) return
+      const focusable = Array.from(sheet.querySelectorAll<HTMLElement>('button, [href], input, textarea, select, [tabindex]:not([tabindex="-1"])'))
+        .filter((element) => !element.hasAttribute('disabled'))
+      if (!focusable.length) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault()
+        last.focus()
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault()
+        first.focus()
+      }
+    }
+
+    document.addEventListener('keydown', onKeyDown)
+    return () => {
+      document.removeEventListener('keydown', onKeyDown)
+      previousFocus?.focus()
+    }
+  }, [summaryExpanded])
 
   function pauseAutoplay() {
     setPausedUntil(Date.now() + 8000)
@@ -481,6 +763,15 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
     if (images.length <= 1) return
     if (pause) pauseAutoplay()
     setActiveImage((current) => (current + delta + images.length) % images.length)
+  }
+
+  function openSummarySheet() {
+    pauseAutoplay()
+    setSummaryExpanded(true)
+  }
+
+  function closeSummarySheet() {
+    setSummaryExpanded(false)
   }
 
   function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
@@ -514,6 +805,7 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
               key={`${story.id}-bg-${image}`}
               src={image}
               alt=""
+              crossOrigin="anonymous"
               className="h-full w-full shrink-0 object-cover"
               loading={index === 0 ? 'eager' : 'lazy'}
             />
@@ -562,19 +854,33 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
           {metricTiles.map((metric, metricIndex) => (
             <div
               key={`${story.id}-metric-${metricIndex}`}
-              className={`story-glass-tile ${metric.className} ${metric.featured ? 'is-featured' : ''}`}
+              className={`story-glass-tile ${metric.className} ${glassTones.metrics[metricIndex] ?? 'tone-on-medium'} ${metric.featured ? 'is-featured' : ''}`}
               style={{ '--ri': metricIndex, ...metric.tileStyle } as CSSProperties}
+              aria-label={`${metric.value || initials(metric.fullLabel)} ${metric.fullLabel}`}
             >
               <span className="story-metric-kicker">{String(metricIndex + 1).padStart(2, '0')}</span>
-              <span className={`story-metric-value ${metric.featured ? 'is-featured' : ''}`}>{metric.value || initials(metric.label)}</span>
-              <span className="story-metric-label">{metric.label}</span>
+              <span className={`story-metric-value ${metric.featured ? 'is-featured' : ''}`}>{metric.value || initials(metric.fullLabel)}</span>
+              <span className="story-metric-label story-metric-label-desktop" title={metric.fullLabel}>{metric.displayLabel}</span>
+              <span className="story-metric-label story-metric-label-mobile" title={metric.fullLabel}>{metric.mobileLabel}</span>
+              <span className="story-metric-label story-metric-label-compact" title={metric.fullLabel}>{metric.compactLabel}</span>
             </div>
           ))}
         </div>
 
-        <div className="story-summary-glass">
+        <div className={`story-summary-glass ${glassTones.summary}`}>
           <span className="story-summary-kicker">{story.category}</span>
-          <p className="story-summary-copy">{story.shortDescription}</p>
+          <p ref={summaryCopyRef} className="story-summary-copy">{story.shortDescription}</p>
+          {summaryNeedsMore && (
+            <button
+              type="button"
+              className="story-summary-more"
+              aria-expanded={summaryExpanded}
+              aria-controls={summarySheetId}
+              onClick={openSummarySheet}
+            >
+              ... more
+            </button>
+          )}
           <div className="story-summary-tags" aria-label="Services">
             {story.services.slice(0, 4).map((service) => (
               <span key={`${story.id}-summary-${service}`}>{service}</span>
@@ -582,14 +888,51 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
           </div>
         </div>
 
-        <button
-          type="button"
-          onClick={() => openBookingModal('story-media')}
-          className="story-media-cta"
-        >
-          About this story
-        </button>
+        <div className="story-media-cta-shell">
+          <button
+            type="button"
+            onClick={() => openBookingModal('story-media')}
+            className="about-story-btn"
+          >
+            About this story
+          </button>
+        </div>
       </div>
+
+      {summaryExpanded && (
+        <div
+          className="story-summary-sheet-backdrop"
+          onMouseDown={(event) => {
+            if (event.target === event.currentTarget) closeSummarySheet()
+          }}
+        >
+          <div
+            id={summarySheetId}
+            ref={summarySheetRef}
+            role="dialog"
+            aria-modal="true"
+            aria-label={`${getDisplayName(story)} full summary`}
+            className="story-summary-sheet"
+          >
+            <button
+              type="button"
+              ref={summaryCloseRef}
+              className="story-summary-sheet-close"
+              aria-label="Close summary"
+              onClick={closeSummarySheet}
+            >
+              &times;
+            </button>
+            <span className="story-summary-sheet-kicker">{story.category}</span>
+            <p>{story.shortDescription}</p>
+            <div className="story-summary-sheet-tags" aria-label="Services">
+              {story.services.map((service) => (
+                <span key={`${story.id}-sheet-${service}`}>{service}</span>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
     </div>
   )

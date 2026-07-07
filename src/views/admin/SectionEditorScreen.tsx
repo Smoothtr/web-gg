@@ -70,7 +70,7 @@ function getItemPreviewImage(item: CmsBlockItem, isPeopleBlock: boolean) {
 }
 
 function getMetricFrom(items: CmsLocalizedBlockItemFields['keyMetrics'] | undefined, index: number) {
-  return items?.[index] ?? { value: '', label: '', featured: false }
+  return items?.[index] ?? { value: '', label: '', shortLabel: '', featured: false }
 }
 
 function getStatChip(items: CmsStatChip[] | undefined, index: number): CmsStatChip {
@@ -795,9 +795,9 @@ function StoryItemEditor({
     updateBlockItem(pageId, blockId, index, patchItemText(item, activeLang, patch))
   }
 
-  function updateMetric(metricIndex: number, patch: { value?: string; label?: string; featured?: boolean }) {
+  function updateMetric(metricIndex: number, patch: { value?: string; label?: string; shortLabel?: string; featured?: boolean }) {
     const nextMetrics = [...(keyMetrics ?? [])]
-    while (nextMetrics.length <= metricIndex) nextMetrics.push({ value: '', label: '', featured: false })
+    while (nextMetrics.length <= metricIndex) nextMetrics.push({ value: '', label: '', shortLabel: '', featured: false })
     nextMetrics[metricIndex] = { ...nextMetrics[metricIndex], ...patch }
     updateText({ keyMetrics: nextMetrics })
   }
@@ -861,6 +861,9 @@ function StoryItemEditor({
         </Field>
         <Field label="Story display name">
           <TextInput value={item.displayName ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { displayName: value })} placeholder="Name under story circle" />
+        </Field>
+        <Field label="Layout variant" hint="auto hoac 1-8. Dung de ep map bento khi anh co subject can khoe.">
+          <TextInput value={item.layoutVariant ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { layoutVariant: value })} placeholder="auto / 1 / 2 / ... / 8" />
         </Field>
       </div>
 
@@ -987,6 +990,9 @@ function StoryItemEditor({
                   </Field>
                   <Field label="Label">
                     <TextInput value={metric.label} onChange={(value) => updateMetric(metricIndex, { label: value })} />
+                  </Field>
+                  <Field label="Short label" hint="Optional. Dung khi metric roi vao o nho 1x1/1x2 de tranh cat chu.">
+                    <TextInput value={metric.shortLabel ?? ''} onChange={(value) => updateMetric(metricIndex, { shortLabel: value })} />
                   </Field>
                   <label className="inline-flex w-fit items-center gap-2 rounded-lg border border-outline-variant/45 px-3 py-2 text-xs font-extrabold text-on-surface-variant">
                     <input

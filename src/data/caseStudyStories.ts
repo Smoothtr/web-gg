@@ -16,6 +16,7 @@ export function storyFromCmsItem(item: CmsBlockItem) {
       const cmsMetrics = (item.keyMetrics ?? []).slice(0, 10).map((metric) => ({
         value: metric.value ?? '',
         label: metric.label ?? '',
+        shortLabel: metric.shortLabel ?? '',
         featured: metric.featured,
       }))
       const keyMetrics = Array.from({ length: 10 }, (_, index) => {
@@ -63,6 +64,7 @@ export function storyFromCmsItem(item: CmsBlockItem) {
         },
         showOnHomepage: item.showOnHomepage ?? fallback.showOnHomepage,
         homepageOrder: item.homepageOrder || fallback.homepageOrder,
+        layoutVariant: item.layoutVariant || fallback.layoutVariant,
         testimonialQuote: item.testimonialQuote || fallback.testimonialQuote,
         testimonialAuthor: item.testimonialAuthor || fallback.testimonialAuthor,
         testimonialRole: item.testimonialRole || fallback.testimonialRole,

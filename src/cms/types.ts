@@ -40,6 +40,7 @@ export type CmsLocalizedBlockItemFields = {
   keyMetrics?: Array<{
     value: string
     label: string
+    shortLabel?: string
     featured?: boolean
   }>
   ctaText?: string
@@ -104,6 +105,7 @@ export type CmsBlockItem = {
   keyMetrics?: Array<{
     value: string
     label: string
+    shortLabel?: string
     featured?: boolean
   }>
   storyDetail?: {
@@ -121,6 +123,7 @@ export type CmsBlockItem = {
   bannerImageUrl?: string
   showOnHomepage?: boolean
   homepageOrder?: string
+  layoutVariant?: string
   featuredStats?: CmsStatChip[]
   proofPoint?: string
   testimonialQuote?: string

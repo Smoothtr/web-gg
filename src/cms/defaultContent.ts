@@ -632,6 +632,7 @@ const theOneStoryItems: CmsBlockItem[] = caseStudies.map((story) => ({
   },
   showOnHomepage: story.showOnHomepage ?? true,
   homepageOrder: story.homepageOrder ?? '',
+  layoutVariant: story.layoutVariant ?? 'auto',
   testimonialQuote: storyVietnameseCopy[story.id]?.testimonialQuote,
   testimonialAuthor: storyVietnameseCopy[story.id]?.testimonialAuthor,
   testimonialRole: storyVietnameseCopy[story.id]?.testimonialRole,

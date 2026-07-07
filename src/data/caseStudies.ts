@@ -1,6 +1,7 @@
 export type CaseStudyMetric = {
   value: string
   label: string
+  shortLabel?: string
   featured?: boolean
 }
 
@@ -37,6 +38,7 @@ export type CaseStudy = {
   }
   showOnHomepage?: boolean
   homepageOrder?: string
+  layoutVariant?: string
   testimonialQuote?: string
   testimonialAuthor?: string
   testimonialRole?: string
