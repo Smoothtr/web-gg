@@ -14,15 +14,10 @@ export type PageMeta = {
 
 export type BrandLang = 'vi' | 'en'
 
-export function localizedPath(lang: BrandLang, path: string) {
+// The site is single-language (English at root); legacy /en URLs collapse onto root paths.
+export function localizedPath(_lang: BrandLang, path: string) {
   const trimmed = path.trim() || '/'
   if (/^(https?:|mailto:|tel:)/i.test(trimmed) || trimmed.startsWith('#')) return trimmed
-  if (lang === 'en') {
-    if (trimmed === '/') return '/en'
-    if (trimmed.startsWith('/en/')) return trimmed
-    if (trimmed === '/en') return trimmed
-    return trimmed.startsWith('/') ? `/en${trimmed}` : `/en/${trimmed}`
-  }
   const withoutEnglishPrefix = trimmed.replace(/^\/en(?=\/|$)/, '')
   return withoutEnglishPrefix || '/'
 }

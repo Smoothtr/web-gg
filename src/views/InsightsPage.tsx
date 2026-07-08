@@ -68,8 +68,8 @@ export function InsightsIndexPage({ posts = insightPosts, siteSettings }: { post
   const [featuredPost, ...otherPosts] = posts
 
   return (
-    <BrandLayout lang="vi" siteSettings={siteSettings}>
-      <SeoHead meta={insightsIndexMeta} schema={[organizationSchema, websiteSchema, insightsIndexSchema]} lang="vi" />
+    <BrandLayout lang="en" siteSettings={siteSettings}>
+      <SeoHead meta={insightsIndexMeta} schema={[organizationSchema, websiteSchema, insightsIndexSchema]} lang="en" />
 
       <article>
         <section className="relative overflow-hidden px-5 py-14 md:py-20 lg:px-10">
@@ -155,7 +155,7 @@ export function InsightArticlePage({
 
   if (!post) {
     return (
-      <BrandLayout lang="vi" siteSettings={siteSettings}>
+      <BrandLayout lang="en" siteSettings={siteSettings}>
         <article className="px-5 py-20 lg:px-10">
           <div className="mx-auto max-w-3xl rounded-2xl border border-outline-variant/40 bg-surface p-6">
             <h1 className="text-2xl font-extrabold text-on-surface">Insight not found</h1>
@@ -175,11 +175,11 @@ export function InsightArticlePage({
       : []
 
   return (
-    <BrandLayout lang="vi" siteSettings={siteSettings}>
+    <BrandLayout lang="en" siteSettings={siteSettings}>
       <SeoHead
         meta={post.meta}
         schema={[organizationSchema, websiteSchema, ...defaultInsightSchemas]}
-        lang="vi"
+        lang="en"
       />
 
       <article>

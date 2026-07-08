@@ -1,13 +1,5 @@
-import { packagesMetaByLang } from '../../../brandContent'
-import { PackagesView } from '../../pageViews'
-import { generateCmsPageMetadata } from '../../routeMetadata'
-
-export const revalidate = 5
-
-export function generateMetadata() {
-  return generateCmsPageMetadata('packages', 'en', packagesMetaByLang.en)
-}
+import { permanentRedirect } from 'next/navigation'
 
 export default function Page() {
-  return <PackagesView lang="en" pageId="packages" />
+  permanentRedirect('/packages')
 }

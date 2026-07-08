@@ -1112,7 +1112,7 @@ function FinalStoryCta({ label }: { label: string }) {
   )
 }
 
-export default function TheOnePage({ lang = 'vi', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
+export default function TheOnePage({ lang = 'en', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const c = compactTheOneByLang[lang]
   const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang)
   const storiesBlock = getLocalizedCmsBlock(cmsPage, 'stories', lang)

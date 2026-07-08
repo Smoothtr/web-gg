@@ -30,10 +30,6 @@ type ItemTextKey = Exclude<keyof CmsLocalizedBlockItemFields, 'services' | 'feat
 
 const storyMetricSlots = Array.from({ length: 10 }, (_, index) => index)
 const packageDetailPageIds = new Set(['the-one-start', 'the-one-system', 'the-one-scale'])
-const languages: Array<{ label: string; value: BrandLang; caption: string }> = [
-  { label: 'VI', value: 'vi', caption: 'Vietnamese copy' },
-  { label: 'EN', value: 'en', caption: 'English copy' },
-]
 
 function listToText(items: string[] | undefined) {
   return (items ?? []).join('\n')
@@ -1202,7 +1198,8 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
   const blockIndex = page?.blocks.findIndex((item) => item.id === blockId) ?? -1
   const block = blockIndex >= 0 ? page?.blocks[blockIndex] : undefined
   const [idDraft, setIdDraft] = useState(blockId)
-  const [activeLang, setActiveLang] = useState<BrandLang>('vi')
+  // Single-language site: content lives in the base fields ('vi' accessor = base, no locale overrides).
+  const activeLang: BrandLang = 'vi'
   const [uploadError, setUploadError] = useState('')
 
   useEffect(() => {
@@ -1300,30 +1297,6 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
           >
             <Save size={17} /> {saving ? 'Đang lưu...' : 'Save page'}
           </button>
-        </div>
-      </div>
-
-      <div className="flex flex-col gap-3 rounded-2xl border border-primary/20 bg-primary/5 p-4 md:flex-row md:items-center md:justify-between">
-        <div>
-          <p className="text-xs font-extrabold uppercase tracking-widest text-primary">Manual bilingual copy</p>
-          <p className="mt-1 text-sm font-semibold text-on-surface-variant">
-            Chon ngon ngu de sua text rieng. Media, gallery, link ky thuat, order va publish status van dung chung cho ca hai version.
-          </p>
-        </div>
-        <div className="inline-flex w-fit rounded-xl border border-outline-variant/45 bg-surface p-1">
-          {languages.map((item) => (
-            <button
-              key={item.value}
-              type="button"
-              onClick={() => setActiveLang(item.value)}
-              className={`rounded-lg px-4 py-2 text-xs font-extrabold transition-colors ${
-                activeLang === item.value ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-primary'
-              }`}
-              title={item.caption}
-            >
-              {item.label}
-            </button>
-          ))}
         </div>
       </div>
 

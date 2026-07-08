@@ -19,13 +19,13 @@ interface LegalPageProps {
 
 function LegalPage({ title, sections, siteSettings }: LegalPageProps) {
   const [bookingOpen, setBookingOpen] = useState(false)
-  const localizedSettings = getLocalizedSiteSettings(siteSettings, 'vi')
+  const localizedSettings = getLocalizedSiteSettings(siteSettings, 'en')
   const { header } = localizedSettings
   const showHeaderCopy = Boolean(header.brandName.trim() || header.tagline.trim())
 
   return (
     <>
-      <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang="vi" copy={localizedSettings.booking} />
+      <BookingModal isOpen={bookingOpen} onClose={() => setBookingOpen(false)} lang="en" copy={localizedSettings.booking} />
       {/* Navbar minimal */}
       <header className="fixed w-full top-0 z-50 bg-surface/92 border-b border-outline-variant/30 shadow-sm">
         <nav className="flex justify-between items-center px-5 lg:px-10 max-w-6xl mx-auto h-14">
@@ -43,7 +43,7 @@ function LegalPage({ title, sections, siteSettings }: LegalPageProps) {
               href="/"
               className="text-sm font-semibold text-primary hover:opacity-70 transition-opacity flex items-center gap-1"
             >
-              ← Trang chủ
+              ← Home
             </a>
           </div>
         </nav>

@@ -5,9 +5,9 @@ import { generateCmsPageMetadata } from '../routeMetadata'
 export const revalidate = 5
 
 export function generateMetadata() {
-  return generateCmsPageMetadata('about', 'vi', aboutMetaByLang.vi)
+  return generateCmsPageMetadata('about', 'en', aboutMetaByLang.en)
 }
 
 export default function Page() {
-  return <AboutView lang="vi" pageId="about" />
+  return <AboutView lang="en" pageId="about" />
 }

@@ -6,20 +6,20 @@ import { createMetadata, JsonLd } from '../seo'
 export const revalidate = 5
 
 const meta: PageMeta = {
-  title: 'gg99.vn la gi? | The One - GG99',
+  title: 'What is gg99.vn? | The One - GG99',
   description:
-    'gg99.vn la website chinh thuc cua The One - GG99, growth partner cho startups va SMEs ve brand, website, CRM, automation va performance marketing. Khong phai casino hay ca cuoc.',
+    'gg99.vn is the official website of The One - GG99, a growth partner for startups and SMEs across brand, website, CRM, automation and performance marketing. It is not a casino or betting website.',
   path: '/gg99-vn-la-gi',
-  ogTitle: 'gg99.vn la gi? | The One - GG99',
+  ogTitle: 'What is gg99.vn? | The One - GG99',
   ogDescription:
-    'Cau tra loi chinh thuc: gg99.vn la website cua The One - GG99, khong phai casino, co bac hay ca cuoc truc tuyen.',
+    'Official answer: gg99.vn is the website of The One - GG99, not a casino, gambling or betting website.',
   ogImage: '/og-the-one-gg99.jpg',
 }
 
 const faq = [
-  ['gg99.vn la gi?', 'gg99.vn la website chinh thuc cua The One - GG99, mot growth partner cho startups va SMEs.'],
-  ['gg99.vn co phai casino khong?', 'Khong. gg99.vn khong phai casino, co bac, ca cuoc, slot, nap/rut hay tro choi doi thuong.'],
-  ['The One - GG99 lam gi?', 'The One - GG99 giup startups va SMEs xay brand, website, CRM, automation va performance marketing trong mot he tang truong ket noi.'],
+  ['What is gg99.vn?', 'gg99.vn is the official website of The One - GG99, a growth partner for startups and SMEs.'],
+  ['Is gg99.vn a casino?', 'No. gg99.vn is not a casino, gambling, betting, slot, deposit/withdrawal or reward game website.'],
+  ['What does The One - GG99 do?', 'The One - GG99 helps startups and SMEs build brand, website, CRM, automation and performance marketing in one connected growth system.'],
 ]
 
 const pageSchema = {
@@ -27,10 +27,10 @@ const pageSchema = {
   '@type': 'WebPage',
   '@id': `${siteUrl}/gg99-vn-la-gi#webpage`,
   url: absoluteUrl('/gg99-vn-la-gi'),
-  name: 'gg99.vn la gi?',
-  headline: 'gg99.vn la gi?',
+  name: 'What is gg99.vn?',
+  headline: 'What is gg99.vn?',
   description: meta.description,
-  inLanguage: 'vi',
+  inLanguage: 'en',
   isPartOf: { '@id': `${siteUrl}/#website` },
   about: { '@id': `${siteUrl}/#organization` },
   primaryImageOfPage: logoUrl,
@@ -57,7 +57,7 @@ const faqSchema = {
 }
 
 export function generateMetadata() {
-  return createMetadata(meta, 'vi')
+  return createMetadata(meta, 'en')
 }
 
 export default async function Page() {
@@ -66,7 +66,7 @@ export default async function Page() {
   return (
     <>
       <JsonLd items={[organizationSchema, websiteSchema, pageSchema, faqSchema]} />
-      <Gg99EntityPage lang="vi" siteSettings={siteSettings} />
+      <Gg99EntityPage lang="en" siteSettings={siteSettings} />
     </>
   )
 }

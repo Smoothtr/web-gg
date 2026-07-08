@@ -250,8 +250,27 @@ export type CmsLocalizedSiteSettings = {
   }
 }
 
+export type CmsAuroraBlob = {
+  color: string
+  alpha: number
+}
+
+export type CmsHomepageBackground = {
+  mode: 'flow-wave' | 'static'
+  colorLow: string
+  colorHigh: string
+  atmoColor: string
+  atmoCount: number
+  opacity: number
+  flow: number
+  waveHeight: number
+  pointerStrength: number
+  blobs: CmsAuroraBlob[]
+}
+
 export type CmsSiteSettings = {
   id: 'global'
   locales: Record<BrandLang, CmsLocalizedSiteSettings>
+  homepageBackground?: Partial<CmsHomepageBackground>
   updatedAt?: string
 }

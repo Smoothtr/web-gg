@@ -62,7 +62,7 @@ const facts = {
   ctaHref: string
 }>
 
-export function Gg99EntityPage({ lang = 'vi', siteSettings }: { lang?: BrandLang; siteSettings?: CmsSiteSettings | null }) {
+export function Gg99EntityPage({ lang = 'en', siteSettings }: { lang?: BrandLang; siteSettings?: CmsSiteSettings | null }) {
   const c = facts[lang]
 
   return (

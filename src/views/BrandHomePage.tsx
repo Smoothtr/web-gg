@@ -13,7 +13,9 @@ import { PackageCards } from '../components/PackageCards'
 import { SeoHead } from '../components/SeoHead'
 import { useScrollReveal } from '../hooks/useScrollReveal'
 import { whenIntroGone } from '../hooks/useIntroGate'
+import { FlowWaveBackground } from '../components/FlowWaveBackground'
 import { getCmsBlock, getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
+import { mergeHomepageBackground } from '../cms/siteSettings'
 import { buildHomeFaqSchema, getHomeClosingFaqItems } from '../cms/homeFaqSchema'
 import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
@@ -960,7 +962,7 @@ function ClosingBanner({
 }
 
 export default function BrandHomePage({
-  lang = 'vi',
+  lang = 'en',
   cmsPage,
   theOnePage,
   siteSettings,
@@ -974,6 +976,8 @@ export default function BrandHomePage({
   const [heroReady, setHeroReady] = useState(false)
 
   const c = compactHomeByLang[lang]
+  const homeBackground = mergeHomepageBackground(siteSettings?.homepageBackground)
+  const flowWaveActive = homeBackground.mode === 'flow-wave'
   const homeMeta = getLocalizedPageMeta(cmsPage, lang, homeMetaByLang[lang])
   const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang)
   const packagesBlock = getLocalizedCmsBlock(cmsPage, 'packages', lang)
@@ -986,7 +990,10 @@ export default function BrandHomePage({
   const heroLineOne = heroBlock?.heading?.trim() || 'The One by gg99'
   const heroLineTwo = heroBlock?.subtitle?.trim() || heroLines[0] || 'The only one digital agency you needed'
   const isDefaultHeroTitle = heroLineOne.toLowerCase() === 'the one by gg99'
-  const heroTextMode = heroBlock?.textColor ?? 'light'
+  const heroHasOwnBackground = !flowWaveActive || Boolean(heroBlock?.backgroundImageUrl?.trim())
+  const rawHeroTextMode = heroBlock?.textColor ?? 'light'
+  // "light" was chosen for the old opaque pink gradient; on the transparent aurora canvas it is unreadable.
+  const heroTextMode = !heroHasOwnBackground && rawHeroTextMode === 'light' ? 'dark' : rawHeroTextMode
   const showHeroDivider = heroBlock?.dividerShow !== false
   const heroWordCount = countStaggerWords(heroLineOne)
   const heroDelays = getHeroAnimationDelays(heroWordCount, showHeroDivider)
@@ -1014,15 +1021,24 @@ export default function BrandHomePage({
       lang={lang}
       siteSettings={siteSettings}
       flushTop
+      transparentBackground={flowWaveActive}
       floatingCtaRevealSelector="[data-floating-cta-threshold='hero']"
       resolveNavHref={(href, label) => (href === '/packages' || label.toLowerCase().includes('packages') ? '#packages' : href)}
     >
       <SeoHead meta={homeMeta} schema={homeSchemas} lang={lang} />
+      {flowWaveActive && <FlowWaveBackground settings={homeBackground} />}
 
-      <section className={`home-hero relative flex min-h-[52vh] items-center overflow-hidden md:min-h-[58vh] ${heroReady ? 'is-ready' : ''}`} style={heroBackgroundStyle(heroBlock)}>
-        <div className="absolute inset-0 tech-grid opacity-35 pointer-events-none" aria-hidden="true" />
-        <div className="noise-overlay" aria-hidden="true" />
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-surface-container" aria-hidden="true" />
+      <section
+        className={`home-hero relative flex min-h-[52vh] items-center overflow-hidden md:min-h-[58vh] ${heroReady ? 'is-ready' : ''}`}
+        style={heroHasOwnBackground ? heroBackgroundStyle(heroBlock) : undefined}
+      >
+        {heroHasOwnBackground && (
+          <>
+            <div className="absolute inset-0 tech-grid opacity-35 pointer-events-none" aria-hidden="true" />
+            <div className="noise-overlay" aria-hidden="true" />
+            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-surface-container" aria-hidden="true" />
+          </>
+        )}
         <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-5 pb-14 pt-28 text-center lg:px-10">
           <h1
             className={[
@@ -1034,7 +1050,7 @@ export default function BrandHomePage({
           </h1>
           {showHeroDivider && (
             <div
-              className="home-hero-divider mt-5 h-px bg-white/45"
+              className={`home-hero-divider mt-5 h-px ${heroTextMode === 'dark' ? 'bg-on-surface/25' : 'bg-white/45'}`}
               style={{ '--hero-delay': `${heroDelays.divider}ms` } as CSSProperties}
               aria-hidden="true"
             />

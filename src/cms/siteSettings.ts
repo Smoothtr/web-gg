@@ -1,5 +1,45 @@
 import { footerCopyByLang, navItemsByLang, type BrandLang } from '../brandContent'
-import type { CmsLink, CmsLocalizedSiteSettings, CmsSiteSettings } from './types'
+import type { CmsHomepageBackground, CmsLink, CmsLocalizedSiteSettings, CmsSiteSettings } from './types'
+
+// Defaults from GG99-FlowWave-Background-Spec.md — Plan B "Ink Wave" v2 aurora (tested values).
+export const defaultHomepageBackground: CmsHomepageBackground = {
+  mode: 'flow-wave',
+  colorLow: '#ffc9d2',
+  colorHigh: '#b3124b',
+  atmoColor: '#ff5f8f',
+  atmoCount: 220,
+  opacity: 0.5,
+  flow: 0.6,
+  waveHeight: 2.6,
+  pointerStrength: 0.8,
+  blobs: [
+    { color: '#ff8f40', alpha: 0.5 },
+    { color: '#ffd166', alpha: 0.55 },
+    { color: '#ff2e88', alpha: 0.42 },
+    { color: '#ff5f6d', alpha: 0.45 },
+  ],
+}
+
+export function mergeHomepageBackground(value?: Partial<CmsHomepageBackground> | null): CmsHomepageBackground {
+  const fallback = defaultHomepageBackground
+  const blobs = fallback.blobs.map((blob, index) => ({
+    color: value?.blobs?.[index]?.color?.trim() || blob.color,
+    alpha: typeof value?.blobs?.[index]?.alpha === 'number' && Number.isFinite(value.blobs[index].alpha) ? value.blobs[index].alpha : blob.alpha,
+  }))
+  const num = (candidate: number | undefined, base: number) => (typeof candidate === 'number' && Number.isFinite(candidate) ? candidate : base)
+  return {
+    mode: value?.mode === 'static' ? 'static' : 'flow-wave',
+    colorLow: value?.colorLow?.trim() || fallback.colorLow,
+    colorHigh: value?.colorHigh?.trim() || fallback.colorHigh,
+    atmoColor: value?.atmoColor?.trim() || fallback.atmoColor,
+    atmoCount: num(value?.atmoCount, fallback.atmoCount),
+    opacity: num(value?.opacity, fallback.opacity),
+    flow: num(value?.flow, fallback.flow),
+    waveHeight: num(value?.waveHeight, fallback.waveHeight),
+    pointerStrength: num(value?.pointerStrength, fallback.pointerStrength),
+    blobs,
+  }
+}
 
 const defaultFooterNavLinks: CmsLink[] = [
   { label: 'The One Story', href: '/about' },
@@ -152,6 +192,7 @@ export function mergeCmsSiteSettings(settings?: Partial<CmsSiteSettings> | null)
       vi: mergeLocale(fallback.locales.vi, current.locales?.vi),
       en: mergeLocale(fallback.locales.en, current.locales?.en),
     },
+    homepageBackground: mergeHomepageBackground(current.homepageBackground),
   }
 }
 

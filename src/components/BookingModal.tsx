@@ -271,7 +271,7 @@ function CalendarPicker({ selected, onSelect, locale, days }: { selected: string
 }
 
 /* ─── Main modal ────────────────────────────────────── */
-export function BookingModal({ isOpen, onClose, lang = 'vi', copy }: BookingModalProps) {
+export function BookingModal({ isOpen, onClose, lang = 'en', copy }: BookingModalProps) {
   const base = STR[lang] ?? STR.vi
   const t: Str = {
     ...base,

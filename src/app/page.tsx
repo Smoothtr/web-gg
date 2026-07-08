@@ -5,9 +5,9 @@ import { HomeView } from './pageViews'
 export const revalidate = 5
 
 export function generateMetadata() {
-  return generateCmsPageMetadata('homepage', 'vi', homeMetaByLang.vi)
+  return generateCmsPageMetadata('homepage', 'en', homeMetaByLang.en)
 }
 
 export default function Page() {
-  return <HomeView lang="vi" pageId="homepage" />
+  return <HomeView lang="en" pageId="homepage" />
 }

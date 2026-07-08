@@ -1,22 +1,66 @@
 'use client'
 
 import { ArrowDown, ArrowUp, Plus, Save, Trash2 } from 'lucide-react'
-import { useState } from 'react'
 import { useAdminData } from '../../admin/AdminDataContext'
 import { Breadcrumbs, Card, Field, TextArea, TextInput } from '../../admin/ui'
 import type { BrandLang } from '../../brandContent'
-import type { CmsLink, CmsLocalizedSiteSettings } from '../../cms/types'
+import { mergeHomepageBackground } from '../../cms/siteSettings'
+import type { CmsHomepageBackground, CmsLink, CmsLocalizedSiteSettings } from '../../cms/types'
 
 type HeaderSettings = CmsLocalizedSiteSettings['header']
 type BookingSettings = CmsLocalizedSiteSettings['booking']
 type FooterSettings = CmsLocalizedSiteSettings['footer']
 
-const languages: Array<{ label: string; value: BrandLang }> = [
-  { label: 'VI', value: 'vi' },
-  { label: 'EN', value: 'en' },
-]
-
 const emptyLink: CmsLink = { label: 'New link', href: '/' }
+
+const auroraBlobLabels = ['Blob 1 - orange, top left', 'Blob 2 - gold, top right', 'Blob 3 - brand pink, bottom right', 'Blob 4 - coral red, bottom left']
+
+function ColorField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  return (
+    <Field label={label}>
+      <div className="flex items-center gap-2">
+        <input
+          type="color"
+          value={/^#[0-9a-fA-F]{6}$/.test(value) ? value : '#ffffff'}
+          onChange={(event) => onChange(event.target.value)}
+          className="h-9 w-12 cursor-pointer rounded-lg border border-outline-variant bg-surface"
+          aria-label={`${label} color picker`}
+        />
+        <TextInput value={value} onChange={onChange} placeholder="#ff2e88" />
+      </div>
+    </Field>
+  )
+}
+
+function RangeField({
+  label,
+  value,
+  min,
+  max,
+  step,
+  onChange,
+}: {
+  label: string
+  value: number
+  min: number
+  max: number
+  step: number
+  onChange: (value: number) => void
+}) {
+  return (
+    <Field label={`${label}: ${value}`}>
+      <input
+        type="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number.parseFloat(event.target.value))}
+        className="h-9 w-full accent-primary"
+      />
+    </Field>
+  )
+}
 
 function setAt<T>(items: T[], index: number, value: T) {
   return items.map((item, itemIndex) => (itemIndex === index ? value : item))
@@ -110,7 +154,8 @@ function LinkListEditor({
 
 export default function SiteSettingsScreen() {
   const { siteSettings, updateSiteSettings, saveSiteSettings, saving } = useAdminData()
-  const [activeLang, setActiveLang] = useState<BrandLang>('vi')
+  // Single-language site: all editable copy lives in the "en" locale.
+  const activeLang: BrandLang = 'en'
   const locale = siteSettings.locales[activeLang]
 
   function updateLocale(patch: Partial<CmsLocalizedSiteSettings>) {
@@ -138,6 +183,19 @@ export default function SiteSettingsScreen() {
     updateLocale({ footer: { ...locale.footer, [key]: value } })
   }
 
+  const background = mergeHomepageBackground(siteSettings.homepageBackground)
+
+  function updateBackground(patch: Partial<CmsHomepageBackground>) {
+    updateSiteSettings((current) => ({
+      ...current,
+      homepageBackground: { ...mergeHomepageBackground(current.homepageBackground), ...patch },
+    }))
+  }
+
+  function updateBlob(index: number, patch: Partial<CmsHomepageBackground['blobs'][number]>) {
+    updateBackground({ blobs: background.blobs.map((blob, blobIndex) => (blobIndex === index ? { ...blob, ...patch } : blob)) })
+  }
+
   return (
     <div className="space-y-6">
       <Breadcrumbs items={[{ label: 'Settings' }, { label: 'Header / Footer' }]} />
@@ -157,20 +215,47 @@ export default function SiteSettingsScreen() {
         </button>
       </div>
 
-      <div className="inline-flex rounded-xl border border-outline-variant/45 bg-surface-container-low p-1">
-        {languages.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            onClick={() => setActiveLang(item.value)}
-            className={`rounded-lg px-4 py-2 text-xs font-extrabold transition-colors ${
-              activeLang === item.value ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-primary'
-            }`}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
+      <Card
+        title="Homepage background"
+        description="Flow Wave = animated particle sea over the aurora gradient on the homepage. Static = plain aurora gradient, canvas removed. Changes apply after saving."
+      >
+        <div className="mb-4 inline-flex rounded-xl border border-outline-variant/45 bg-surface-container-low p-1">
+          {(['flow-wave', 'static'] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => updateBackground({ mode })}
+              className={`rounded-lg px-4 py-2 text-xs font-extrabold transition-colors ${
+                background.mode === mode ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-primary'
+              }`}
+            >
+              {mode === 'flow-wave' ? 'Flow Wave' : 'Static'}
+            </button>
+          ))}
+        </div>
+        <div className="grid gap-4 md:grid-cols-3">
+          <ColorField label="Wave crest color" value={background.colorHigh} onChange={(value) => updateBackground({ colorHigh: value })} />
+          <ColorField label="Wave trough color" value={background.colorLow} onChange={(value) => updateBackground({ colorLow: value })} />
+          <ColorField label="Motes color" value={background.atmoColor} onChange={(value) => updateBackground({ atmoColor: value })} />
+        </div>
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <RangeField label="Flow speed" value={background.flow} min={0.2} max={1.5} step={0.05} onChange={(value) => updateBackground({ flow: value })} />
+          <RangeField label="Wave height" value={background.waveHeight} min={1} max={4} step={0.1} onChange={(value) => updateBackground({ waveHeight: value })} />
+          <RangeField label="Particle opacity" value={background.opacity} min={0.3} max={0.7} step={0.05} onChange={(value) => updateBackground({ opacity: value })} />
+          <RangeField label="Pointer strength" value={background.pointerStrength} min={0} max={1.5} step={0.1} onChange={(value) => updateBackground({ pointerStrength: value })} />
+        </div>
+        <div className="mt-5 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+          <h3 className="mb-3 text-sm font-extrabold text-on-surface">Aurora blobs</h3>
+          <div className="grid gap-4 md:grid-cols-2">
+            {background.blobs.map((blob, index) => (
+              <div key={auroraBlobLabels[index]} className="grid gap-2 rounded-xl border border-outline-variant/40 bg-surface p-3">
+                <ColorField label={auroraBlobLabels[index]} value={blob.color} onChange={(value) => updateBlob(index, { color: value })} />
+                <RangeField label="Alpha" value={blob.alpha} min={0} max={0.8} step={0.05} onChange={(value) => updateBlob(index, { alpha: value })} />
+              </div>
+            ))}
+          </div>
+        </div>
+      </Card>
 
       <Card title="Header" description="Leave Header subtitle blank if you want to remove the company line under the logo.">
         <div className="grid gap-4 md:grid-cols-2">

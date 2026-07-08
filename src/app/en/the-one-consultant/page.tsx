@@ -1,5 +1,5 @@
-import { redirect } from 'next/navigation'
+import { permanentRedirect } from 'next/navigation'
 
 export default function Page() {
-  redirect('/en/the-one-start')
+  permanentRedirect('/the-one-start')
 }

@@ -67,7 +67,7 @@ function AboutPeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> 
   )
 }
 
-export default function AboutBrandPage({ lang = 'vi', cmsPage, homePage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; homePage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
+export default function AboutBrandPage({ lang = 'en', cmsPage, homePage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; homePage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const c = compactAboutByLang[lang]
   const meta = getLocalizedPageMeta(cmsPage, lang, aboutMetaByLang[lang])
   const packages = theOnePackagesByLang[lang].packages

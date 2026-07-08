@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { ChevronRight, Layers3, Plus, Save, Search, Trash2, Type } from 'lucide-react'
@@ -10,11 +9,6 @@ import { getAdminSectionLabel } from '../../cms/adminSectionLabels'
 import type { BrandLang, PageMeta } from '../../brandContent'
 
 type PageMetaKey = keyof PageMeta
-
-const languages: Array<{ label: string; value: BrandLang; caption: string }> = [
-  { label: 'VI', value: 'vi', caption: 'Vietnamese SEO' },
-  { label: 'EN', value: 'en', caption: 'English SEO' },
-]
 
 function emptyMeta(): PageMeta {
   return {
@@ -30,7 +24,8 @@ function emptyMeta(): PageMeta {
 export default function PageEditorScreen({ pageId }: { pageId: string }) {
   const router = useRouter()
   const { getPage, updatePageField, updatePageMeta, addBlock, removeBlock, savePage, saving } = useAdminData()
-  const [activeLang, setActiveLang] = useState<BrandLang>('vi')
+  // Single-language site: SEO meta lives in the base fields ('vi' accessor = base, no locale overrides).
+  const activeLang: BrandLang = 'vi'
   const page = getPage(pageId)
 
   if (!page) {
@@ -108,30 +103,9 @@ export default function PageEditorScreen({ pageId }: { pageId: string }) {
       </Card>
 
       <Card title="SEO" action={<Search size={18} className="text-primary" />}>
-        <div className="mb-5 flex flex-col gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-xs font-extrabold uppercase tracking-widest text-primary">Manual SEO language</p>
-            <p className="mt-1 text-sm font-semibold text-on-surface-variant">Meta title, description, OG text va canonical path duoc sua rieng cho tung version.</p>
-          </div>
-          <div className="inline-flex w-fit rounded-xl border border-outline-variant/45 bg-surface p-1">
-            {languages.map((item) => (
-              <button
-                key={item.value}
-                type="button"
-                onClick={() => setActiveLang(item.value)}
-                className={`rounded-lg px-4 py-2 text-xs font-extrabold transition-colors ${
-                  activeLang === item.value ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-primary'
-                }`}
-                title={item.caption}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
-        </div>
         <div className="grid gap-4">
           <Field label="Canonical path">
-            <TextInput value={activeMeta.path} onChange={(value) => updateLocalizedMeta('path', value)} placeholder={activeLang === 'en' ? '/en' : '/'} />
+            <TextInput value={activeMeta.path} onChange={(value) => updateLocalizedMeta('path', value)} placeholder="/" />
           </Field>
           <Field label="Meta title">
             <TextInput value={activeMeta.title} onChange={(value) => updateLocalizedMeta('title', value)} />

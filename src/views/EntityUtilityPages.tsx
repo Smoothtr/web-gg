@@ -32,7 +32,7 @@ const defaultContactItems: CmsBlockItem[] = [
   { title: 'Office', body: 'Hanoi, Vietnam', icon: 'Target' },
 ]
 
-export function PackagesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
+export function PackagesPage({ lang = 'en', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   useScrollReveal()
 
   const c = theOnePackagesByLang[lang]
@@ -101,7 +101,7 @@ export function PackagesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: Br
   )
 }
 
-export function ServicesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
+export function ServicesPage({ lang = 'en', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const introBlock = getLocalizedCmsBlock(cmsPage, 'intro', lang)
   const serviceItems = introBlock?.items?.length ? introBlock.items : defaultServiceItems
   return (
@@ -129,7 +129,7 @@ export function ServicesPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: Br
   )
 }
 
-export function ContactPage({ lang = 'vi', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
+export function ContactPage({ lang = 'en', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const introBlock = getLocalizedCmsBlock(cmsPage, 'intro', lang)
   const footer = getLocalizedSiteSettings(siteSettings, lang).footer
   const contactItems = introBlock?.items?.length ? introBlock.items : defaultContactItems

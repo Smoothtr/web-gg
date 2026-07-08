@@ -60,7 +60,7 @@ const icons = [
   CheckCircle2,
 ]
 
-export function PackagePage({ packageKey, lang = 'vi', cmsPage, siteSettings }: { packageKey: PackageKey; lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
+export function PackagePage({ packageKey, lang = 'en', cmsPage, siteSettings }: { packageKey: PackageKey; lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const page = compactPackageByLang[lang][packageKey]
   const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang) ?? getLocalizedCmsBlock(cmsPage, 'intro', lang)
   const cardsBlock = getLocalizedCmsBlock(cmsPage, 'cards', lang)

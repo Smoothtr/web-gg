@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { absoluteUrl, logoUrl, type PageMeta } from '../brandContent'
 
-export function createMetadata(meta: PageMeta | undefined, lang = 'vi'): Metadata {
+export function createMetadata(meta: PageMeta | undefined, _lang = 'en'): Metadata {
   const title = meta?.title ?? 'The One - GG99'
   const description =
     meta?.description ??
@@ -28,7 +28,6 @@ export function createMetadata(meta: PageMeta | undefined, lang = 'vi'): Metadat
     },
     alternates: {
       canonical,
-      languages: lang === 'en' ? { vi: path.replace(/^\/en(?=\/|$)/, '') || '/', en: path } : { vi: path },
     },
     openGraph: {
       title: ogTitle,
@@ -36,7 +35,7 @@ export function createMetadata(meta: PageMeta | undefined, lang = 'vi'): Metadat
       url: canonical,
       siteName: 'The One - GG99',
       images: [{ url: image }],
-      locale: lang === 'en' ? 'en_US' : 'vi_VN',
+      locale: 'en_US',
       type: 'website',
     },
     twitter: {

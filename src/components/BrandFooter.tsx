@@ -12,7 +12,7 @@ function isContactHref(href: string) {
   return normalized === '#contact' || normalized === '/contact' || normalized.endsWith('/contact')
 }
 
-export function BrandFooter({ lang = 'vi', siteSettings }: { lang?: BrandLang; siteSettings?: CmsSiteSettings | null }) {
+export function BrandFooter({ lang = 'en', siteSettings }: { lang?: BrandLang; siteSettings?: CmsSiteSettings | null }) {
   const footer = getLocalizedSiteSettings(siteSettings, lang).footer
   const solutionLinks = footer.solutionLinks.filter((item) => item.visible !== false && item.label.trim() && item.href.trim())
   const navLinks = footer.navigationLinks.filter((item) => item.visible !== false && item.label.trim() && item.href.trim())
