@@ -1,6 +1,6 @@
 'use client'
 
-import { MapPin } from 'lucide-react'
+import { AtSign, Facebook, Instagram, MapPin, Music2 } from 'lucide-react'
 import { localizedPath, type BrandLang } from '../brandContent'
 import { getLocalizedSiteSettings } from '../cms/siteSettings'
 import type { CmsSiteSettings } from '../cms/types'
@@ -37,9 +37,39 @@ export function BrandFooter({ lang = 'en', siteSettings }: { lang?: BrandLang; s
     )
   }
 
+  const socials = footer.socials ?? {}
+  const socialLinks = [
+    { key: 'facebook', href: socials.facebook, label: 'Facebook', icon: <Facebook size={16} /> },
+    { key: 'instagram', href: socials.instagram, label: 'Instagram', icon: <Instagram size={16} /> },
+    { key: 'tiktok', href: socials.tiktok, label: 'TikTok', icon: <Music2 size={16} /> },
+    { key: 'threads', href: socials.threads, label: 'Threads', icon: <AtSign size={16} /> },
+    { key: 'zalo', href: socials.zalo, label: 'Zalo', icon: <ChatIcon app="zalo" size={16} /> },
+  ].filter((item) => item.href?.trim())
+
   return (
-    <footer className="relative border-t border-outline-variant/40 bg-gradient-to-b from-surface to-surface-container-low before:absolute before:inset-x-0 before:top-0 before:h-[3px] before:bg-gradient-to-r before:from-primary before:via-tertiary before:to-secondary">
-      <div className="max-w-6xl mx-auto px-5 lg:px-10 pt-10 pb-8">
+    <footer className="relative overflow-hidden border-t border-outline-variant/40 bg-[#FFFDFB] before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-primary before:via-tertiary before:to-secondary">
+      {/* Round 8 A6: oversized watermark, barely there */}
+      {footer.logoSrc && (
+        <img
+          src={footer.logoSrc}
+          alt=""
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-16 -right-10 h-64 w-auto opacity-[0.04] md:h-80"
+        />
+      )}
+      <div className="relative max-w-6xl mx-auto px-5 lg:px-10 pt-10 pb-8">
+        {footer.ctaHeading?.trim() && (
+          <div className="mb-10 flex flex-col gap-5 border-b border-primary/10 pb-9 md:flex-row md:items-center md:justify-between">
+            <p className="font-serif text-[30px] leading-tight text-[#3d1226] md:text-[42px]">{footer.ctaHeading}</p>
+            <button
+              type="button"
+              onClick={openBookingModal}
+              className="btn-shine cta-idle inline-flex w-fit shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-6 py-3 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.24)] hover:opacity-95"
+            >
+              Schedule Our Date
+            </button>
+          </div>
+        )}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div>
             <div className="flex items-center gap-3 mb-3">
@@ -68,9 +98,30 @@ export function BrandFooter({ lang = 'en', siteSettings }: { lang?: BrandLang; s
               )}
             </div>
 
+            {socialLinks.length > 0 && (
+              <div className="mb-4 flex items-center gap-2">
+                {socialLinks.map((item) => (
+                  <a
+                    key={item.key}
+                    href={item.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    aria-label={item.label}
+                    className="flex h-9 w-9 items-center justify-center rounded-full border border-primary/15 bg-white text-on-surface/60 transition-colors hover:border-primary hover:text-primary"
+                  >
+                    {item.icon}
+                  </a>
+                ))}
+              </div>
+            )}
+            <div className="mb-4 flex items-center gap-3">
+              <img src="/qr-gg99.png" alt="Zalo QR code" className="h-[72px] w-[72px] rounded-lg border border-primary/10 bg-white object-contain" />
+              {footer.qrCaption?.trim() && <p className="max-w-[140px] text-xs font-bold leading-snug text-on-surface/60">{footer.qrCaption}</p>}
+            </div>
+
             <div className="border-t border-primary/10 pt-4 space-y-1">
               {footer.companyName && <p className="text-xs font-bold text-on-surface/75 leading-snug">{footer.companyName}</p>}
-              {footer.taxCode && <p className="text-xs text-on-surface/50">MST: {footer.taxCode}</p>}
+              {footer.taxCode && <p className="text-xs text-on-surface/50">TAX ID: {footer.taxCode}</p>}
               {footer.companyAddress && <p className="text-xs text-on-surface/50 leading-relaxed">{footer.companyAddress}</p>}
             </div>
           </div>

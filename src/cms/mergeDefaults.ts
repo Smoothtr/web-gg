@@ -66,5 +66,9 @@ export function mergeCmsBlockWithTemplate(templateBlock: CmsBlock, currentBlock:
     ...templateBlock,
     ...currentBlock,
     items,
+    // Single-language content: never inherit bilingual overlays from the template.
+    // Stale template locales would otherwise shadow freshly edited base fields
+    // at render time (the CMS docs dropped their locale maps in the EN migration).
+    locales: currentBlock.locales,
   }
 }

@@ -10,6 +10,8 @@
    Dark mode: tone NAVY/ĐEN + accent CAM/VÀNG.
    ============================================================ */
 :root {
+  /* Round 8: one vertical rhythm for every homepage section */
+  --section-gap: clamp(48px, 8vh, 96px);
   --c-background: 255 247 250;
   --c-surface: 255 248 251;
   --c-surface-container-low: 255 241 246;
@@ -168,6 +170,30 @@
     -webkit-backdrop-filter: blur(18px) saturate(140%);
     border: 1px solid rgba(255, 255, 255, 0.28);
     box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 32px rgba(74, 31, 53, 0.18);
+  }
+  /* Round 8 A4: denser frost for text-heavy cards sitting on the busy wave */
+  .glass-panel--frost {
+    background: rgba(255, 255, 255, 0.78);
+    backdrop-filter: blur(20px) saturate(140%);
+    -webkit-backdrop-filter: blur(20px) saturate(140%);
+  }
+
+  /* Round 8 A0: shared vertical padding for every homepage section */
+  .section-pad {
+    padding-top: var(--section-gap);
+    padding-bottom: var(--section-gap);
+  }
+
+  /* Round 8 A2.1: featured banner bleeds into the wave background */
+  .featured-banner-media {
+    mask-image:
+      linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%),
+      linear-gradient(180deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+    -webkit-mask-image:
+      linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%),
+      linear-gradient(180deg, transparent 0, #000 7%, #000 93%, transparent 100%);
+    mask-composite: intersect;
+    -webkit-mask-composite: source-in;
   }
 
   /* Round 7 A3: Threads-style feed for the red-flags zone */

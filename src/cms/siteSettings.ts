@@ -140,6 +140,9 @@ function createDefaultLocale(lang: BrandLang): CmsLocalizedSiteSettings {
       privacyHref: '/chinh-sach-bao-mat',
       termsLabel: isVi ? '\u0110i\u1ec1u kho\u1ea3n' : 'Terms',
       termsHref: '/dieu-khoan-dich-vu',
+      ctaHeading: 'See you on our first date?',
+      qrCaption: 'Say hi on Zalo',
+      socials: {},
     },
   }
 }

@@ -267,6 +267,16 @@ export type CmsLocalizedSiteSettings = {
     privacyHref: string
     termsLabel: string
     termsHref: string
+    // Round 8 A6: closing serif line + booking CTA at the top of the footer
+    ctaHeading?: string
+    qrCaption?: string
+    socials?: {
+      facebook?: string
+      instagram?: string
+      tiktok?: string
+      threads?: string
+      zalo?: string
+    }
   }
 }
 

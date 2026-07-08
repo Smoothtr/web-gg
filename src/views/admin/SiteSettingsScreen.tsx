@@ -356,11 +356,32 @@ export default function SiteSettingsScreen() {
           <Field label="Footer tagline">
             <TextInput value={locale.footer.tagline} onChange={(value) => updateFooter('tagline', value)} />
           </Field>
+          <Field label="Footer CTA line" hint="Large serif line at the top of the footer. Blank = row hidden.">
+            <TextInput value={locale.footer.ctaHeading ?? ''} onChange={(value) => updateFooter('ctaHeading', value)} placeholder="See you on our first date?" />
+          </Field>
+          <Field label="Zalo QR caption">
+            <TextInput value={locale.footer.qrCaption ?? ''} onChange={(value) => updateFooter('qrCaption', value)} placeholder="Say hi on Zalo" />
+          </Field>
         </div>
         <div className="mt-4">
           <Field label="Footer description">
             <TextArea value={locale.footer.description} onChange={(value) => updateFooter('description', value)} minHeight={86} />
           </Field>
+        </div>
+        <div className="mt-5 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+          <h3 className="mb-3 text-sm font-extrabold text-on-surface">Social links</h3>
+          <p className="mb-3 text-xs font-semibold text-on-surface-variant">Icons only show when the link is filled in.</p>
+          <div className="grid gap-4 md:grid-cols-2">
+            {(['facebook', 'instagram', 'tiktok', 'threads', 'zalo'] as const).map((network) => (
+              <Field key={network} label={network.charAt(0).toUpperCase() + network.slice(1)}>
+                <TextInput
+                  value={locale.footer.socials?.[network] ?? ''}
+                  onChange={(value) => updateFooter('socials', { ...(locale.footer.socials ?? {}), [network]: value })}
+                  placeholder={`https://${network === 'zalo' ? 'zalo.me' : network + '.com'}/...`}
+                />
+              </Field>
+            ))}
+          </div>
         </div>
       </Card>
 

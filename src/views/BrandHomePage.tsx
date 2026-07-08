@@ -162,6 +162,20 @@ function cssUrl(value: string) {
   return `url("${value.replace(/"/g, '%22')}")`
 }
 
+// Round 8 A2.2: serve properly sized Cloudinary renditions (f_auto,q_auto:good).
+// Non-Cloudinary URLs and already-transformed URLs pass through untouched.
+function cloudinaryWidth(url: string, width: number) {
+  if (!/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(url)) return url
+  if (/\/upload\/[^/]*\bw_\d+/.test(url)) return url
+  return url.replace('/upload/', `/upload/f_auto,q_auto:good,w_${width}/`)
+}
+
+function cloudinarySrcSet(url: string, widths: number[]) {
+  if (!/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(url)) return undefined
+  if (/\/upload\/[^/]*\bw_\d+/.test(url)) return undefined
+  return widths.map((width) => `${cloudinaryWidth(url, width)} ${width}w`).join(', ')
+}
+
 function heroBackgroundStyle(block: ReturnType<typeof getCmsBlock>): CSSProperties {
   const gradient = block?.backgroundGradient?.trim() || defaultHeroGradient
   const imageUrl = block?.backgroundImageUrl?.trim()
@@ -476,7 +490,7 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
   }
 
   return (
-    <section className="relative overflow-visible px-5 py-8 md:py-12 lg:px-10" onMouseLeave={closePreviewSoon}>
+    <section className="section-pad relative overflow-visible px-5 lg:px-10" onMouseLeave={closePreviewSoon}>
       {/* Round 7 A2.1: warm bridge from the video's bottom tone into the shared wave background */}
       <div
         aria-hidden="true"
@@ -484,31 +498,50 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
         style={{ background: 'linear-gradient(to bottom, rgba(255,182,170,0.55), transparent)' }}
       />
       <div className="relative mx-auto max-w-6xl">
-        <a
+        <div className="relative" data-reveal="scale">
+          {/* Round 8 A2.1: ambient glow — a blurred copy of the active slide bleeds its colors into the wave */}
+          <div aria-hidden="true" className="pointer-events-none absolute -inset-4 md:-inset-8">
+            {showcaseStories.map((story, index) => {
+              const thumbnail = getCaseStudyThumbnail(story)
+              return (
+                <img
+                  key={`${story.id}-glow-${index}`}
+                  src={cloudinaryWidth(thumbnail, 640)}
+                  alt=""
+                  className={`absolute inset-0 h-full w-full scale-[1.06] object-cover blur-[48px] saturate-[1.4] transition-opacity duration-700 ${
+                    index === activeBannerIndex ? 'opacity-45' : 'opacity-0'
+                  }`}
+                />
+              )
+            })}
+          </div>
+          <a
           href={activeStoryHref}
-          data-reveal="scale"
           onMouseEnter={() => setPreviewStory(null)}
           onFocus={() => setPreviewStory(null)}
-          className="group relative block aspect-[16/8] w-full overflow-hidden rounded-[24px] bg-[#190b12] text-left shadow-[0_24px_70px_rgba(80,20,50,0.18)] outline-none ring-1 ring-white/65 transition duration-500 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary md:aspect-[16/6]"
+          className="group relative block aspect-[16/8] w-full overflow-hidden text-left outline-none focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary md:aspect-[16/6]"
           aria-label={`Open ${activeStory.brandName} story`}
         >
-          {showcaseStories.map((story, index) => (
-            (() => {
+          {/* Feathered media layer: images + scrim fade at all four edges (no hard card border, Round 8 A2.1) */}
+          <div className="featured-banner-media pointer-events-none absolute inset-0">
+            {showcaseStories.map((story, index) => {
               const thumbnail = getCaseStudyThumbnail(story)
               return (
                 <img
                   key={`${story.id}-banner-${index}`}
-                  src={thumbnail}
+                  src={cloudinaryWidth(thumbnail, 1600)}
+                  srcSet={cloudinarySrcSet(thumbnail, [1600, 2400])}
+                  sizes="(min-width: 1280px) 1152px, 96vw"
                   alt={index === activeBannerIndex ? `${story.brandName} case study thumbnail` : ''}
                   aria-hidden={index === activeBannerIndex ? undefined : true}
-                  className={`pointer-events-none absolute inset-0 h-full w-full transition duration-700 group-hover:scale-[1.025] ${
+                  className={`absolute inset-0 h-full w-full transition duration-700 group-hover:scale-[1.025] ${
                     isLogoLikeImage(thumbnail) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-12 md:p-20' : 'object-cover'
                   } ${index === activeBannerIndex ? 'opacity-100' : 'opacity-0'}`}
                 />
               )
-            })()
-          ))}
-          <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/70 via-black/18 to-transparent" aria-hidden="true" />
+            })}
+            <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/18 to-transparent" aria-hidden="true" />
+          </div>
           <div className="pointer-events-none absolute inset-x-0 bottom-0 p-5 text-white md:p-8">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/68">Featured case</p>
             <h2 className="mt-2 max-w-2xl text-[30px] font-extrabold leading-tight md:text-[48px]">{activeStory.brandName}</h2>
@@ -524,6 +557,7 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
             )}
           </div>
         </a>
+        </div>
 
         <div className="relative mt-3">
           {showcaseStories.length > 1 && (
@@ -570,13 +604,15 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
                 ].join(' ')}
                 aria-label={`Preview ${story.brandName}`}
               >
-                <span className="flex h-full flex-col overflow-hidden rounded-[16px] shadow-[0_14px_40px_rgba(80,20,50,0.13)]">
+                <span className="flex h-full flex-col overflow-hidden rounded-[16px] shadow-[0_14px_40px_rgba(219,39,119,0.14)]">
                   <span className="relative block aspect-video w-full overflow-hidden bg-[#180b11]">
                     {(() => {
                       const thumbnail = getCaseStudyThumbnail(story)
                       return (
                         <img
-                          src={thumbnail}
+                          src={cloudinaryWidth(thumbnail, 640)}
+                          srcSet={cloudinarySrcSet(thumbnail, [640, 960])}
+                          sizes="(min-width: 1024px) 25vw, 42vw"
                           alt=""
                           aria-hidden="true"
                           className={`absolute inset-0 h-full w-full transition duration-500 group-hover:scale-105 ${
@@ -640,9 +676,11 @@ function ThreadAvatar({ item, index }: { item: CmsBlockItem; index: number }) {
   )
 }
 
-// Round 7 A3: the red-flags zone is a simulated Threads post — The One founders open a
-// topic and the replies are the familiar agency complaints. Liquid glass on the wave.
+// Round 7 A3 / Round 8 A3.1: the red-flags zone is a simulated Threads post — The One
+// founders open a topic and the replies are the familiar agency complaints. Desktop:
+// sticky message column (heading + punchline + CTA) left, feed right; mobile: one column.
 function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
+  const [showAllReplies, setShowAllReplies] = useState(false)
   const items = (block?.items ?? []).filter((item) => item.published !== false && (item.body?.trim() || item.title.trim()))
   if (!block || (!block.heading.trim() && !block.body.trim() && !items.length)) return null
 
@@ -651,18 +689,33 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
   const postText = block.postText?.trim() || 'Tell us the red flags you ran into with your last agency 👇'
   const punchline = block.body?.trim() || "You don't need another agency. You need The One."
   const punchlineIndex = items.length + 2
+  const mobileVisibleCount = 5
+  const hasHiddenMobileReplies = items.length > mobileVisibleCount
 
   return (
-    <section className="px-5 py-14 md:py-20 lg:px-10">
-      <div className="mx-auto max-w-[640px]">
-        <div className="mb-6">
+    <section className="section-pad px-5 lg:px-10">
+      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start lg:gap-12">
+        <div className="lg:sticky lg:top-28">
           <p data-reveal className="text-[11px] font-black uppercase tracking-[0.2em] text-[#3d1226]/55">Red flags</p>
           <h2 data-reveal className="mt-3 font-serif text-[38px] font-normal leading-[0.98] text-[#3d1226] md:text-[52px]">
-            {block.heading || 'Sound familiar?'}
+            {block.heading || 'Sounds familiar?'}
           </h2>
+          {/* Desktop only: punchline + CTA live here; on mobile they close the feed below. */}
+          <div className="hidden lg:block">
+            <p data-reveal className="mt-6 max-w-sm bg-gradient-to-r from-primary via-tertiary to-secondary bg-clip-text text-[26px] font-black leading-tight text-transparent xl:text-[32px]">
+              {punchline}
+            </p>
+            <button
+              type="button"
+              onClick={openBookingModal}
+              className="btn-shine cta-idle mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] hover:opacity-95"
+            >
+              {block.ctaLabel?.trim() || 'Schedule Our Date'}
+            </button>
+          </div>
         </div>
 
-        <div className="glass-panel relative p-5 md:p-6">
+        <div className="glass-panel relative w-full p-5 md:p-6">
           <div className="thread-line" aria-hidden="true" style={{ left: 39, top: 64 }} />
 
           <article data-reveal="tile-in" data-tile-direction="bottom" style={{ '--ri': 0 } as CSSProperties} className="relative grid grid-cols-[40px_1fr] gap-3">
@@ -698,7 +751,9 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
               data-reveal="tile-in"
               data-tile-direction="bottom"
               style={{ '--ri': index + 2 } as CSSProperties}
-              className="relative mt-5 grid grid-cols-[40px_1fr] gap-3"
+              className={`relative mt-5 grid-cols-[40px_1fr] gap-3 ${
+                index >= mobileVisibleCount && !showAllReplies ? 'hidden lg:grid' : 'grid'
+              }`}
             >
               <ThreadAvatar item={item} index={index} />
               <div className="min-w-0">
@@ -717,7 +772,18 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
             </article>
           ))}
 
-          <article data-reveal="tile-in" data-tile-direction="bottom" style={{ '--ri': punchlineIndex } as CSSProperties} className="relative mt-6 grid grid-cols-[40px_1fr] gap-3">
+          {hasHiddenMobileReplies && !showAllReplies && (
+            <button
+              type="button"
+              onClick={() => setShowAllReplies(true)}
+              className="relative mt-4 ml-[52px] inline-flex items-center gap-1 text-xs font-extrabold text-primary transition-colors hover:text-primary/70 lg:hidden"
+            >
+              Show {items.length - mobileVisibleCount} more replies ▾
+            </button>
+          )}
+
+          {/* Mobile only: the punchline closes the feed (desktop shows it in the left column). */}
+          <article data-reveal="tile-in" data-tile-direction="bottom" style={{ '--ri': punchlineIndex } as CSSProperties} className="relative mt-6 grid grid-cols-[40px_1fr] gap-3 lg:hidden">
             <img src="/logo-gg.png" alt="" aria-hidden="true" className="relative z-10 h-10 w-10 rounded-full border border-white/80 bg-white object-contain p-1 shadow-sm" />
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
@@ -842,7 +908,7 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
   }
 
   return (
-    <section className="px-5 py-12 md:py-16 lg:px-10" onMouseLeave={closeMemberPreviewSoon}>
+    <section className="section-pad px-5 lg:px-10" onMouseLeave={closeMemberPreviewSoon}>
       <div className="mx-auto max-w-6xl">
         <SectionHeader title={block.heading || 'The One People'} intro={block.body} align="left" />
         <div data-reveal="scale" className="group relative aspect-[16/8] overflow-hidden rounded-[24px] bg-[#190b12] text-white shadow-[0_24px_70px_rgba(80,20,50,0.16)] ring-1 ring-white/70 md:aspect-[16/6]">
@@ -1000,13 +1066,14 @@ function ClosingBanner({
   // Round 7 A5: no solid gradient background and no logo marquee — glass items float
   // directly on the shared aurora + wave background.
   return (
-    <section className="closing-section px-5 py-14 md:py-20 lg:px-10">
-      <div className="closing-content relative mx-auto w-full max-w-[720px]" data-reveal="closing-content">
-        <div className="mb-7 text-left md:text-center">
+    <section className="closing-section section-pad px-5 lg:px-10">
+      <div className="closing-content relative mx-auto w-full max-w-[880px]" data-reveal="closing-content">
+        {/* Round 8 A5.2: left-aligned, lined up with the other zone headings */}
+        <div className="mb-7 text-left">
           <h2 className="text-[30px] font-black leading-tight text-[#3d1226] md:text-[42px]">
             <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
           </h2>
-          <div className="home-gradient-underline mt-3 md:mx-auto" aria-hidden="true" />
+          <div className="home-gradient-underline mt-3" aria-hidden="true" />
           {faqSubtitle && (
             <p className="closing-follow mt-4 text-[15px] font-bold leading-relaxed text-[#3d1226]/75 md:text-[18px]" style={{ '--closing-delay': `${closingFollowDelay}ms` } as CSSProperties}>
               {faqSubtitle}
@@ -1092,8 +1159,6 @@ export default function BrandHomePage({
   const heroWordCount = countStaggerWords(heroLineOne)
   const heroDelays = getHeroAnimationDelays(heroWordCount, showHeroDivider)
   const heroStatChips = (heroBlock?.statChips ?? []).filter((chip) => chip.value.trim() || chip.label.trim()).slice(0, 3)
-  const heroCtaSubtext = heroBlock?.ctaSubtext?.trim()
-  const showHeroCtaSubtext = heroBlock?.showCtaSubtext === true && Boolean(heroCtaSubtext)
   const showHeroStatChips = heroBlock?.showStatChips === true && heroStatChips.length > 0
   const closingFaqItems = getHomeClosingFaqItems(cmsPage, lang)
   const homeSchemas = [organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(cmsPage, lang)].filter(Boolean)
@@ -1183,14 +1248,7 @@ export default function BrandHomePage({
           >
             {resolvePrimaryBookingCtaLabel(heroBlock?.ctaLabel)}
           </button>
-          {showHeroCtaSubtext && (
-            <p
-              style={{ '--hero-delay': `${heroDelays.cta + 140}ms` } as CSSProperties}
-              className={`home-hero-item mt-3 max-w-xl text-xs font-bold md:text-sm ${heroTextMode === 'dark' ? 'text-on-surface-variant' : 'text-white/76'}`}
-            >
-              {heroCtaSubtext}
-            </p>
-          )}
+          {/* Round 8 A1: ctaSubtext slot removed from the DOM entirely (field stays dormant in CMS). */}
           {showHeroStatChips && (
             <div
               style={{ '--hero-delay': `${heroDelays.cta + 230}ms` } as CSSProperties}
@@ -1209,7 +1267,7 @@ export default function BrandHomePage({
       <CaseStudyShowcase stories={storyTargets} lang={lang} />
       <RedFlagsSection block={redFlagsBlock} />
 
-      <section id="packages" className="py-10 md:py-14 px-5 lg:px-10">
+      <section id="packages" className="section-pad px-5 lg:px-10">
         <div className="max-w-6xl mx-auto">
           <SectionHeader
             title={packagesBlock?.heading || 'The One Packages'}

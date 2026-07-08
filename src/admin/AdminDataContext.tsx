@@ -84,7 +84,9 @@ function normalizePage(page: CmsPageContent): CmsPageContent {
     ...template,
     ...page,
     meta: { ...template.meta, ...page.meta },
-    metaLocales: { ...(template.metaLocales ?? {}), ...(page.metaLocales ?? {}) },
+    // Single-language content: never pull template metaLocales into the editable page —
+    // saving would write stale template overlays back to Firestore, shadowing base edits.
+    metaLocales: page.metaLocales,
     blocks: [...mergedBlocks, ...extraBlocks],
   }
 }

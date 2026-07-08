@@ -55,6 +55,9 @@ function normalizePage(id: string, data: FirebaseFirestore.DocumentData): CmsPag
     ...template,
     ...normalized,
     meta: { ...template.meta, ...normalized.meta },
+    // Same rule as block-level merge: the doc is the single source of truth for
+    // localized overlays — stale template metaLocales must not shadow doc meta.
+    metaLocales: normalized.metaLocales,
     blocks: [...mergedBlocks, ...extraBlocks],
   }
 }

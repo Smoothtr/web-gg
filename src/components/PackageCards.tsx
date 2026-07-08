@@ -115,7 +115,8 @@ function organizePackageFeatures(features: PackageFeatureRow[]) {
   const metricRow = rows.find(isContentMetricRow)
   const listRows = rows.filter((row) => row !== metricRow)
   const flagged = listRows.filter((row) => row.featured === true)
-  const compactRows = (flagged.length ? flagged : listRows).slice(0, 4)
+  // Round 8 A4.1: CMS decides how many rows are featured (no hard cap); fallback caps at 4.
+  const compactRows = flagged.length ? flagged : listRows.slice(0, 4)
 
   const groups: Array<{ name: string; rows: PackageFeatureRow[] }> = []
   for (const row of listRows) {
@@ -256,18 +257,27 @@ export function PackageCards({
           const Icon = packageIcons[index] ?? Rocket
           const caseStudyLink = item.caseStudyLink?.trim() || fallbackCaseStudyLinks[id] || ''
 
+          const selected = selectedIndex === index
+
           return (
             <div
               key={`${item.title}-${index}-horizontal`}
               data-reveal="scale"
               style={{ '--ri': index } as CSSProperties}
-              className={system ? 'rounded-[22px] bg-gradient-to-r from-primary via-tertiary to-secondary p-[2px]' : 'p-[2px]'}
+              className={system ? 'rounded-[22px] bg-gradient-to-r from-primary via-tertiary to-secondary p-[2px] md:scale-[1.02]' : 'p-[2px]'}
             >
               <article
                 id={id}
+                tabIndex={0}
+                role="button"
+                aria-pressed={selected}
+                onClick={(event) => handleCardClick(event, index)}
+                onKeyDown={(event) => handleKeyDown(event, index)}
                 className={[
-                  'glass-panel relative flex scroll-mt-32 flex-col p-6 transition duration-300',
-                  system ? 'home-package-featured' : '',
+                  // Round 8 A4.2: denser frost so text stays readable over the wave; emphasis by border, never by background.
+                  'glass-panel glass-panel--frost relative flex h-full cursor-pointer scroll-mt-32 flex-col p-6 outline-none transition duration-300 focus-visible:ring-2 focus-visible:ring-primary',
+                  system ? 'shadow-[0_24px_60px_-24px_rgba(219,39,119,0.55)]' : '',
+                  selected && !system ? 'ring-2 ring-primary/45' : '',
                   highlight ? 'is-anchor-highlighted' : '',
                 ].join(' ')}
               >
@@ -286,18 +296,19 @@ export function PackageCards({
                   </span>
                   <h3 className="text-xl font-extrabold text-[#3d1226]">{item.title}</h3>
                 </div>
-                {subtitle && <p className="mt-3 line-clamp-2 text-sm font-semibold leading-relaxed text-on-surface-variant">{subtitle}</p>}
+                {subtitle && <p className="mt-3 text-sm font-semibold leading-relaxed text-[#7a5566]">{subtitle}</p>}
                 {metricRow && (
-                  <span className="mt-4 w-fit rounded-full bg-gradient-to-r from-primary/12 via-tertiary/10 to-secondary/12 px-3 py-1.5 text-xs font-black text-primary">
+                  // Round 8 A4.2: solid chip — same style on all three cards, no gradient text.
+                  <span className="mt-4 w-fit rounded-full border border-[#F9C1D6] bg-[#FFF1F5] px-3 py-1.5 text-xs font-extrabold text-[#B3124B]">
                     {metricRow.text}
                   </span>
                 )}
                 {compactRows.length > 0 && (
                   <ul className="mt-4 grid gap-2">
                     {compactRows.map((row, rowIndex) => (
-                      <li key={`${item.title}-featured-${rowIndex}`} className="flex items-start gap-2 text-[13px] font-semibold leading-snug text-[#3d1226]/85">
+                      <li key={`${item.title}-featured-${rowIndex}`} className="flex items-start gap-2 text-[13px] font-semibold leading-snug text-[#3d1226]">
                         <Check size={15} strokeWidth={3} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
-                        <span className="line-clamp-1">{row.text}</span>
+                        <span>{row.text}</span>
                       </li>
                     ))}
                   </ul>
@@ -321,7 +332,7 @@ export function PackageCards({
                           <p className="text-[10px] font-black uppercase tracking-[0.14em] text-primary/80">{group.name}</p>
                           <ul className="mt-1.5 grid gap-1.5">
                             {group.rows.map((row, rowIndex) => (
-                              <li key={`${item.title}-${group.name}-${rowIndex}`} className="flex items-start gap-2 text-[12px] font-semibold leading-relaxed text-on-surface-variant">
+                              <li key={`${item.title}-${group.name}-${rowIndex}`} className="flex items-start gap-2 text-[12px] font-semibold leading-relaxed text-[#7a5566]">
                                 <Check size={13} strokeWidth={3} className="mt-0.5 shrink-0 text-primary/70" aria-hidden="true" />
                                 {row.text}
                               </li>
@@ -333,9 +344,9 @@ export function PackageCards({
                   </div>
                 </div>
                 {priceValue && (
-                  <div className="mt-5 rounded-2xl border border-primary/20 bg-white/55 p-3">
-                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">{priceLabel}</p>
-                    <p className="home-price-shimmer mt-1 text-lg font-black text-primary">
+                  <div className="mt-5 rounded-2xl border border-primary/15 bg-[#FFF8F4] p-3.5">
+                    <p className="text-[10px] font-black uppercase tracking-[0.16em] text-[#7a5566]">{priceLabel}</p>
+                    <p className="home-price-shimmer mt-1 text-2xl font-extrabold text-[#B3124B]">
                       <PriceText price={priceValue} />
                     </p>
                   </div>
