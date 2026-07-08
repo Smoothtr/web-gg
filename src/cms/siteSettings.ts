@@ -193,6 +193,7 @@ export function mergeCmsSiteSettings(settings?: Partial<CmsSiteSettings> | null)
       en: mergeLocale(fallback.locales.en, current.locales?.en),
     },
     homepageBackground: mergeHomepageBackground(current.homepageBackground),
+    introLoaderEnabled: current.introLoaderEnabled === true,
   }
 }
 

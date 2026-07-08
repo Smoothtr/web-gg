@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Grand_Hotel, Inter, Sora } from 'next/font/google'
 import '../index.css'
 import { homeMetaByLang, logoUrl, siteUrl } from '../brandContent'
+import { getServerCmsSiteSettings } from '../cms/serverRepository'
 import { AppShell } from './AppShell'
 
 const inter = Inter({
@@ -51,11 +52,18 @@ export const metadata: Metadata = {
   },
 }
 
-export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+export default async function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
+  const siteSettings = await getServerCmsSiteSettings().catch(() => null)
+  const introLoaderEnabled = siteSettings?.introLoaderEnabled === true
+
   return (
     <html lang="en">
       <body className={`${inter.variable} ${sora.variable} ${grandHotel.variable}`}>
-        <AppShell>{children}</AppShell>
+        {!introLoaderEnabled && (
+          // Lets whenIntroGone() resolve immediately (pre-hydration) when the loader is off.
+          <script dangerouslySetInnerHTML={{ __html: 'window.__gg99IntroOff=1' }} />
+        )}
+        <AppShell introLoaderEnabled={introLoaderEnabled}>{children}</AppShell>
       </body>
     </html>
   )

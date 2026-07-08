@@ -9,8 +9,12 @@ export type CmsStatChip = {
 }
 
 export type CmsPackageFeature = {
-  label: string
+  // Legacy field kept for old data; "group" supersedes it (Round 7 A4).
+  label?: string
   text: string
+  group?: string
+  // Featured rows appear in the compact card view (max 4); the rest live in the expander.
+  featured?: boolean
 }
 
 export type CmsLocalizedBlockFields = {
@@ -71,6 +75,11 @@ export type CmsBlockItem = {
   verified?: boolean
   caption?: string
   likesSeed?: string
+  // Round 7 A3: Threads-style red-flags replies
+  handle?: string
+  roleLabel?: string
+  likes?: string
+  avatarUrl?: string
   imageUrl?: string
   imageAlt?: string
   avatarImages?: string[]
@@ -158,6 +167,12 @@ export type CmsBlock = {
   ctaSubtext?: string
   pricingNote?: string
   disclaimer?: string
+  // Round 7 A4: single merged note under the packages section (replaces pricingNote + disclaimer).
+  packagesNote?: string
+  // Round 7 A3: Threads-style opening post for the red-flags zone
+  postHandle?: string
+  postTopic?: string
+  postText?: string
   statChips?: CmsStatChip[]
   showCtaSubtext?: boolean
   showStatChips?: boolean
@@ -277,5 +292,7 @@ export type CmsSiteSettings = {
   id: 'global'
   locales: Record<BrandLang, CmsLocalizedSiteSettings>
   homepageBackground?: Partial<CmsHomepageBackground>
+  // Round 7 A6: intro logo loader is opt-in while the PO tests; default OFF.
+  introLoaderEnabled?: boolean
   updatedAt?: string
 }

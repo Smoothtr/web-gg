@@ -149,6 +149,50 @@
       radial-gradient(circle at 10% 20%, rgba(255, 219, 204, 0.45) 0%, transparent 50%),
       radial-gradient(circle at 90% 80%, rgba(255, 222, 165, 0.4) 0%, transparent 50%);
   }
+
+  /* Round 7: shared liquid-glass surface for sections floating on the wave background */
+  .glass-panel {
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(16px) saturate(140%);
+    -webkit-backdrop-filter: blur(16px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.65);
+    border-radius: 20px;
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7), 0 8px 32px rgba(219, 39, 119, 0.10);
+  }
+  .glass-panel--strong {
+    background: rgba(255, 255, 255, 0.7);
+  }
+  .glass-panel--dark {
+    background: rgba(74, 31, 53, 0.32);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2), 0 8px 32px rgba(74, 31, 53, 0.18);
+  }
+
+  /* Round 7 A3: Threads-style feed for the red-flags zone */
+  .thread-line {
+    position: absolute;
+    left: 19px;
+    top: 48px;
+    bottom: 0;
+    width: 2px;
+    background: rgba(61, 18, 38, 0.15);
+  }
+  .thread-typing-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 9999px;
+    background: rgba(61, 18, 38, 0.4);
+    animation: thread-typing 1s ease-in-out infinite;
+  }
+  .thread-typing-dot:nth-child(2) { animation-delay: 0.15s; }
+  .thread-typing-dot:nth-child(3) { animation-delay: 0.3s; }
+  @keyframes thread-typing {
+    0%, 60%, 100% { transform: translateY(0); opacity: 0.4; }
+    30% { transform: translateY(-3px); opacity: 1; }
+  }
+
   /* Dark: ánh sáng gradient ấm (cam/vàng) + lạnh nhẹ — premium */
   .dark .mesh {
     background:

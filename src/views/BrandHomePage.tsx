@@ -5,6 +5,10 @@ import {
   ArrowUpRight,
   ChevronLeft,
   ChevronRight,
+  Heart,
+  MessageCircle,
+  Repeat2,
+  Send,
 } from 'lucide-react'
 import { compactHomeByLang, homeMetaByLang, homeWebPageSchema, localizedPath, organizationSchema, websiteSchema, type BrandLang } from '../brandContent'
 import { BrandLayout } from '../components/BrandLayout'
@@ -390,6 +394,7 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
   const [canHover, setCanHover] = useState(false)
   const hoverOpenTimer = useRef<number | null>(null)
   const hoverCloseTimer = useRef<number | null>(null)
+  const popupHoverRef = useRef(false)
   const pauseUntilRef = useRef(0)
 
   useEffect(() => {
@@ -453,7 +458,17 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
 
   function closePreviewSoon() {
     clearPreviewTimers()
-    hoverCloseTimer.current = window.setTimeout(() => setPreviewStory(null), 150)
+    // 400ms grace so the pointer can cross the gap between card and popup (Round 7 A2.3).
+    hoverCloseTimer.current = window.setTimeout(() => {
+      if (popupHoverRef.current) {
+        // Safety net: a close arrived while the pointer is inside the popup — re-check later.
+        hoverCloseTimer.current = window.setTimeout(() => {
+          if (!popupHoverRef.current) setPreviewStory(null)
+        }, 3000)
+        return
+      }
+      setPreviewStory(null)
+    }, 400)
   }
 
   function pauseAuto(ms = 5000) {
@@ -461,8 +476,14 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
   }
 
   return (
-    <section className="relative overflow-visible bg-surface-container px-5 py-8 md:py-12 lg:px-10" onMouseLeave={closePreviewSoon}>
-      <div className="mx-auto max-w-6xl">
+    <section className="relative overflow-visible px-5 py-8 md:py-12 lg:px-10" onMouseLeave={closePreviewSoon}>
+      {/* Round 7 A2.1: warm bridge from the video's bottom tone into the shared wave background */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-x-0 top-0 h-[180px]"
+        style={{ background: 'linear-gradient(to bottom, rgba(255,182,170,0.55), transparent)' }}
+      />
+      <div className="relative mx-auto max-w-6xl">
         <a
           href={activeStoryHref}
           data-reveal="scale"
@@ -543,29 +564,33 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
                   else showPreview(story, event.currentTarget)
                 }}
                 className={[
-                  'group relative aspect-[16/10] shrink-0 basis-[42vw] snap-start overflow-hidden rounded-[16px] bg-[#180b11] text-left shadow-[0_14px_40px_rgba(80,20,50,0.13)] outline-none ring-1 transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2.25)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]',
-                  index === activeBannerIndex ? 'ring-primary/70' : 'ring-white/70',
+                  // Round 7 A2.2: two-tier card — clean 16:9 image on top, glass caption bar below.
+                  'group relative shrink-0 basis-[42vw] snap-start rounded-[18px] p-[2px] text-left outline-none transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2.25)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]',
+                  index === activeBannerIndex ? 'bg-gradient-to-r from-primary via-tertiary to-secondary' : 'bg-transparent',
                 ].join(' ')}
                 aria-label={`Preview ${story.brandName}`}
               >
-                {(() => {
-                  const thumbnail = getCaseStudyThumbnail(story)
-                  return (
-                    <img
-                      src={thumbnail}
-                      alt=""
-                      aria-hidden="true"
-                      className={`absolute inset-0 h-full w-full transition duration-500 group-hover:scale-[1.06] ${
-                        isLogoLikeImage(thumbnail) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-7' : 'object-cover'
-                      }`}
-                    />
-                  )
-                })()}
-                <div className={`absolute inset-0 bg-gradient-to-t ${index === activeBannerIndex ? 'from-black/82 via-black/18 to-transparent' : 'from-white/88 via-white/46 to-white/12 group-hover:from-black/76 group-hover:via-black/12 group-hover:to-transparent'}`} aria-hidden="true" />
-                <div className="absolute inset-x-0 bottom-0 p-4 text-white">
-                  <h3 className={`line-clamp-1 text-[17px] font-extrabold leading-tight ${index === activeBannerIndex ? 'text-white' : 'text-on-surface group-hover:text-white'}`}>{story.brandName}</h3>
-                  <p className={`mt-1 line-clamp-2 text-xs font-semibold leading-relaxed ${index === activeBannerIndex ? 'text-white/70' : 'text-on-surface-variant group-hover:text-white/70'}`}>{story.headline}</p>
-                </div>
+                <span className="flex h-full flex-col overflow-hidden rounded-[16px] shadow-[0_14px_40px_rgba(80,20,50,0.13)]">
+                  <span className="relative block aspect-video w-full overflow-hidden bg-[#180b11]">
+                    {(() => {
+                      const thumbnail = getCaseStudyThumbnail(story)
+                      return (
+                        <img
+                          src={thumbnail}
+                          alt=""
+                          aria-hidden="true"
+                          className={`absolute inset-0 h-full w-full transition duration-500 group-hover:scale-105 ${
+                            isLogoLikeImage(thumbnail) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-7' : 'object-cover'
+                          }`}
+                        />
+                      )
+                    })()}
+                  </span>
+                  <span className="glass-panel glass-panel--strong flex h-[58px] flex-col justify-center rounded-none border-x-0 border-b-0 px-3.5 py-2">
+                    <h3 className="line-clamp-1 text-[14px] font-extrabold leading-tight text-[#3d1226] md:text-[15px]">{story.brandName}</h3>
+                    <p className="line-clamp-1 text-xs font-semibold leading-snug text-on-surface-variant">{story.headline}</p>
+                  </span>
+                </span>
               </button>
             ))}
           </div>
@@ -573,84 +598,144 @@ function CaseStudyShowcase({ stories, lang }: { stories: CaseStudy[]; lang: Bran
       </div>
 
       {previewStory && canHover && (
-        <>
-          <div className="pointer-events-none fixed z-[80] hidden md:block" style={previewStory.style}>
-            <CaseStudyPreviewPopover story={previewStory.story} lang={lang} />
-          </div>
-        </>
+        // Card and popup share one hover region: entering the popup cancels the
+        // pending close, so it never flickers away under the pointer (Round 7 A2.3).
+        <div
+          className="pointer-events-none fixed z-[80] hidden md:block"
+          style={previewStory.style}
+          onMouseEnter={() => {
+            popupHoverRef.current = true
+            clearPreviewTimers()
+          }}
+          onMouseLeave={() => {
+            popupHoverRef.current = false
+            closePreviewSoon()
+          }}
+        >
+          <CaseStudyPreviewPopover story={previewStory.story} lang={lang} />
+        </div>
       )}
     </section>
   )
 }
 
+const threadAvatarPalette = [
+  'bg-pink-200 text-pink-900',
+  'bg-amber-200 text-amber-900',
+  'bg-rose-200 text-rose-900',
+  'bg-orange-200 text-orange-900',
+  'bg-fuchsia-200 text-fuchsia-900',
+  'bg-red-200 text-red-900',
+]
+
+function ThreadAvatar({ item, index }: { item: CmsBlockItem; index: number }) {
+  if (item.avatarUrl?.trim()) {
+    return <img src={item.avatarUrl} alt="" aria-hidden="true" className="relative z-10 h-10 w-10 rounded-full border border-white/80 bg-white object-cover shadow-sm" />
+  }
+  const source = item.handle?.trim() || item.roleLabel?.trim() || item.title || '?'
+  return (
+    <span className={`relative z-10 flex h-10 w-10 items-center justify-center rounded-full border border-white/80 text-[15px] font-black shadow-sm ${threadAvatarPalette[index % threadAvatarPalette.length]}`}>
+      {source.charAt(0).toUpperCase()}
+    </span>
+  )
+}
+
+// Round 7 A3: the red-flags zone is a simulated Threads post — The One founders open a
+// topic and the replies are the familiar agency complaints. Liquid glass on the wave.
 function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
-  const rowRef = useRef<HTMLDivElement | null>(null)
-  const items = (block?.items ?? []).filter((item) => item.published !== false && (item.thumbnailUrl?.trim() || item.imageUrl?.trim() || item.title.trim()))
+  const items = (block?.items ?? []).filter((item) => item.published !== false && (item.body?.trim() || item.title.trim()))
   if (!block || (!block.heading.trim() && !block.body.trim() && !items.length)) return null
 
-  function scrollRow(direction: -1 | 1) {
-    const row = rowRef.current
-    if (!row) return
-    row.scrollBy({ left: direction * Math.max(280, row.clientWidth * 0.8), behavior: 'smooth' })
-  }
+  const postHandle = block.postHandle?.trim() || 'founders.theone'
+  const postTopic = block.postTopic?.trim() || 'Agency life'
+  const postText = block.postText?.trim() || 'Tell us the red flags you ran into with your last agency 👇'
+  const punchline = block.body?.trim() || "You don't need another agency. You need The One."
+  const punchlineIndex = items.length + 2
 
   return (
-    <section className="relative overflow-hidden bg-[#180712] px-5 py-14 text-white md:py-20 lg:px-10">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_18%_16%,rgba(219,39,119,0.34),transparent_34%),radial-gradient(circle_at_86%_24%,rgba(245,158,11,0.24),transparent_30%),linear-gradient(135deg,rgba(255,122,168,0.1),rgba(239,68,68,0.08))]" aria-hidden="true" />
-      <div className="relative mx-auto max-w-6xl">
-        <div className="max-w-3xl">
-          <p data-reveal className="text-[11px] font-black uppercase tracking-[0.2em] text-white/54">Red flags</p>
-          <h2 data-reveal className="mt-4 max-w-xl font-serif text-[38px] font-normal leading-[0.98] md:text-[58px]">
+    <section className="px-5 py-14 md:py-20 lg:px-10">
+      <div className="mx-auto max-w-[640px]">
+        <div className="mb-6">
+          <p data-reveal className="text-[11px] font-black uppercase tracking-[0.2em] text-[#3d1226]/55">Red flags</p>
+          <h2 data-reveal className="mt-3 font-serif text-[38px] font-normal leading-[0.98] text-[#3d1226] md:text-[52px]">
             {block.heading || 'Sound familiar?'}
           </h2>
-          {block.body && (
-            <p data-reveal className="mt-5 max-w-xl bg-gradient-to-r from-[#ff7aa8] via-[#ef4444] to-[#f59e0b] bg-clip-text text-[24px] font-black leading-tight text-transparent md:text-[34px]">
-              {block.body}
-            </p>
-          )}
         </div>
-        <div className="red-flags-row group/row relative mt-8">
-          {items.length > 1 && (
-            <>
-              <button
-                type="button"
-                onClick={() => scrollRow(-1)}
-                className="absolute left-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/72 text-on-surface opacity-60 shadow-[0_16px_36px_rgba(0,0,0,0.26)] backdrop-blur-md transition hover:bg-white hover:opacity-100 md:opacity-0 md:group-hover/row:opacity-100"
-                aria-label="Previous red flags"
-              >
-                <ChevronLeft size={20} strokeWidth={2.6} aria-hidden="true" />
-              </button>
-              <button
-                type="button"
-                onClick={() => scrollRow(1)}
-                className="absolute right-2 top-1/2 z-20 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-full bg-white/72 text-on-surface opacity-60 shadow-[0_16px_36px_rgba(0,0,0,0.26)] backdrop-blur-md transition hover:bg-white hover:opacity-100 md:opacity-0 md:group-hover/row:opacity-100"
-                aria-label="Next red flags"
-              >
-                <ChevronRight size={20} strokeWidth={2.6} aria-hidden="true" />
-              </button>
-            </>
-          )}
-          <div ref={rowRef} className="red-flags-scroll flex snap-x gap-2.5 overflow-x-auto scroll-smooth pb-2">
+
+        <div className="glass-panel relative p-5 md:p-6">
+          <div className="thread-line" aria-hidden="true" style={{ left: 39, top: 64 }} />
+
+          <article data-reveal="tile-in" data-tile-direction="bottom" style={{ '--ri': 0 } as CSSProperties} className="relative grid grid-cols-[40px_1fr] gap-3">
+            <img src="/logo-gg.png" alt="" aria-hidden="true" className="relative z-10 h-10 w-10 rounded-full border border-white/80 bg-white object-contain p-1 shadow-sm" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[14px] font-extrabold text-[#3d1226]">{postHandle}</span>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-black uppercase tracking-wide text-primary">{postTopic}</span>
+                <span className="text-xs font-semibold text-[#3d1226]/45">17h</span>
+              </div>
+              <p className="mt-1.5 text-[15px] font-semibold leading-relaxed text-[#3d1226]">{postText}</p>
+              <div className="mt-3 flex items-center gap-5 text-[#3d1226]/55" aria-hidden="true">
+                <span className="flex items-center gap-1.5 text-xs font-bold"><Heart size={17} strokeWidth={2.2} /> 512</span>
+                <span className="flex items-center gap-1.5 text-xs font-bold"><MessageCircle size={17} strokeWidth={2.2} /> {items.length}</span>
+                <Repeat2 size={17} strokeWidth={2.2} />
+                <Send size={16} strokeWidth={2.2} />
+              </div>
+            </div>
+          </article>
+
+          <div data-reveal="tile-in" data-tile-direction="bottom" style={{ '--ri': 1 } as CSSProperties} className="relative mt-5 grid grid-cols-[40px_1fr] gap-3" aria-hidden="true">
+            <span />
+            <span className="flex h-6 items-center gap-1">
+              <span className="thread-typing-dot" />
+              <span className="thread-typing-dot" />
+              <span className="thread-typing-dot" />
+            </span>
+          </div>
+
           {items.map((item, index) => (
-            <a
-              key={`${item.title}-${index}`}
-              href={item.href?.trim() || undefined}
+            <article
+              key={`${item.handle || item.title}-${index}`}
               data-reveal="tile-in"
               data-tile-direction="bottom"
-              style={{ '--ri': index } as CSSProperties}
-              className="red-flag-poster group/poster relative aspect-video shrink-0 basis-[78vw] snap-start overflow-hidden rounded-lg border border-white/12 bg-white/[0.08] shadow-[0_22px_70px_rgba(0,0,0,0.22)] outline-none transition duration-300 hover:z-10 hover:scale-[1.06] hover:shadow-[0_30px_90px_rgba(219,39,119,0.28)] focus-visible:ring-2 focus-visible:ring-white sm:basis-[48vw] md:basis-[30vw] lg:basis-[calc((100%_-_40px)/4.5)]"
-              aria-label={item.title}
+              style={{ '--ri': index + 2 } as CSSProperties}
+              className="relative mt-5 grid grid-cols-[40px_1fr] gap-3"
             >
-              {item.thumbnailUrl || item.imageUrl ? (
-                <img src={item.thumbnailUrl || item.imageUrl} alt={item.title} className="h-full w-full object-cover transition duration-500 group-hover/poster:scale-[1.04]" />
-              ) : (
-                <div className="flex h-full w-full items-end bg-gradient-to-br from-primary via-red-500 to-secondary p-4">
-                  <p className="text-[15px] font-black leading-tight text-white md:text-[18px]">{item.title}</p>
+              <ThreadAvatar item={item} index={index} />
+              <div className="min-w-0">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="text-[14px] font-extrabold text-[#3d1226]">{item.handle?.trim() || item.title}</span>
+                  {item.roleLabel?.trim() && <span className="text-xs font-semibold text-[#3d1226]/50">· {item.roleLabel}</span>}
+                  <span className="text-xs font-semibold text-[#3d1226]/45">{Math.max(1, 16 - index * 2)}h</span>
                 </div>
-              )}
-            </a>
+                <p className="mt-1.5 text-[15px] font-semibold leading-relaxed text-[#3d1226]/90">{item.body?.trim() || item.title}</p>
+                {item.likes?.trim() && (
+                  <span className="mt-2 flex w-fit items-center gap-1.5 text-xs font-bold text-[#3d1226]/55" aria-hidden="true">
+                    <Heart size={15} strokeWidth={2.2} /> {item.likes}
+                  </span>
+                )}
+              </div>
+            </article>
           ))}
-          </div>
+
+          <article data-reveal="tile-in" data-tile-direction="bottom" style={{ '--ri': punchlineIndex } as CSSProperties} className="relative mt-6 grid grid-cols-[40px_1fr] gap-3">
+            <img src="/logo-gg.png" alt="" aria-hidden="true" className="relative z-10 h-10 w-10 rounded-full border border-white/80 bg-white object-contain p-1 shadow-sm" />
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[14px] font-extrabold text-[#3d1226]">{postHandle}</span>
+                <span className="text-xs font-semibold text-[#3d1226]/45">now</span>
+              </div>
+              <p className="mt-2 bg-gradient-to-r from-primary via-tertiary to-secondary bg-clip-text text-[22px] font-black leading-tight text-transparent md:text-[30px]">
+                {punchline}
+              </p>
+              <button
+                type="button"
+                onClick={openBookingModal}
+                className="btn-shine cta-idle mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] hover:opacity-95"
+              >
+                {block.ctaLabel?.trim() || 'Schedule Our Date'}
+              </button>
+            </div>
+          </article>
         </div>
       </div>
     </section>
@@ -691,6 +776,7 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
   const [canHover, setCanHover] = useState(false)
   const hoverOpenTimer = useRef<number | null>(null)
   const hoverCloseTimer = useRef<number | null>(null)
+  const popupHoverRef = useRef(false)
   const pauseUntilRef = useRef(0)
   const hasPeople = Boolean(block && members.length)
   const autoSlideSeconds = Math.max(2.5, Number.parseFloat(block?.autoSlideSeconds ?? '5') || 5)
@@ -744,7 +830,15 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
 
   function closeMemberPreviewSoon() {
     clearPreviewTimers()
-    hoverCloseTimer.current = window.setTimeout(() => setPreviewMember(null), 150)
+    hoverCloseTimer.current = window.setTimeout(() => {
+      if (popupHoverRef.current) {
+        hoverCloseTimer.current = window.setTimeout(() => {
+          if (!popupHoverRef.current) setPreviewMember(null)
+        }, 3000)
+        return
+      }
+      setPreviewMember(null)
+    }, 400)
   }
 
   return (
@@ -837,7 +931,18 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
           </div>
         </div>
         {previewMember && canHover && (
-          <div className="pointer-events-none fixed z-[80] hidden md:block" style={previewMember.style}>
+          <div
+            className="pointer-events-none fixed z-[80] hidden md:block"
+            style={previewMember.style}
+            onMouseEnter={() => {
+              popupHoverRef.current = true
+              clearPreviewTimers()
+            }}
+            onMouseLeave={() => {
+              popupHoverRef.current = false
+              closeMemberPreviewSoon()
+            }}
+          >
             {(() => {
               const member = previewMember.member
               const image = member.bannerImageUrl || member.thumbnailUrl || getPeopleAvatarImages(member)[0] || '/logo-gg.png'
@@ -886,77 +991,57 @@ function ClosingBanner({
 }) {
   const [openFaqIndex, setOpenFaqIndex] = useState(0)
   if (!block) return null
-  const overlayValue = Number.parseFloat(block.backgroundOverlayOpacity ?? '0.62')
-  const overlay = Number.isFinite(overlayValue) ? Math.min(0.85, Math.max(0.2, overlayValue)) : 0.62
-  const gradient = block.backgroundGradient || 'linear-gradient(135deg,#db2777 0%,#ef4444 48%,#f59e0b 100%)'
-  const style: CSSProperties = block.backgroundImageUrl
-    ? {
-      backgroundImage: `linear-gradient(rgba(185,20,76,${overlay}), rgba(185,20,76,${overlay})), ${cssUrl(block.backgroundImageUrl)}, ${gradient}`,
-      backgroundSize: 'cover',
-      backgroundPosition: 'center',
-    }
-    : { backgroundImage: gradient }
-  const logos = stories.map(getStoryLogoForHome).filter(Boolean)
+  void stories
   const faqTitle = block.heading?.trim() || 'Frequently Asked Questions'
   const faqSubtitle = block.subtitle?.trim() || block.body?.trim()
   const closingCharacterCount = countStaggerCharacters(faqTitle)
   const closingFollowDelay = Math.max(360, closingCharacterCount * 18 + 220)
 
+  // Round 7 A5: no solid gradient background and no logo marquee — glass items float
+  // directly on the shared aurora + wave background.
   return (
-    <section className="closing-section px-0 py-0">
-      <div className="closing-banner relative flex min-h-[420px] items-center overflow-hidden px-5 py-16 text-center md:min-h-[540px] lg:px-10" style={style}>
-        <div className="absolute inset-0 closing-banner-bg" aria-hidden="true" />
-        {logos.length > 0 && (
-          <div className="closing-logo-rail absolute inset-x-0 top-7 h-12 overflow-hidden opacity-80">
-            <div className="closing-logo-marquee flex w-max items-center gap-12">
-              {[...logos, ...logos].map((logo, index) => (
-                <img key={`${logo}-${index}`} src={logo} alt="" aria-hidden="true" className="h-8 w-auto max-w-[128px] object-contain brightness-0 invert opacity-80" />
-              ))}
-            </div>
-          </div>
-        )}
-        <div className="closing-content relative mx-auto w-full max-w-[1200px]" data-reveal="closing-content">
-          <div className="mx-auto mb-7 max-w-3xl text-left md:text-center">
-            <h2 className="text-[30px] font-black leading-tight text-white md:text-[42px]">
-              <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
-            </h2>
-            <div className="home-gradient-underline mt-3 bg-white/80 md:mx-auto" aria-hidden="true" />
-            {faqSubtitle && (
-              <p className="closing-follow mt-4 text-[15px] font-bold leading-relaxed text-white/82 md:text-[18px]" style={{ '--closing-delay': `${closingFollowDelay}ms` } as CSSProperties}>
-                {faqSubtitle}
-              </p>
-            )}
-          </div>
-          {faqItems.length > 0 && (
-            <div className="closing-faq mx-auto grid max-w-3xl gap-3 text-left">
-              {faqItems.map((item, index) => {
-                const open = openFaqIndex === index
-                return (
-                  <div
-                    key={`${item.question}-${index}`}
-                    className="closing-faq-item overflow-hidden rounded-2xl border border-white/22 bg-white/14 text-white shadow-[0_18px_46px_rgba(0,0,0,0.12)] backdrop-blur-xl"
-                    style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + 140 + index * 80}ms` } as CSSProperties}
-                  >
-                    <button
-                      type="button"
-                      onClick={() => setOpenFaqIndex(open ? -1 : index)}
-                      className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-[15px] font-extrabold leading-snug md:text-[16px]"
-                      aria-expanded={open}
-                    >
-                      <span>{item.question}</span>
-                      <span className={`closing-faq-plus flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-white/18 text-xl leading-none transition-transform ${open ? 'rotate-45' : ''}`}>+</span>
-                    </button>
-                    <div className={`closing-faq-answer grid transition-[grid-template-rows] duration-300 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                      <div className="overflow-hidden">
-                        <p className="px-4 pb-4 text-sm font-semibold leading-relaxed text-white/78">{item.answer}</p>
-                      </div>
-                    </div>
-                  </div>
-                )
-              })}
-            </div>
+    <section className="closing-section px-5 py-14 md:py-20 lg:px-10">
+      <div className="closing-content relative mx-auto w-full max-w-[720px]" data-reveal="closing-content">
+        <div className="mb-7 text-left md:text-center">
+          <h2 className="text-[30px] font-black leading-tight text-[#3d1226] md:text-[42px]">
+            <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
+          </h2>
+          <div className="home-gradient-underline mt-3 md:mx-auto" aria-hidden="true" />
+          {faqSubtitle && (
+            <p className="closing-follow mt-4 text-[15px] font-bold leading-relaxed text-[#3d1226]/75 md:text-[18px]" style={{ '--closing-delay': `${closingFollowDelay}ms` } as CSSProperties}>
+              {faqSubtitle}
+            </p>
           )}
         </div>
+        {faqItems.length > 0 && (
+          <div className="closing-faq grid gap-3 text-left">
+            {faqItems.map((item, index) => {
+              const open = openFaqIndex === index
+              return (
+                <div
+                  key={`${item.question}-${index}`}
+                  className={`closing-faq-item glass-panel overflow-hidden !rounded-2xl text-[#3d1226] ${open ? 'glass-panel--strong' : ''}`}
+                  style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + 140 + index * 80}ms` } as CSSProperties}
+                >
+                  <button
+                    type="button"
+                    onClick={() => setOpenFaqIndex(open ? -1 : index)}
+                    className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-[15px] font-bold leading-snug md:text-[16px]"
+                    aria-expanded={open}
+                  >
+                    <span>{item.question}</span>
+                    <span className={`closing-faq-plus flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3d1226]/10 text-xl leading-none transition-transform ${open ? 'rotate-45' : ''}`}>+</span>
+                  </button>
+                  <div className={`closing-faq-answer grid transition-[grid-template-rows] duration-300 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                    <div className="overflow-hidden">
+                      <p className="px-4 pb-4 text-sm font-semibold leading-relaxed text-[#3d1226]/75">{item.answer}</p>
+                    </div>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
       </div>
     </section>
   )
@@ -1038,12 +1123,21 @@ export default function BrandHomePage({
       {flowWaveActive && <FlowWaveBackground settings={homeBackground} />}
 
       <section
-        className={`home-hero relative flex items-center overflow-hidden ${
-          heroHasVideo ? 'min-h-[100svh]' : 'min-h-[52vh] md:min-h-[58vh]'
+        className={`home-hero relative flex overflow-hidden ${
+          heroHasVideo ? 'min-h-[78vh] items-start md:min-h-[82vh]' : 'min-h-[52vh] items-center md:min-h-[58vh]'
         } ${heroReady ? 'is-ready' : ''}`}
         style={heroHasOwnBackground ? heroBackgroundStyle(heroBlock) : undefined}
       >
         {heroHasVideo && <HeroBackgroundVideo sources={heroVideoSources} />}
+        {heroHasVideo && (
+          // Round 7 A1.5: soft radial scrim right behind the text cluster only —
+          // the sub-line sits on the brightest part of the sky.
+          <div
+            aria-hidden="true"
+            className="pointer-events-none absolute left-1/2 top-[6%] h-[46%] w-[min(920px,94vw)] -translate-x-1/2"
+            style={{ background: 'radial-gradient(closest-side, rgba(40,10,25,0.22), transparent 100%)' }}
+          />
+        )}
         {heroHasOwnBackground && (
           <>
             <div className="absolute inset-0 tech-grid opacity-35 pointer-events-none" aria-hidden="true" />
@@ -1051,7 +1145,11 @@ export default function BrandHomePage({
             <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-surface-container" aria-hidden="true" />
           </>
         )}
-        <div className="relative mx-auto flex w-full max-w-5xl flex-col items-center justify-center px-5 pb-14 pt-28 text-center lg:px-10">
+        <div
+          className={`relative mx-auto flex w-full max-w-5xl flex-col items-center px-5 text-center lg:px-10 ${
+            heroHasVideo ? 'pb-14 pt-36 md:pt-40' : 'justify-center pb-14 pt-28'
+          }`}
+        >
           <h1
             className={[
               'hero-word-title home-hero-title-serif text-[clamp(38px,10vw,52px)] font-normal not-italic leading-[0.98] md:text-[clamp(54px,6vw,86px)]',
@@ -1119,14 +1217,11 @@ export default function BrandHomePage({
             align="center"
           />
           <PackageCards items={packageItems} lang={lang} layout={packagesBlock?.layout === 'cards' ? 'cards' : 'horizontal'} />
-          {packagesBlock?.pricingNote && (
-            <p className="mx-auto mt-6 max-w-3xl rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-center text-sm font-bold leading-relaxed text-on-surface-variant">
-              {packagesBlock.pricingNote}
-            </p>
-          )}
-          {packagesBlock?.disclaimer && (
-            <p className="mx-auto mt-6 max-w-[720px] whitespace-pre-line text-center text-[12px] italic leading-relaxed text-on-surface-variant/60 md:text-[13px]">
-              {packagesBlock.disclaimer}
+          {(packagesBlock?.packagesNote?.trim() || packagesBlock?.pricingNote?.trim() || packagesBlock?.disclaimer?.trim()) && (
+            // Round 7 A4.4: one merged note, on a soft glass strip so it stays readable over the wave.
+            <p className="glass-panel mx-auto mt-8 max-w-[720px] whitespace-pre-line px-5 py-3.5 text-center text-[12px] italic leading-relaxed text-[#3d1226]/70 md:text-[13px]">
+              {packagesBlock.packagesNote?.trim() ||
+                [packagesBlock.pricingNote?.trim(), packagesBlock.disclaimer?.trim()].filter(Boolean).join('\n')}
             </p>
           )}
         </div>

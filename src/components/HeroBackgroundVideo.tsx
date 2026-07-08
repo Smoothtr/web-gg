@@ -76,14 +76,14 @@ export function HeroBackgroundVideo({ sources }: { sources: HeroVideoSources }) 
       aria-hidden="true"
       className="absolute inset-0 overflow-hidden"
       style={{
-        WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 80px), transparent 100%)',
-        maskImage: 'linear-gradient(to bottom, black calc(100% - 80px), transparent 100%)',
+        WebkitMaskImage: 'linear-gradient(to bottom, black calc(100% - 160px), transparent 100%)',
+        maskImage: 'linear-gradient(to bottom, black calc(100% - 160px), transparent 100%)',
       }}
     >
       {sources.poster && (
         // Poster paints immediately (SSR) and is the permanent fallback for
         // reduced-motion / Data Saver, where the <video> never mounts.
-        <img src={sources.poster} alt="" className="absolute inset-0 h-full w-full object-cover" />
+        <img src={sources.poster} alt="" className="absolute inset-0 h-full w-full object-cover [object-position:center_65%]" />
       )}
       {active && (
         <video
@@ -94,13 +94,12 @@ export function HeroBackgroundVideo({ sources }: { sources: HeroVideoSources }) 
           playsInline
           preload="metadata"
           poster={sources.poster || undefined}
-          className="absolute inset-0 h-full w-full object-cover"
+          className="absolute inset-0 h-full w-full object-cover [object-position:center_65%]"
         >
           {active.webm && <source src={active.webm} type="video/webm" />}
           {active.mp4 && <source src={active.mp4} type="video/mp4" />}
         </video>
       )}
-      <div className="absolute inset-0" style={{ background: 'linear-gradient(rgba(40,10,25,.25), transparent 50%)' }} />
     </div>
   )
 }

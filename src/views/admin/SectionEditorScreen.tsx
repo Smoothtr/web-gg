@@ -433,18 +433,14 @@ function PackageItemEditor({
   const priceValue = getItemTextValue(item, activeLang, 'priceValue')
   const body = getItemTextValue(item, activeLang, 'body')
   const features = getItemFeatures(item, activeLang) ?? []
-  const duplicateFeatureLabels = features
-    .map((feature) => feature.label.trim().toLowerCase())
-    .filter(Boolean)
-    .filter((labelValue, labelIndex, labels) => labels.indexOf(labelValue) !== labelIndex)
 
   function updateText(patch: CmsLocalizedBlockItemFields) {
     updateBlockItem(pageId, blockId, index, patchItemText(item, activeLang, patch))
   }
 
-  function updateFeature(featureIndex: number, patch: { label?: string; text?: string }) {
+  function updateFeature(featureIndex: number, patch: { label?: string; text?: string; group?: string; featured?: boolean }) {
     const next = [...features]
-    while (next.length <= featureIndex) next.push({ label: '', text: '' })
+    while (next.length <= featureIndex) next.push({ text: '' })
     next[featureIndex] = { ...next[featureIndex], ...patch }
     updateText({ features: next })
   }
@@ -543,26 +539,36 @@ function PackageItemEditor({
         <div className="mb-4 flex items-center justify-between gap-3">
           <div>
             <p className="text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Feature rows</p>
-            <p className="mt-1 text-xs leading-relaxed text-on-surface-variant/75">Moi row gom label + text. Tranh trung label trong cung mot goi.</p>
+            <p className="mt-1 text-xs leading-relaxed text-on-surface-variant/75">
+              Each row: text + optional group + Featured flag. Rows stay exactly where you place them (no auto-grouping). Featured rows (max 4) show on the compact card; everything else lives in the expander, grouped by the Group field.
+            </p>
           </div>
           <button
             type="button"
-            onClick={() => updateText({ features: [...features, { label: 'CONTENT ENGINE', text: '' }] })}
+            onClick={() => updateText({ features: [...features, { text: '', group: '', featured: false }] })}
             className="inline-flex items-center gap-2 rounded-xl border border-outline-variant bg-surface px-3 py-2 text-xs font-extrabold text-primary"
           >
             <Plus size={15} /> Add row
           </button>
         </div>
-        {duplicateFeatureLabels.length > 0 && (
-          <p className="mb-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs font-bold text-red-700">
-            Duplicate feature label detected: {Array.from(new Set(duplicateFeatureLabels)).join(', ')}
-          </p>
-        )}
         <div className="grid gap-3">
           {features.map((feature, featureIndex) => (
-            <div key={`${featureIndex}-${feature.label}`} className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface p-3 md:grid-cols-[0.8fr_1.4fr_auto]">
-              <TextInput value={feature.label} onChange={(value) => updateFeature(featureIndex, { label: value })} placeholder="CONTENT ENGINE" />
+            <div key={featureIndex} className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface p-3 md:grid-cols-[1.4fr_0.7fr_auto_auto]">
               <TextInput value={feature.text} onChange={(value) => updateFeature(featureIndex, { text: value })} placeholder="Feature detail" />
+              <TextInput
+                value={feature.group ?? feature.label ?? ''}
+                onChange={(value) => updateFeature(featureIndex, { group: value })}
+                placeholder="Group (optional)"
+              />
+              <label className="inline-flex h-9 items-center gap-2 rounded-lg border border-outline-variant px-2.5 text-xs font-extrabold text-on-surface-variant">
+                <input
+                  type="checkbox"
+                  checked={feature.featured === true}
+                  onChange={(event) => updateFeature(featureIndex, { featured: event.target.checked })}
+                  className="h-4 w-4 accent-primary"
+                />
+                Featured
+              </label>
               <div className="flex items-center gap-1">
                 <button type="button" onClick={() => moveFeature(featureIndex, -1)} disabled={featureIndex === 0} className="rounded-lg border border-outline-variant px-2.5 py-2 text-on-surface-variant disabled:opacity-40" aria-label="Move feature up">
                   <ArrowUp size={14} />
@@ -650,34 +656,40 @@ function RedFlagItemEditor({
   updateBlockItem: UpdateBlockItem
   onUploadError: (message: string) => void
 }) {
-  const title = getItemTextValue(item, activeLang, 'title')
+  const body = getItemTextValue(item, activeLang, 'body')
 
   function updateText(patch: CmsLocalizedBlockItemFields) {
     updateBlockItem(pageId, blockId, index, patchItemText(item, activeLang, patch))
   }
 
+  // Round 7 A3: red-flags items are Threads-style replies (handle + role + complaint + likes).
   return (
     <div className="grid gap-4">
-      <Field label="Poster title / alt text">
-        <TextInput value={title} onChange={(value) => updateText({ title: value })} />
-      </Field>
-      <Field label="Optional href">
-        <TextInput value={item.href ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { href: value })} placeholder="/the-one#curnon" />
-      </Field>
-      <div className="grid gap-4 lg:grid-cols-[1fr_220px]">
-        <Field label="Thumbnail URL" hint="Poster 16:9 do PO upload. Neu de trong, site se dung fallback gradient/title.">
+      <div className="grid gap-4 md:grid-cols-2">
+        <Field label="Handle" hint="e.g. fnb.chain.owner">
+          <TextInput value={item.handle ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { handle: value })} placeholder="fnb.chain.owner" />
+        </Field>
+        <Field label="Role label" hint="Shown next to the handle, e.g. F&B chain owner">
+          <TextInput value={item.roleLabel ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { roleLabel: value })} placeholder="F&B chain owner" />
+        </Field>
+        <Field label="Likes (display only)">
+          <TextInput value={item.likes ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { likes: value })} placeholder="156" />
+        </Field>
+        <Field label="Avatar URL" hint="Empty = colored circle with the first letter of the handle.">
           <div className="grid gap-2">
-            <TextInput value={item.thumbnailUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { thumbnailUrl: value })} />
+            <TextInput value={item.avatarUrl ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { avatarUrl: value })} />
             <ImageUploadButton
-              folder={`cms/pages/${pageId}/${blockId}/red-flag-posters`}
-              onUploaded={(url) => updateBlockItem(pageId, blockId, index, { thumbnailUrl: url })}
+              folder={`cms/pages/${pageId}/${blockId}/avatars`}
+              onUploaded={(url) => updateBlockItem(pageId, blockId, index, { avatarUrl: url })}
               onError={onUploadError}
-              label={item.thumbnailUrl ? 'Thay poster' : 'Upload poster'}
+              label={item.avatarUrl ? 'Replace avatar' : 'Upload avatar'}
             />
           </div>
         </Field>
-        <MediaPreview url={item.thumbnailUrl} alt={title || item.title} />
       </div>
+      <Field label="Complaint text">
+        <TextArea value={body} onChange={(value) => updateText({ body: value })} minHeight={80} />
+      </Field>
     </div>
   )
 }
@@ -1408,11 +1420,29 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                   ))}
                 </div>
               </Field>
-              <Field label="Pricing note" hint="Dong minh bach duoi cac package cards.">
-                <TextArea value={blockPricingNote} onChange={(value) => updateBlockText({ pricingNote: value })} minHeight={86} />
+              <Field label="Packages note" hint="Single note under the whole section (merged pricing note + disclaimer, Round 7 A4).">
+                <TextArea
+                  value={block.packagesNote ?? [blockPricingNote, blockDisclaimer].filter(Boolean).join('\n')}
+                  onChange={(value) => updateBlock(pageId, blockId, { packagesNote: value })}
+                  minHeight={86}
+                />
               </Field>
-              <Field label="Disclaimer" hint="Chu nho nghieng hien duoi cung khu pricing.">
-                <TextArea value={blockDisclaimer} onChange={(value) => updateBlockText({ disclaimer: value })} minHeight={86} />
+            </div>
+          )}
+
+          {isRedFlagsBlock && (
+            <div className="grid gap-4 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+              <p className="text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Threads opening post (Round 7 A3)</p>
+              <div className="grid gap-4 md:grid-cols-2">
+                <Field label="Post handle">
+                  <TextInput value={block.postHandle ?? ''} onChange={(value) => updateBlock(pageId, blockId, { postHandle: value })} placeholder="founders.theone" />
+                </Field>
+                <Field label="Topic badge">
+                  <TextInput value={block.postTopic ?? ''} onChange={(value) => updateBlock(pageId, blockId, { postTopic: value })} placeholder="Agency life" />
+                </Field>
+              </div>
+              <Field label="Post text" hint="The opening post; items below become the replies. The Body field above stays the closing punchline.">
+                <TextArea value={block.postText ?? ''} onChange={(value) => updateBlock(pageId, blockId, { postText: value })} minHeight={70} />
               </Field>
             </div>
           )}

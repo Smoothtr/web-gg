@@ -257,6 +257,18 @@ export default function SiteSettingsScreen() {
         </div>
       </Card>
 
+      <Card title="Intro loader" description="The logo intro screen shown before the homepage. Currently paused for testing (Round 7 A6) - turn back on when the PO asks.">
+        <label className="inline-flex items-center gap-3 rounded-xl border border-outline-variant/45 bg-surface-container-low px-4 py-3 text-sm font-extrabold text-on-surface">
+          <input
+            type="checkbox"
+            checked={siteSettings.introLoaderEnabled === true}
+            onChange={(event) => updateSiteSettings((current) => ({ ...current, introLoaderEnabled: event.target.checked }))}
+            className="h-4 w-4 accent-primary"
+          />
+          Enable intro loader
+        </label>
+      </Card>
+
       <Card title="Header" description="Leave Header subtitle blank if you want to remove the company line under the logo.">
         <div className="grid gap-4 md:grid-cols-2">
           <Field label="Logo URL">

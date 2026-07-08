@@ -25,6 +25,13 @@ export function whenIntroGone(cb: () => void) {
     cb()
     return
   }
+  // Round 7 A6: layout injects this flag pre-hydration when the intro loader is
+  // disabled from CMS settings — resolve immediately, nothing to wait for.
+  if ((window as Window & { __gg99IntroOff?: number }).__gg99IntroOff) {
+    if (!resolved) flush()
+    cb()
+    return
+  }
   if (resolved) {
     cb()
     return

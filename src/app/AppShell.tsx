@@ -3,10 +3,10 @@
 import type { ReactNode } from 'react'
 import IntroLoader from '../components/IntroLoader'
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, introLoaderEnabled = false }: { children: ReactNode; introLoaderEnabled?: boolean }) {
   return (
     <>
-      <IntroLoader />
+      {introLoaderEnabled && <IntroLoader />}
       {children}
     </>
   )
