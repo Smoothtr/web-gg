@@ -654,7 +654,7 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
       onKeyDown={handleKeyDown}
     >
       <div
-        className="absolute inset-0 flex transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+        className="story-slide-track absolute inset-0 flex transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
         style={{ transform: `translateX(-${activeSlide * 100}%)` }}
       >
         {slides.map((slide, slideIndex) => {

@@ -2619,6 +2619,15 @@
   pointer-events: none;
 }
 
+.story-slide-track {
+  z-index: 1;
+}
+
+.story-slide-unit > img,
+.story-slide-unit > .story-slide-scrim {
+  pointer-events: none;
+}
+
 /* Slide 1: featured BigStats top-left, story summary above the CTA */
 .story-slide-hero-stats {
   position: absolute;
@@ -2900,7 +2909,7 @@
 .story-carousel-arrow {
   position: absolute;
   top: 50%;
-  z-index: 40;
+  z-index: 90;
   display: flex;
   width: 44px;
   height: 44px;
@@ -2910,13 +2919,12 @@
   color: transparent;
   cursor: pointer;
   opacity: 0;
-  pointer-events: none;
+  pointer-events: auto;
   transition: opacity 200ms ease;
 }
 .story-media-frame:hover .story-carousel-arrow,
 .story-media-frame:focus-within .story-carousel-arrow {
   opacity: 1;
-  pointer-events: auto;
 }
 .story-carousel-arrow::before {
   content: '';
