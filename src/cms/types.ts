@@ -26,6 +26,7 @@ export type CmsLocalizedBlockFields = {
   ctaLabel?: string
   ctaHref?: string
   ctaSubtext?: string
+  heroTextAlign?: 'center' | 'left'
   pricingNote?: string
   disclaimer?: string
   statChips?: CmsStatChip[]

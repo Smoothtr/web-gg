@@ -677,7 +677,7 @@ export const defaultCmsPages: CmsPageContent[] = [
         backgroundGradient: 'linear-gradient(180deg,#FF7AA8 0%,#FF4D7D 45%,#FFB199 100%)',
         backgroundOverlayOpacity: '0',
         textColor: 'light',
-        heroTextAlign: 'center',
+        heroTextAlign: 'left',
         dividerShow: true,
         ctaLabel: 'Schedule Our Date',
         ctaSubtext: '30 phút cà phê online với founder - miễn phí, không ràng buộc, không sales gọi dai.',
@@ -697,6 +697,7 @@ export const defaultCmsPages: CmsPageContent[] = [
             subtitle: 'The One delivers full-service marketing solutions with exceptional speed, efficiency, and cost-effectiveness.',
             ctaLabel: 'Schedule Our Date',
             ctaSubtext: 'Free 30-min call - no commitment - talk directly with a founder.',
+            heroTextAlign: 'left',
             statChips: [
               { value: 'x35', label: 'peak client growth' },
               { value: '326K+', label: 'orders operated' },
@@ -709,6 +710,7 @@ export const defaultCmsPages: CmsPageContent[] = [
         id: 'what-is',
         heading: compactHomeByLang.en.whatIs.title,
         body: compactHomeByLang.en.whatIs.body,
+        subtitle: 'Khách hàng đang đồng hành cùng The One',
         items: [
           { title: 'The One knows about failure.', body: 'Premium local watch growth with connected promotions, marketplaces and reporting.', icon: 'Search', href: 'curnon', imageUrl: '/logo-curnon.png', showOnHomepage: true, homepageOrder: '0' },
           { title: 'The One Performance Marketing Agency', body: 'Tut - tricks and real performance.', icon: 'Megaphone', href: 'phinoi', imageUrl: '/logo-phinoi.png', showOnHomepage: true, homepageOrder: '1' },
@@ -716,6 +718,11 @@ export const defaultCmsPages: CmsPageContent[] = [
           { title: 'The One Consultant', body: 'KPIs, Targets, Optimization & Growth Strategies.', icon: 'Target', href: 'inkaholic', imageUrl: '/logo-inkaholic.png', showOnHomepage: true, homepageOrder: '3' },
           { title: 'The Cheating One', body: 'faster, better and cheaper', icon: 'Rocket', href: 'qanda-books', imageUrl: '/logo-qandabook.png', showOnHomepage: true, homepageOrder: '4' },
         ],
+        locales: {
+          en: {
+            subtitle: 'Clients growing with The One',
+          },
+        },
       },
       {
         id: 'packages',

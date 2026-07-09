@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent } from 'react'
 import {
+  ArrowUp,
   Check,
   ChevronLeft,
   ChevronRight,
@@ -179,7 +180,7 @@ function getStoryTheme(story: CaseStudy, storyIndex: number) {
 
 
 function getToneFromLuminance(luminance: number): StoryGlassTone {
-  if (luminance >= 0.62) return 'tone-on-light'
+  if (luminance >= 0.55) return 'tone-on-light'
   if (luminance >= 0.45) return 'tone-on-medium'
   return 'tone-on-dark'
 }
@@ -430,6 +431,7 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
   const summarySheetRef = useRef<HTMLDivElement | null>(null)
   const summaryCloseRef = useRef<HTMLButtonElement | null>(null)
   const touchStartX = useRef(0)
+  const touchStartY = useRef(0)
   const initialDelayRef = useRef(5000 + (index % 4) * 1200)
   const slides = useMemo(() => buildStorySlides(story), [story])
   const theme = useMemo(() => getStoryTheme(story, index), [index, story])
@@ -602,14 +604,17 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
 
   function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
     touchStartX.current = event.touches[0]?.clientX ?? 0
+    touchStartY.current = event.touches[0]?.clientY ?? 0
     pauseAuto(6000)
   }
 
   function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
     const endX = event.changedTouches[0]?.clientX ?? 0
-    const delta = endX - touchStartX.current
-    if (Math.abs(delta) < 40) return
-    goTo(delta < 0 ? 1 : -1)
+    const endY = event.changedTouches[0]?.clientY ?? 0
+    const deltaX = endX - touchStartX.current
+    const deltaY = endY - touchStartY.current
+    if (Math.abs(deltaX) < 42 || Math.abs(deltaX) <= Math.abs(deltaY)) return
+    goTo(deltaX < 0 ? 1 : -1)
   }
 
   function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
@@ -826,7 +831,7 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
     </div>
 
     {slideCount > 1 && (
-      <div className="mt-2.5 flex justify-center gap-1.5" role="tablist" aria-label="Slides">
+      <div className="story-carousel-dots mt-2.5 flex justify-center gap-1.5" role="tablist" aria-label="Slides">
         {slides.map((_, slideIndex) => (
           <button
             type="button"
@@ -835,7 +840,7 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
             aria-selected={slideIndex === activeSlide}
             aria-label={`Go to slide ${slideIndex + 1}`}
             onClick={() => goToSlide(slideIndex)}
-            className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${slideIndex === activeSlide ? 'scale-125 bg-[#FF2E88]' : 'bg-[#3d1226]/30'}`}
+            className={`story-carousel-dot h-1.5 w-1.5 rounded-full transition-all duration-300 ${slideIndex === activeSlide ? 'scale-125 bg-[#FF2E88]' : 'bg-[#3d1226]/30'}`}
           />
         ))}
       </div>
@@ -911,7 +916,7 @@ function InstagramPost({
             <span className="text-xs font-bold text-on-surface-variant">.</span>
             <span className="truncate text-xs font-bold text-on-surface-variant">{story.period}</span>
           </div>
-          <p className="truncate text-xs font-semibold text-on-surface-variant">{story.headline}</p>
+          <p className="line-clamp-2 text-xs font-semibold leading-snug text-on-surface-variant md:truncate md:leading-normal">{story.headline}</p>
         </div>
         <PostMoreMenu story={story} onCopy={onCopy} />
       </header>
@@ -926,7 +931,7 @@ function InstagramPost({
           {story.caption || story.shortDescription}
         </p>
         {story.testimonialQuote && (
-          <figure className="mt-3 rounded-2xl border border-primary/15 bg-gradient-to-r from-primary/10 via-tertiary/10 to-secondary/10 p-3">
+          <figure className="story-testimonial-quote mt-3 rounded-2xl border border-primary/15 bg-[#FFF7F5] p-3">
             <blockquote className="text-sm font-semibold italic leading-relaxed text-on-surface">
               "{story.testimonialQuote}"
             </blockquote>
@@ -989,7 +994,7 @@ function StickyStoryRail({
 
         {firstStory && (
           <a href={`#${encodeURIComponent(firstStory.id)}`} className="inline-flex items-center gap-2 px-2 text-sm font-extrabold text-primary">
-            Back to top story <ChevronRight size={16} />
+            Back to top story <ArrowUp size={16} strokeWidth={2.8} />
           </a>
         )}
       </div>
@@ -1023,7 +1028,8 @@ export default function TheOnePage({ lang = 'en', cmsPage, siteSettings }: { lan
   const c = compactTheOneByLang[lang]
   const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang)
   const storiesBlock = getLocalizedCmsBlock(cmsPage, 'stories', lang)
-  const orderedCaseStudies = useMemo(() => getOrderedCaseStudies(storiesBlock), [storiesBlock])
+  const storiesOrderKey = JSON.stringify(storiesBlock?.items ?? [])
+  const orderedCaseStudies = useMemo(() => getOrderedCaseStudies(storiesBlock), [storiesOrderKey])
   const swipeHintText = storiesBlock?.swipeHintText?.trim() || 'Swipe for more records →'
   const [viewedStories, setViewedStories] = useState<Set<string>>(() => new Set())
   const [highlightedId, setHighlightedId] = useState('')

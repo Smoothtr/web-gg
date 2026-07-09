@@ -39,6 +39,10 @@ export function BrandFooter({ lang = 'en', siteSettings }: { lang?: BrandLang; s
   }
 
   const socials = footer.socials ?? {}
+  const languageLinks = [
+    { code: 'EN', href: '/', active: lang === 'en' },
+    { code: 'VI', href: '/vi', active: lang === 'vi' },
+  ]
   const socialLinks = [
     { key: 'facebook', href: socials.facebook, label: 'Facebook', icon: <Facebook size={16} /> },
     { key: 'instagram', href: socials.instagram, label: 'Instagram', icon: <Instagram size={16} /> },
@@ -48,30 +52,14 @@ export function BrandFooter({ lang = 'en', siteSettings }: { lang?: BrandLang; s
   ].filter((item) => item.href?.trim())
 
   return (
-    <footer className="relative overflow-hidden border-t border-outline-variant/40 bg-[#FFFDFB] before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-primary before:via-tertiary before:to-secondary">
-      {/* Round 8 A6: oversized watermark, barely there */}
-      {footer.logoSrc && (
-        <img
-          src={footer.logoSrc}
-          alt=""
-          aria-hidden="true"
-          className="pointer-events-none absolute -bottom-16 -right-10 h-64 w-auto opacity-[0.04] md:h-80"
-        />
-      )}
+    <footer className="brand-footer-v2 relative overflow-hidden border-t border-outline-variant/40 bg-[#FFFDFB] before:absolute before:inset-x-0 before:top-0 before:h-[2px] before:bg-gradient-to-r before:from-primary before:via-tertiary before:to-secondary">
+      <span className="brand-footer-watermark" aria-hidden="true">The One</span>
+      <div className="brand-footer-wave" aria-hidden="true" />
       <div className="relative max-w-6xl mx-auto px-5 lg:px-10 pt-10 pb-8">
         {/* Round 12 A2.4: footer joins the page cascade — serif line → button → columns L→R → bottom bar */}
         {footer.ctaHeading?.trim() && (
-          <div className="mb-10 flex flex-col gap-5 border-b border-primary/10 pb-9 md:flex-row md:items-center md:justify-between">
+          <div className="mb-10 border-b border-primary/10 pb-9">
             <p data-reveal="soft" className="font-serif text-[30px] leading-tight text-[#3d1226] md:text-[42px]">{footer.ctaHeading}</p>
-            <button
-              type="button"
-              onClick={openBookingModal}
-              data-reveal="soft"
-              style={{ '--ri': 1 } as CSSProperties}
-              className="btn-shine cta-idle inline-flex w-fit shrink-0 items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-6 py-3 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.24)] hover:opacity-95"
-            >
-              Schedule Our Date
-            </button>
           </div>
         )}
         <div className="grid grid-cols-1 gap-8 md:grid-cols-[2fr_1fr_1fr_1fr]">
@@ -194,10 +182,11 @@ export function BrandFooter({ lang = 'en', siteSettings }: { lang?: BrandLang; s
       </div>
 
       <div className="border-t border-primary/10">
-        <div data-reveal="soft" style={{ '--ri': 6 } as CSSProperties} className="max-w-6xl mx-auto px-5 lg:px-10 py-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+        <div data-reveal="soft" style={{ '--ri': 6 } as CSSProperties} className="max-w-6xl mx-auto px-5 lg:px-10 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
           {footer.copyright && <p className="text-[11px] text-on-surface/45">{footer.copyright}</p>}
-          {hasLegalLinks && (
-            <div className="flex gap-5">
+          <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
+            {hasLegalLinks && (
+              <>
               {footer.privacyLabel && footer.privacyHref && (
                 <a href={footer.privacyHref} className="text-[11px] text-on-surface/50 hover:text-primary transition-colors">
                   {footer.privacyLabel}
@@ -208,8 +197,21 @@ export function BrandFooter({ lang = 'en', siteSettings }: { lang?: BrandLang; s
                   {footer.termsLabel}
                 </a>
               )}
-            </div>
-          )}
+              </>
+            )}
+            <span className="inline-flex rounded-full border border-primary/15 bg-white/70 p-0.5 shadow-[0_8px_24px_rgba(219,39,119,0.08)]">
+              {languageLinks.map((item) => (
+                <a
+                  key={item.code}
+                  href={item.href}
+                  aria-current={item.active ? 'page' : undefined}
+                  className={`rounded-full px-2.5 py-1 text-[11px] font-black transition ${item.active ? 'bg-gradient-to-r from-primary via-tertiary to-secondary text-white' : 'text-on-surface/50 hover:text-primary'}`}
+                >
+                  {item.code}
+                </a>
+              ))}
+            </span>
+          </div>
         </div>
       </div>
     </footer>

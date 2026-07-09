@@ -255,7 +255,7 @@ export function PackageCards({
     // icon + name · subtitle · content chip · max 4 featured rows · price · 2 CTAs,
     // with the full grouped deliverable list inside an in-card expander.
     return (
-      <div className={`grid items-start gap-5 md:grid-cols-3 ${className}`}>
+      <div className={`grid items-stretch gap-5 md:grid-cols-3 ${className}`}>
         {items.map((item, index) => {
           const { subtitle, features, priceLabel, priceValue } = getPackageContent(item)
           const { metricRow, compactRows, groups, totalRows } = organizePackageFeatures(features)
@@ -279,6 +279,7 @@ export function PackageCards({
               data-testid="package-card"
               data-package-id={id}
               data-selected={selected ? 'true' : 'false'}
+              data-system-package={system ? 'true' : 'false'}
               style={{ '--ri': index } as CSSProperties}
               className={[
                 'rounded-[22px] p-[2px] transition-[transform,box-shadow] duration-[250ms]',
@@ -418,6 +419,10 @@ export function PackageCards({
           <div
             key={`${item.title}-${index}`}
             data-reveal="scale"
+            data-testid="package-card"
+            data-package-id={id}
+            data-selected={selected ? 'true' : 'false'}
+            data-system-package={system ? 'true' : 'false'}
             style={{ '--ri': index } as CSSProperties}
           >
           <article

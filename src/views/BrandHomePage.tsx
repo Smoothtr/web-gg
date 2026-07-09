@@ -24,7 +24,7 @@ import { getCmsBlock, getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagr
 import { mergeHomepageBackground } from '../cms/siteSettings'
 import { cldSrcSet, cldWidth } from '../lib/cloudinaryImage'
 import { buildHomeFaqSchema, getHomeClosingFaqItems } from '../cms/homeFaqSchema'
-import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
+import type { CmsBlock, CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
 import type { CaseStudy } from '../data/caseStudies'
 
@@ -530,7 +530,7 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
   )
 }
 
-function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: CaseStudy[]; lang: BrandLang; openingBaseMs?: number }) {
+function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { stories: CaseStudy[]; lang: BrandLang; block?: CmsBlock | null; openingBaseMs?: number }) {
   const railRef = useRef<HTMLDivElement | null>(null)
   const showcaseStories = getHomepageCaseStudies(stories)
   const [bannerIndex, setBannerIndex] = useState(0)
@@ -581,6 +581,7 @@ function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: Case
   const activeStoryHref = resolveStoryHref(lang, activeStory.id, activeStory.id)
   const activeStats = getFeaturedStats(activeStory)
   const allStoriesHref = localizedPath(lang, '/the-one')
+  const featuredContextLabel = block?.subtitle?.trim() || (lang === 'vi' ? 'Khach hang dang dong hanh cung The One' : 'Clients growing with The One')
   const allStoriesLabel = lang === 'vi' ? 'Xem tất cả stories' : 'View all stories'
 
   function moveRail(direction: -1 | 1) {
@@ -622,7 +623,7 @@ function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: Case
   }
 
   return (
-    <section id="featured-cases" className="home-section-pad home-section-pad--featured relative overflow-visible px-5 lg:px-10" onMouseLeave={closePreviewSoon}>
+    <section id="featured-cases" className="home-section-pad home-section-pad--featured relative overflow-hidden px-5 lg:px-10" onMouseLeave={closePreviewSoon}>
       {/* Round 7 A2.1: warm bridge from the video's bottom tone into the shared wave background */}
       <div
         aria-hidden="true"
@@ -635,7 +636,7 @@ function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: Case
             strips --rd outside the opening window (reload mid-page, scroll back). */}
         <div className="relative" data-reveal="scale" data-reveal-open style={{ '--rd': `${openingBaseMs}ms` } as CSSProperties}>
           {/* Round 8 A2.1: ambient glow — a blurred copy of the active slide bleeds its colors into the wave */}
-          <div aria-hidden="true" className="pointer-events-none absolute -inset-4 md:-inset-8">
+          <div aria-hidden="true" className="pointer-events-none absolute -inset-2 md:-inset-4">
             {showcaseStories.map((story, index) => {
               const thumbnail = getCaseStudyThumbnail(story)
               return (
@@ -643,8 +644,8 @@ function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: Case
                   key={`${story.id}-glow-${index}`}
                   src={cldWidth(thumbnail, 640)}
                   alt=""
-                  className={`absolute inset-0 h-full w-full scale-[1.06] object-cover blur-[48px] saturate-[1.4] transition-opacity duration-700 ${
-                    index === activeBannerIndex ? 'opacity-45' : 'opacity-0'
+                  className={`absolute inset-0 h-full w-full scale-[1.03] object-cover blur-[32px] saturate-[1.25] transition-opacity duration-700 ${
+                    index === activeBannerIndex ? 'opacity-30' : 'opacity-0'
                   }`}
                 />
               )
@@ -678,6 +679,7 @@ function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: Case
             <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/18 to-transparent" aria-hidden="true" />
           </div>
           <div className="featured-banner-copy pointer-events-none absolute inset-x-0 bottom-0 text-white">
+            <p className="featured-banner-context mb-2 inline-flex rounded-full border border-white/20 bg-white/14 px-3 py-1 text-[11px] font-black uppercase tracking-[0.16em] text-white/78 backdrop-blur-md">{featuredContextLabel}</p>
             <p className="featured-banner-kicker font-extrabold uppercase text-white/68">Featured case</p>
             <h2 className="featured-banner-title mt-2 max-w-2xl font-extrabold leading-tight">{activeStory.brandName}</h2>
             <p className="featured-banner-caption mt-2 max-w-2xl font-semibold leading-relaxed text-white/76">{activeStory.caption || activeStory.shortDescription}</p>
@@ -1023,6 +1025,7 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
   const activeMember = members[activeIndex % members.length] ?? members[0]
   const activeRoles = splitPeopleRoles(activeMember.label)
   const activeBanner = activeMember.bannerImageUrl || getPeopleAvatarImages(activeMember)[0] || '/logo-gg.png'
+  const activeBannerIsPlaceholder = isLogoLikeImage(activeBanner)
 
   function pauseAuto(ms = 5000) {
     pauseUntilRef.current = Date.now() + ms
@@ -1073,16 +1076,20 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
           perWord
         />
         <div data-reveal="scale" className="group relative aspect-[16/8] overflow-hidden rounded-[24px] bg-[#190b12] text-white shadow-[0_24px_70px_rgba(80,20,50,0.16)] ring-1 ring-white/70 md:aspect-[16/6]">
-          <img
-            src={cldWidth(activeBanner, 1280)}
-            srcSet={cldSrcSet(activeBanner, [1280, 2400])}
-            sizes="(min-width: 1280px) 1152px, 96vw"
-            decoding="async"
-            alt={`${activeMember.title} banner`}
-            className={`absolute inset-0 h-full w-full transition duration-700 ${
-              isLogoLikeImage(activeBanner) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-12 md:p-20' : 'object-cover'
-            }`}
-          />
+          {activeBannerIsPlaceholder ? (
+            <div className="people-typographic-banner absolute inset-0 flex items-center justify-center px-8 text-center">
+              <span>{activeMember.title}</span>
+            </div>
+          ) : (
+            <img
+              src={cldWidth(activeBanner, 1280)}
+              srcSet={cldSrcSet(activeBanner, [1280, 2400])}
+              sizes="(min-width: 1280px) 1152px, 96vw"
+              decoding="async"
+              alt={`${activeMember.title} banner`}
+              className="absolute inset-0 h-full w-full object-cover transition duration-700"
+            />
+          )}
           <div className="absolute inset-0 bg-gradient-to-t from-black/72 via-black/20 to-transparent" aria-hidden="true" />
           <div className="absolute inset-x-0 bottom-0 p-5 md:p-8">
             <p className="text-[11px] font-extrabold uppercase tracking-[0.2em] text-white/68">The One People</p>
@@ -1143,18 +1150,22 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
                   active ? 'ring-primary/80' : 'ring-white/70',
                 ].join(' ')}
               >
-                <img
-                  src={cldWidth(thumbnail, 320)}
-                  srcSet={cldSrcSet(thumbnail, [320, 640])}
-                  sizes="(min-width: 1024px) 25vw, 42vw"
-                  loading="lazy"
-                  decoding="async"
-                  alt=""
-                  aria-hidden="true"
-                  className={`absolute inset-0 h-full w-full transition duration-500 group-hover:scale-[1.06] ${
-                    isLogoLikeImage(thumbnail) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-7' : 'object-cover'
-                  }`}
-                />
+                {isLogoLikeImage(thumbnail) ? (
+                  <span className="people-typographic-card absolute inset-0 flex items-center justify-center px-4 text-center transition duration-500 group-hover:scale-[1.04]">
+                    {member.title}
+                  </span>
+                ) : (
+                  <img
+                    src={cldWidth(thumbnail, 320)}
+                    srcSet={cldSrcSet(thumbnail, [320, 640])}
+                    sizes="(min-width: 1024px) 25vw, 42vw"
+                    loading="lazy"
+                    decoding="async"
+                    alt=""
+                    aria-hidden="true"
+                    className="absolute inset-0 h-full w-full object-cover transition duration-500 group-hover:scale-[1.06]"
+                  />
+                )}
                 <div className={`absolute inset-0 bg-gradient-to-t ${active ? 'from-black/82 via-black/18 to-transparent' : 'from-white/88 via-white/46 to-white/12 group-hover:from-black/76 group-hover:via-black/12 group-hover:to-transparent'}`} aria-hidden="true" />
                 <div className="absolute inset-x-0 bottom-0 p-4">
                   <h3 className={`line-clamp-1 text-[17px] font-extrabold leading-tight ${active ? 'text-white' : 'text-on-surface group-hover:text-white'}`}>{member.title}</h3>
@@ -1333,6 +1344,7 @@ export default function BrandHomePage({
   const flowWaveActive = homeBackground.mode === 'flow-wave'
   const homeMeta = getLocalizedPageMeta(cmsPage, lang, homeMetaByLang[lang])
   const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang)
+  const showcaseBlock = getLocalizedCmsBlock(cmsPage, 'what-is', lang)
   const packagesBlock = getLocalizedCmsBlock(cmsPage, 'packages', lang)
   const redFlagsBlock = getLocalizedCmsBlock(cmsPage, 'red-flags', lang)
   const peopleBlock = getLocalizedCmsBlock(cmsPage, 'people', lang)
@@ -1351,7 +1363,7 @@ export default function BrandHomePage({
     poster: heroBlock?.backgroundVideoPoster?.trim() || undefined,
   }
   const heroHasVideo = Boolean(heroVideoSources.mp4 || heroVideoSources.webm)
-  const heroTextAlign = heroBlock?.heroTextAlign === 'left' ? 'left' : 'center'
+  const heroTextAlign = heroBlock?.heroTextAlign === 'center' ? 'center' : 'left'
   const heroAlignLeft = heroTextAlign === 'left'
   const heroHasOwnBackground = !heroHasVideo && (!flowWaveActive || Boolean(heroBlock?.backgroundImageUrl?.trim()))
   const rawHeroTextMode = heroBlock?.textColor ?? 'light'
@@ -1453,7 +1465,7 @@ export default function BrandHomePage({
         >
           <h1
             className={[
-              'hero-word-title home-hero-title-serif text-[clamp(38px,10vw,52px)] font-normal not-italic leading-[0.98] md:text-[clamp(54px,6vw,86px)]',
+              'hero-word-title home-hero-title-serif text-[clamp(30px,9vw,48px)] font-normal not-italic leading-[0.98] md:text-[clamp(54px,6vw,86px)]',
               heroTextMode === 'gradient' ? 'gg-grad-text' : heroTextMode === 'dark' ? 'text-on-surface' : 'text-white',
             ].join(' ')}
           >
@@ -1488,10 +1500,10 @@ export default function BrandHomePage({
           {showHeroStatChips && (
             <div
               style={{ '--hero-delay': `${heroDelays.cta + 230}ms` } as CSSProperties}
-              className={`home-hero-item mt-5 flex flex-wrap gap-2 ${heroAlignLeft ? 'justify-start' : 'justify-center'}`}
+              className={`home-hero-item home-hero-stat-chips mt-5 flex flex-wrap gap-2 ${heroAlignLeft ? 'justify-start' : 'justify-center'}`}
             >
               {heroStatChips.map((chip) => (
-                <span key={`${chip.value}-${chip.label}`} className="rounded-full border border-white/40 bg-white/[0.12] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.1)] backdrop-blur-md">
+                <span key={`${chip.value}-${chip.label}`} className="home-hero-stat-chip rounded-full border border-white/40 bg-white/[0.12] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.1)] backdrop-blur-md">
                   {chip.value}{chip.label ? ` ${chip.label}` : ''}
                 </span>
               ))}
@@ -1508,7 +1520,7 @@ export default function BrandHomePage({
         </button>
       </section>
 
-      <CaseStudyShowcase stories={storyTargets} lang={lang} openingBaseMs={heroDelays.cta + 200} />
+      <CaseStudyShowcase stories={storyTargets} lang={lang} block={showcaseBlock} openingBaseMs={heroDelays.cta + 200} />
       <RedFlagsSection block={redFlagsBlock} />
 
       <section id="packages" className="home-section-pad px-5 lg:px-10">

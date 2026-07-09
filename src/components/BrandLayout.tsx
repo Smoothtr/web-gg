@@ -46,6 +46,7 @@ export function BrandLayout({
   const [showFloatingCta, setShowFloatingCta] = useState(!floatingCtaRevealSelector)
   const [menuOpen, setMenuOpen] = useState(false)
   const [isDesktop, setIsDesktop] = useState(false)
+  const [headerOnHero, setHeaderOnHero] = useState(true)
   const localizedSettings = getLocalizedSiteSettings(siteSettings, lang)
   const header = localizedSettings.header
   const navItems = header.navLinks.filter((item) => item.visible !== false && item.label.trim() && item.href.trim())
@@ -73,11 +74,15 @@ export function BrandLayout({
 
     const sync = () => {
       const marker = document.querySelector(floatingCtaRevealSelector)
+      const closingBand = document.querySelector('.closing-portal-section')
+      const closingRect = closingBand?.getBoundingClientRect()
+      const closingVisible = closingRect ? closingRect.top < window.innerHeight * 0.82 && closingRect.bottom > window.innerHeight * 0.12 : false
       if (!marker) {
-        setShowFloatingCta(window.scrollY > 420)
+        setShowFloatingCta(window.scrollY > 420 && !closingVisible)
         return
       }
-      setShowFloatingCta(marker.getBoundingClientRect().bottom < 0)
+      const markerBottom = marker.getBoundingClientRect().bottom + window.scrollY
+      setShowFloatingCta(window.scrollY > markerBottom - 4 && !closingVisible)
     }
 
     sync()
@@ -88,6 +93,17 @@ export function BrandLayout({
       window.removeEventListener('resize', sync)
     }
   }, [floatingCtaRevealSelector])
+
+  useEffect(() => {
+    const sync = () => setHeaderOnHero(window.scrollY < 220)
+    sync()
+    window.addEventListener('scroll', sync, { passive: true })
+    window.addEventListener('resize', sync)
+    return () => {
+      window.removeEventListener('scroll', sync)
+      window.removeEventListener('resize', sync)
+    }
+  }, [])
 
   useEffect(() => {
     const media = window.matchMedia('(min-width: 1024px)')
@@ -128,8 +144,8 @@ export function BrandLayout({
         </button>
       )}
 
-      <header className="fixed inset-x-0 top-4 z-50 px-3 sm:px-5 lg:absolute">
-        <nav className="relative mx-auto flex h-16 max-w-[1200px] items-center gap-6 rounded-full border border-white/70 bg-white/[0.82] px-4 shadow-[0_18px_48px_rgba(219,39,119,0.12)] backdrop-blur-xl sm:px-6 lg:px-8 lg:pr-48">
+      <header className={`fixed inset-x-0 top-4 z-50 px-3 sm:px-5 lg:absolute ${headerOnHero ? 'is-on-hero' : 'is-off-hero'}`}>
+        <nav className="site-nav-pill relative mx-auto flex h-16 max-w-[1200px] items-center gap-6 rounded-full border px-4 shadow-[0_18px_48px_rgba(219,39,119,0.12)] backdrop-blur-xl transition-[background,border-color,box-shadow,color] duration-300 sm:px-6 lg:px-8">
           <a href={homeHref} className="flex min-w-0 items-center gap-2.5">
             {header.logoSrc && <img src={header.logoSrc === '/logo-gg.png' ? '/avatars/logo-gg.png' : header.logoSrc} alt={header.logoAlt || header.brandName} className="h-12 w-auto shrink-0" />}
             {showHeaderCopy && (

@@ -1,6 +1,7 @@
 'use client'
 
-import { memo, useEffect, useId, useRef } from 'react'
+import { memo, useEffect, useId, useMemo, useRef } from 'react'
+import { BarChart3, CalendarDays, Heart, Megaphone, PackageCheck, ShoppingCart, TrendingUp, Users } from 'lucide-react'
 import type { CaseStudyMetric } from '../data/caseStudies'
 
 // Round 9 Part B: five self-drawn SVG/CSS chart tiles for the story carousel.
@@ -16,41 +17,95 @@ function parseNumericValue(raw: string): { prefix: string; num: number; suffix: 
   return { prefix: match[1], num: numeric, suffix: match[3], decimals: decimalPart ? decimalPart.length : 0 }
 }
 
+function formatNumber(value: number, decimals: number) {
+  return new Intl.NumberFormat('en-US', { minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(value)
+}
+
+function splitMetricLabel(value: string | undefined) {
+  const [headline, ...rest] = String(value || '').split(/\s*(?:\||—| - )\s+/).map((item) => item.trim()).filter(Boolean)
+  return {
+    headline: headline || value || '',
+    context: rest.join(' · '),
+  }
+}
+
+function MetricLabel({ metric }: { metric: CaseStudyMetric }) {
+  const { headline, context } = splitMetricLabel(metric.shortLabel?.trim() || metric.label)
+  return (
+    <span className="story-chart-label">
+      <span className="story-chart-label-main">{headline}</span>
+      {context && <span className="story-chart-label-context">{context}</span>}
+    </span>
+  )
+}
+
+function metricIcon(metric: CaseStudyMetric) {
+  const source = `${metric.label} ${metric.shortLabel ?? ''} ${metric.chartCaption ?? ''}`.toLowerCase()
+  if (/order|basket|cart|shop|commerce|product|sku/.test(source)) return ShoppingCart
+  if (/follower|community|kol|koc|creator|people|user/.test(source)) return Users
+  if (/growth|revenue|traffic|roas|cvr|conversion|performance/.test(source)) return TrendingUp
+  if (/ads|ad |media|campaign|promotion|marketing/.test(source)) return Megaphone
+  if (/month|year|date|period|operation/.test(source)) return CalendarDays
+  if (/cancel|fulfill|delivery|package/.test(source)) return PackageCheck
+  if (/love|like|heart|social/.test(source)) return Heart
+  return BarChart3
+}
+
+export function MetricSemanticIcon({ metric }: { metric: CaseStudyMetric }) {
+  const Icon = metricIcon(metric)
+  return <Icon className="story-chart-icon" size={18} strokeWidth={2.4} aria-hidden="true" />
+}
+
 function CountUpValue({ raw, activated, className }: { raw: string; activated: boolean; className?: string }) {
   const ref = useRef<HTMLSpanElement | null>(null)
+  const parsed = useMemo(() => parseNumericValue(raw), [raw])
 
   // Round 11 §6.3: the counter writes textContent directly inside rAF — no React
   // re-render per animation frame, no layout reads in the loop.
   useEffect(() => {
     const el = ref.current
     if (!el) return
-    const parsed = parseNumericValue(raw)
     if (!parsed) {
       el.textContent = raw
       return
     }
+    el.textContent = formatNumber(parsed.num, parsed.decimals)
     if (!activated) return
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-      el.textContent = raw
+      el.textContent = formatNumber(parsed.num, parsed.decimals)
       return
     }
     let rafId = 0
     const start = performance.now()
-    const formatter = new Intl.NumberFormat('en-US', { minimumFractionDigits: parsed.decimals, maximumFractionDigits: parsed.decimals })
+    const startValue = parsed.num === 0 ? 0 : Math.max(Math.abs(parsed.num) * 0.12, 0.1) * Math.sign(parsed.num)
+    const fallbackTimer = window.setTimeout(() => {
+      el.textContent = formatNumber(parsed.num, parsed.decimals)
+    }, 1500)
     const tick = (now: number) => {
       const progress = Math.min(1, (now - start) / 900)
       const eased = 1 - Math.pow(1 - progress, 3)
-      el.textContent = parsed.prefix + formatter.format(parsed.num * eased) + parsed.suffix
+      const value = startValue + (parsed.num - startValue) * eased
+      el.textContent = formatNumber(value, parsed.decimals)
       if (progress < 1) rafId = requestAnimationFrame(tick)
     }
     rafId = requestAnimationFrame(tick)
-    return () => cancelAnimationFrame(rafId)
-  }, [activated, raw])
+    return () => {
+      cancelAnimationFrame(rafId)
+      window.clearTimeout(fallbackTimer)
+    }
+  }, [activated, parsed, raw])
 
-  const parsed = parseNumericValue(raw)
   return (
-    <span ref={ref} className={className}>
-      {parsed ? parsed.prefix + (0).toFixed(parsed.decimals) + parsed.suffix : raw}
+    <span className={className}>
+      {parsed ? (
+        <>
+          {parsed.prefix && <span className="story-chart-unit is-prefix">{parsed.prefix}</span>}
+          <span ref={ref} className="story-chart-number">{formatNumber(parsed.num, parsed.decimals)}</span>
+          {parsed.suffix && <span className="story-chart-unit is-suffix">{parsed.suffix}</span>}
+        </>
+      ) : (
+        <span ref={ref}>{raw}</span>
+      )}
     </span>
   )
 }
@@ -58,7 +113,8 @@ function CountUpValue({ raw, activated, className }: { raw: string; activated: b
 // Round 10 D.2: a leading minus means "a decrease that is good" (CAC, CPA, cancellations) —
 // those rows/bars flip to the amber gradient + a down marker so shorter never reads as worse.
 function isDownGoodValue(raw: string | undefined) {
-  return /^[−-]/.test((raw ?? '').trim())
+  const normalized = (raw ?? '').trim()
+  return /^[-\u2212]/.test(normalized)
 }
 
 // Round 10: multi-row bars come from the CMS "series" field: "Label:Value|Label:Value|...".
@@ -84,11 +140,12 @@ function parseComparableNumber(raw: string | undefined) {
 export const BigStatTile = memo(function BigStatTile({ metric, activated }: { metric: CaseStudyMetric; activated: boolean }) {
   return (
     <div className="story-chart-bignum">
+      <MetricSemanticIcon metric={metric} />
       <svg className="story-chart-spark" viewBox="0 0 100 32" preserveAspectRatio="none" aria-hidden="true">
         <path d="M0,28 C18,26 30,20 46,18 C62,16 74,10 100,4" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" />
       </svg>
       <CountUpValue raw={metric.value} activated={activated} className="story-chart-bignum-value" />
-      <span className="story-chart-label">{metric.shortLabel?.trim() || metric.label}</span>
+      <MetricLabel metric={metric} />
     </div>
   )
 })
@@ -105,6 +162,7 @@ export function BeforeAfterTile({ metric, activated }: { metric: CaseStudyMetric
 
   return (
     <div className="story-chart-beforeafter">
+      <MetricSemanticIcon metric={metric} />
       <div className="story-chart-ba-row">
         <span className="story-chart-ba-value">{from || '—'}</span>
         <span className="story-chart-ba-bar is-before" style={{ width: `${fromWidth}%` }} />
@@ -117,7 +175,7 @@ export function BeforeAfterTile({ metric, activated }: { metric: CaseStudyMetric
           style={{ width: activated ? `${toWidth}%` : '0%' }}
         />
       </div>
-      <span className="story-chart-label">{metric.shortLabel?.trim() || metric.label}</span>
+      <MetricLabel metric={metric} />
     </div>
   )
 }
@@ -130,6 +188,7 @@ export function DonutTile({ metric, activated }: { metric: CaseStudyMetric; acti
 
   return (
     <div className="story-chart-donut">
+      <MetricSemanticIcon metric={metric} />
       <svg viewBox="0 0 100 100" role="img" aria-label={`${metric.value} ${metric.label}`}>
         <defs>
           <linearGradient id={gradientId} x1="0%" y1="0%" x2="100%" y2="100%">
@@ -153,7 +212,7 @@ export function DonutTile({ metric, activated }: { metric: CaseStudyMetric; acti
         />
       </svg>
       <CountUpValue raw={metric.value} activated={activated} className="story-chart-donut-value" />
-      <span className="story-chart-label">{metric.shortLabel?.trim() || metric.label}</span>
+      <MetricLabel metric={metric} />
     </div>
   )
 }
@@ -173,6 +232,7 @@ export function HBarCompareTile({ metric, activated }: { metric: CaseStudyMetric
     const maxNumber = Math.max(...numbers, 1)
     return (
       <div className="story-chart-bars">
+        <MetricSemanticIcon metric={metric} />
         {series.map((row, rowIndex) => {
           const down = isDownGoodValue(row.value)
           const width = Math.max(10, (numbers[rowIndex] / maxNumber) * 100)
@@ -187,13 +247,14 @@ export function HBarCompareTile({ metric, activated }: { metric: CaseStudyMetric
             </div>
           )
         })}
-        <span className="story-chart-label">{metric.shortLabel?.trim() || metric.label}</span>
+        <MetricLabel metric={metric} />
       </div>
     )
   }
 
   return (
     <div className="story-chart-bars">
+      <MetricSemanticIcon metric={metric} />
       <div className="story-chart-bars-row">
         <span className="story-chart-bars-name">The One</span>
         <span className={`story-chart-bars-bar is-own ${activated ? 'is-grown' : ''}`} style={{ width: activated ? `${ownWidth}%` : '0%' }} />
@@ -204,7 +265,7 @@ export function HBarCompareTile({ metric, activated }: { metric: CaseStudyMetric
         <span className={`story-chart-bars-bar is-bench ${activated ? 'is-grown' : ''}`} style={{ width: activated ? `${benchWidth}%` : '0%', transitionDelay: '180ms' }} />
         <span className="story-chart-ba-value">{metric.benchmarkValue?.trim() || ''}</span>
       </div>
-      <span className="story-chart-label">{metric.shortLabel?.trim() || metric.label}</span>
+      <MetricLabel metric={metric} />
     </div>
   )
 }
@@ -216,6 +277,7 @@ export function TrendLineTile({ metric, activated }: { metric: CaseStudyMetric; 
 
   return (
     <div className="story-chart-trend">
+      <MetricSemanticIcon metric={metric} />
       <svg viewBox="0 0 160 72" preserveAspectRatio="none" aria-hidden="true">
         <defs>
           <linearGradient id={`${gradientId}-fill`} x1="0%" y1="0%" x2="0%" y2="100%">
@@ -248,7 +310,7 @@ export function TrendLineTile({ metric, activated }: { metric: CaseStudyMetric; 
         {from && <span>{from}</span>}
         <span className="story-chart-ba-value is-after">{to}</span>
       </div>
-      <span className="story-chart-label">{metric.shortLabel?.trim() || metric.label}</span>
+      <MetricLabel metric={metric} />
     </div>
   )
 }

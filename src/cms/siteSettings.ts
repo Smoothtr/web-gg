@@ -148,7 +148,9 @@ function createDefaultLocale(lang: BrandLang): CmsLocalizedSiteSettings {
       termsHref: '/dieu-khoan-dich-vu',
       ctaHeading: 'See you on our first date?',
       qrCaption: 'Say hi on Zalo',
-      socials: {},
+      socials: {
+        zalo: 'https://zalo.me/smoothgg',
+      },
     },
   }
 }
@@ -185,6 +187,10 @@ function mergeLocale(
       ...current?.footer,
       solutionLinks: cloneLinks(current?.footer?.solutionLinks, fallback.footer.solutionLinks),
       navigationLinks: cloneLinks(current?.footer?.navigationLinks, fallback.footer.navigationLinks),
+      socials: {
+        ...fallback.footer.socials,
+        ...current?.footer?.socials,
+      },
     },
   }
 }
