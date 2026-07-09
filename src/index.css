@@ -2204,3 +2204,245 @@
     opacity: 1 !important;
   }
 }
+
+/* ============ Round 9: story carousel (Instagram-style, 4 slides) ============ */
+
+.story-slide-scrim {
+  background: linear-gradient(180deg, rgba(10,6,10,0.16) 0%, rgba(10,6,10,0.02) 32%, rgba(10,6,10,0.10) 66%, rgba(10,6,10,0.38) 100%);
+  pointer-events: none;
+}
+
+/* Slide 1: featured BigStats top-left, story summary above the CTA */
+.story-slide-hero-stats {
+  position: absolute;
+  top: 14px;
+  left: 14px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: min(46%, 220px);
+}
+
+.story-slide-summary {
+  position: absolute;
+  inset-inline: 14px;
+  bottom: 76px;
+  z-index: 10;
+  padding: 14px 16px;
+}
+
+/* Slides 2-4: tile column, offset left or right so the photo subject stays visible */
+.story-slide-tiles {
+  position: absolute;
+  top: 14px;
+  bottom: 76px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+  width: min(52%, 250px);
+}
+
+.story-slide-tiles.is-right { right: 14px; }
+.story-slide-tiles.is-left { left: 14px; }
+
+.story-chart-tile {
+  padding: 12px 14px;
+  animation: storyTileIn 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation-delay: calc(var(--ri, 0) * 90ms);
+}
+
+@keyframes storyTileIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.story-chart-label {
+  display: block;
+  margin-top: 5px;
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+  opacity: 0.88;
+}
+
+/* BigStat */
+.story-chart-bignum { position: relative; }
+.story-chart-spark {
+  position: absolute;
+  right: 4px;
+  top: 2px;
+  width: 56%;
+  height: 30px;
+  opacity: 0.18;
+  pointer-events: none;
+}
+.story-chart-bignum-value {
+  display: block;
+  font-size: clamp(24px, 9cqw, 34px);
+  font-weight: 950;
+  line-height: 1.04;
+  letter-spacing: -0.01em;
+}
+
+/* BeforeAfter */
+.story-chart-ba-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 18px;
+}
+.story-chart-ba-value {
+  min-width: 44px;
+  font-size: 13px;
+  font-weight: 900;
+}
+.story-chart-ba-value.is-after { color: #ffd1e2; }
+.story-chart-ba-bar {
+  display: block;
+  height: 8px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.40);
+}
+.story-chart-ba-bar.is-after {
+  background: linear-gradient(90deg, #FF2E88, #FFB199);
+  transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1) 150ms;
+}
+.story-chart-ba-arrow {
+  display: block;
+  margin: 1px 0 1px 2px;
+  font-size: 12px;
+  font-weight: 900;
+  opacity: 0.75;
+}
+
+/* Donut */
+.story-chart-donut { position: relative; }
+.story-chart-donut svg {
+  display: block;
+  width: min(64%, 108px);
+  margin-inline: auto;
+}
+.story-chart-donut-value {
+  position: absolute;
+  top: calc(min(64%, 108px) / 2);
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: clamp(15px, 6cqw, 21px);
+  font-weight: 950;
+  white-space: nowrap;
+}
+
+/* HBarCompare */
+.story-chart-bars { display: grid; gap: 7px; }
+.story-chart-bars-row {
+  display: grid;
+  grid-template-columns: 52px 1fr auto;
+  align-items: center;
+  gap: 7px;
+}
+.story-chart-bars-name {
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  opacity: 0.85;
+}
+.story-chart-bars-bar {
+  display: block;
+  height: 9px;
+  border-radius: 9999px;
+  transition: width 600ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+.story-chart-bars-bar.is-own { background: linear-gradient(90deg, #FF2E88, #FFB199); }
+.story-chart-bars-bar.is-bench { background: rgba(255,255,255,0.38); }
+
+/* TrendLine */
+.story-chart-trend svg { display: block; width: 100%; height: auto; }
+.story-chart-trend-line {
+  stroke-dasharray: 220;
+  stroke-dashoffset: 220;
+}
+.story-chart-trend-line.is-drawn {
+  stroke-dashoffset: 0;
+  transition: stroke-dashoffset 900ms cubic-bezier(0.22, 1, 0.36, 1) 100ms;
+}
+.story-chart-trend-ends {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 3px;
+  font-size: 12px;
+  font-weight: 900;
+}
+
+/* Swipe hint pill (slide 1 only, disappears after the first swipe) */
+.story-swipe-hint {
+  position: absolute;
+  right: 14px;
+  bottom: 138px;
+  z-index: 20;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid rgba(255,255,255,0.24);
+  border-radius: 9999px;
+  background: rgba(20,18,22,0.45);
+  -webkit-backdrop-filter: blur(14px) saturate(150%);
+  backdrop-filter: blur(14px) saturate(150%);
+  padding: 8px 13px;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+.story-swipe-hint-arrow {
+  display: inline-block;
+  animation: storyHintNudge 1.2s ease-in-out infinite;
+}
+@keyframes storyHintNudge {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(4px); }
+}
+
+/* Desktop hover arrows */
+.story-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 25;
+  display: flex;
+  width: 44px;
+  height: 44px;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-50%);
+  color: transparent;
+  animation: storyArrowIn 200ms ease both;
+}
+.story-carousel-arrow::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 9999px;
+  background: rgba(255,255,255,0.75);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(30,10,20,0.22);
+  transition: transform 150ms ease;
+}
+.story-carousel-arrow svg { position: relative; color: #3d1226; }
+.story-carousel-arrow:hover::before { transform: scale(1.1); }
+.story-carousel-arrow.is-left { left: 12px; }
+.story-carousel-arrow.is-right { right: 12px; }
+@keyframes storyArrowIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .story-chart-tile { animation: none; }
+  .story-swipe-hint-arrow { animation: none; }
+  .story-chart-ba-bar.is-after,
+  .story-chart-bars-bar,
+  .story-chart-trend-line.is-drawn { transition: none; }
+}

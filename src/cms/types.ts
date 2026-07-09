@@ -46,6 +46,14 @@ export type CmsLocalizedBlockItemFields = {
     label: string
     shortLabel?: string
     featured?: boolean
+    // Round 9: Instagram-carousel slide assignment + chart display type
+    slide?: number
+    display?: 'bignum' | 'beforeafter' | 'donut' | 'bars' | 'trend'
+    from?: string
+    to?: string
+    benchmarkLabel?: string
+    benchmarkValue?: string
+    percent?: number
   }>
   ctaText?: string
   caseStudyLabel?: string
@@ -116,6 +124,14 @@ export type CmsBlockItem = {
     label: string
     shortLabel?: string
     featured?: boolean
+    // Round 9: Instagram-carousel slide assignment + chart display type
+    slide?: number
+    display?: 'bignum' | 'beforeafter' | 'donut' | 'bars' | 'trend'
+    from?: string
+    to?: string
+    benchmarkLabel?: string
+    benchmarkValue?: string
+    percent?: number
   }>
   storyDetail?: {
     challenge?: string
@@ -177,6 +193,8 @@ export type CmsBlock = {
   showCtaSubtext?: boolean
   showStatChips?: boolean
   layout?: 'cards' | 'horizontal'
+  // Round 9 A3: swipe hint pill text on slide 1 of story carousels
+  swipeHintText?: string
   autoSlideSeconds?: string
   items?: CmsBlockItem[]
   locales?: Partial<Record<BrandLang, CmsLocalizedBlockFields>>

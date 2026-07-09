@@ -798,12 +798,35 @@ function StoryItemEditor({
   }).length
   const featuredMetricCount = storyMetricSlots.filter((metricIndex) => Boolean(getMetricFrom(keyMetrics, metricIndex).featured)).length
   const metricWarning = filledMetricCount !== 10 || featuredMetricCount !== 2
+  // Round 9: carousel-specific validation — 2-4 tiles per chart slide, 4 background images.
+  const filledMetrics = storyMetricSlots
+    .map((metricIndex) => getMetricFrom(keyMetrics, metricIndex))
+    .filter((metric) => metric.value.trim() || metric.label.trim())
+  const metricsWithoutSlide = filledMetrics.filter((metric) => !metric.featured && !metric.slide).length
+  const slideTileCounts = [2, 3, 4].map((slide) => filledMetrics.filter((metric) => metric.slide === slide).length)
+  const slideBalanceWarning = slideTileCounts.some((count) => count > 0 && (count < 2 || count > 4))
+  const backgroundImageCount = (item.backgroundImages ?? []).filter((url) => url.trim()).length
 
   function updateText(patch: CmsLocalizedBlockItemFields) {
     updateBlockItem(pageId, blockId, index, patchItemText(item, activeLang, patch))
   }
 
-  function updateMetric(metricIndex: number, patch: { value?: string; label?: string; shortLabel?: string; featured?: boolean }) {
+  function updateMetric(
+    metricIndex: number,
+    patch: {
+      value?: string
+      label?: string
+      shortLabel?: string
+      featured?: boolean
+      slide?: number
+      display?: 'bignum' | 'beforeafter' | 'donut' | 'bars' | 'trend'
+      from?: string
+      to?: string
+      benchmarkLabel?: string
+      benchmarkValue?: string
+      percent?: number
+    },
+  ) {
     const nextMetrics = [...(keyMetrics ?? [])]
     while (nextMetrics.length <= metricIndex) nextMetrics.push({ value: '', label: '', shortLabel: '', featured: false })
     nextMetrics[metricIndex] = { ...nextMetrics[metricIndex], ...patch }
@@ -983,6 +1006,21 @@ function StoryItemEditor({
               Can dung 10 metric co noi dung va dung 2 metric Featured. Hien tai: {filledMetricCount}/10 metric, {featuredMetricCount}/2 Featured.
             </p>
           )}
+          {metricsWithoutSlide > 0 && (
+            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold leading-relaxed text-amber-800">
+              {metricsWithoutSlide} metric chua gan Slide — se tu roi vao slide it tile nhat. Nen gan slide thu cong theo y do noi dung.
+            </p>
+          )}
+          {slideBalanceWarning && (
+            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold leading-relaxed text-amber-800">
+              Moi slide 2-4 nen co 2-4 tile. Hien tai: slide 2 = {slideTileCounts[0]}, slide 3 = {slideTileCounts[1]}, slide 4 = {slideTileCounts[2]}.
+            </p>
+          )}
+          {backgroundImageCount < 4 && (
+            <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold leading-relaxed text-amber-800">
+              Carousel co 4 slide nhung story chi co {backgroundImageCount} anh nen — anh cuoi se lap lai. Nen upload du 4 anh (muc Background images).
+            </p>
+          )}
         </div>
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
           {storyMetricSlots.map((metricIndex, displayIndex) => {
@@ -1011,6 +1049,64 @@ function StoryItemEditor({
                     />
                     Featured metric
                   </label>
+                  <div className="grid gap-3 md:grid-cols-2">
+                    <Field label="Slide (carousel)" hint="Empty = auto: drops into the emptiest chart slide.">
+                      <select
+                        value={metric.slide ?? ''}
+                        onChange={(event) => updateMetric(metricIndex, { slide: event.target.value ? Number(event.target.value) : undefined })}
+                        className="h-10 w-full rounded-lg border border-outline-variant bg-surface px-3 text-sm font-semibold text-on-surface"
+                      >
+                        <option value="">Auto</option>
+                        {[1, 2, 3, 4].map((slide) => (
+                          <option key={slide} value={slide}>Slide {slide}{slide === 1 ? ' (hero)' : ''}</option>
+                        ))}
+                      </select>
+                    </Field>
+                    <Field label="Display as">
+                      <select
+                        value={metric.display ?? 'bignum'}
+                        onChange={(event) => updateMetric(metricIndex, { display: event.target.value as 'bignum' | 'beforeafter' | 'donut' | 'bars' | 'trend' })}
+                        className="h-10 w-full rounded-lg border border-outline-variant bg-surface px-3 text-sm font-semibold text-on-surface"
+                      >
+                        <option value="bignum">Big number</option>
+                        <option value="beforeafter">Before → After bars</option>
+                        <option value="donut">Donut %</option>
+                        <option value="bars">Bars vs benchmark</option>
+                        <option value="trend">Trend line</option>
+                      </select>
+                    </Field>
+                  </div>
+                  {(metric.display === 'beforeafter' || metric.display === 'trend') && (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <Field label="From" hint='e.g. "70%" or "1.5"'>
+                        <TextInput value={metric.from ?? ''} onChange={(value) => updateMetric(metricIndex, { from: value })} />
+                      </Field>
+                      <Field label="To" hint="Empty = uses Value">
+                        <TextInput value={metric.to ?? ''} onChange={(value) => updateMetric(metricIndex, { to: value })} />
+                      </Field>
+                    </div>
+                  )}
+                  {metric.display === 'bars' && (
+                    <div className="grid gap-3 md:grid-cols-2">
+                      <Field label="Benchmark label" hint='e.g. "Industry"'>
+                        <TextInput value={metric.benchmarkLabel ?? ''} onChange={(value) => updateMetric(metricIndex, { benchmarkLabel: value })} />
+                      </Field>
+                      <Field label="Benchmark value" hint='e.g. "1x"'>
+                        <TextInput value={metric.benchmarkValue ?? ''} onChange={(value) => updateMetric(metricIndex, { benchmarkValue: value })} />
+                      </Field>
+                    </div>
+                  )}
+                  {metric.display === 'donut' && (
+                    <Field label="Percent (0-100)" hint="Donut sweep angle. Empty = parsed from Value.">
+                      <TextInput
+                        value={metric.percent !== undefined ? String(metric.percent) : ''}
+                        onChange={(value) => {
+                          const parsed = Number.parseFloat(value)
+                          updateMetric(metricIndex, { percent: Number.isFinite(parsed) ? parsed : undefined })
+                        }}
+                      />
+                    </Field>
+                  )}
                 </div>
               </div>
             )
@@ -1426,6 +1522,14 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                   onChange={(value) => updateBlock(pageId, blockId, { packagesNote: value })}
                   minHeight={86}
                 />
+              </Field>
+            </div>
+          )}
+
+          {isStoryBlock && (
+            <div className="grid gap-4 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+              <Field label="Swipe hint text" hint='Pill on slide 1 of every story carousel. Default: "Swipe for more records →"'>
+                <TextInput value={block.swipeHintText ?? ''} onChange={(value) => updateBlock(pageId, blockId, { swipeHintText: value })} placeholder="Swipe for more records →" />
               </Field>
             </div>
           )}

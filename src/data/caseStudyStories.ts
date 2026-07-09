@@ -18,6 +18,13 @@ export function storyFromCmsItem(item: CmsBlockItem) {
         label: metric.label ?? '',
         shortLabel: metric.shortLabel ?? '',
         featured: metric.featured,
+        slide: metric.slide,
+        display: metric.display,
+        from: metric.from,
+        to: metric.to,
+        benchmarkLabel: metric.benchmarkLabel,
+        benchmarkValue: metric.benchmarkValue,
+        percent: metric.percent,
       }))
       const keyMetrics = Array.from({ length: 10 }, (_, index) => {
         const metric = cmsMetrics[index]

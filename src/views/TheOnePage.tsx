@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef, useState, type CSSProperties, type TouchEvent } from 'react'
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent as ReactKeyboardEvent, type TouchEvent } from 'react'
 import {
   Check,
   ChevronLeft,
@@ -22,6 +22,7 @@ import type { CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
 import type { CaseStudy, CaseStudyMetric } from '../data/caseStudies'
 import { useScrollReveal } from '../hooks/useScrollReveal'
+import { BigStatTile, StoryMetricChart } from '../components/StoryMetricCharts'
 
 type SocialKey = 'facebook' | 'instagram' | 'tiktok' | 'website'
 type MetricLayoutSlot = {
@@ -31,22 +32,7 @@ type MetricLayoutSlot = {
   rowSpan: number
 }
 type StoryGlassTone = 'tone-on-dark' | 'tone-on-medium' | 'tone-on-light'
-type MetricTile = CaseStudyMetric & {
-  className: string
-  compactLabel: string
-  displayLabel: string
-  featured: boolean
-  fullLabel: string
-  mobileLabel: string
-  slot: MetricLayoutSlot
-  tileStyle: CSSProperties
-}
 
-const summaryLayoutSlot: MetricLayoutSlot = { column: 1, row: 6, columnSpan: 6, rowSpan: 2 }
-const fallbackToneState: { metrics: StoryGlassTone[]; summary: StoryGlassTone } = {
-  metrics: Array.from({ length: 10 }, () => 'tone-on-medium' as StoryGlassTone),
-  summary: 'tone-on-medium',
-}
 const luminanceCache = new Map<string, Promise<ImageData | null>>()
 
 const socialPlatforms: Array<{ key: SocialKey; label: string; Icon: typeof Instagram }> = [
@@ -65,120 +51,6 @@ const storyLogoById: Record<string, string> = {
   'annita-studios': '/logo-annita.png',
 }
 
-const metricLayoutMaps: Array<{ slots: MetricLayoutSlot[] }> = [
-  {
-    slots: [
-      { column: 1, row: 1, columnSpan: 3, rowSpan: 2 },
-      { column: 4, row: 4, columnSpan: 3, rowSpan: 2 },
-      { column: 4, row: 1, columnSpan: 1, rowSpan: 1 },
-      { column: 5, row: 1, columnSpan: 2, rowSpan: 1 },
-      { column: 4, row: 2, columnSpan: 1, rowSpan: 1 },
-      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 1, row: 4, columnSpan: 1, rowSpan: 2 },
-      { column: 2, row: 4, columnSpan: 2, rowSpan: 1 },
-      { column: 2, row: 5, columnSpan: 2, rowSpan: 1 },
-    ],
-  },
-  {
-    slots: [
-      { column: 3, row: 1, columnSpan: 3, rowSpan: 2 },
-      { column: 1, row: 4, columnSpan: 3, rowSpan: 2 },
-      { column: 6, row: 1, columnSpan: 1, rowSpan: 1 },
-      { column: 6, row: 2, columnSpan: 1, rowSpan: 1 },
-      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 4, row: 4, columnSpan: 1, rowSpan: 2 },
-      { column: 5, row: 4, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 5, columnSpan: 2, rowSpan: 1 },
-    ],
-  },
-  {
-    slots: [
-      { column: 1, row: 1, columnSpan: 2, rowSpan: 2 },
-      { column: 4, row: 1, columnSpan: 3, rowSpan: 2 },
-      { column: 3, row: 1, columnSpan: 1, rowSpan: 1 },
-      { column: 3, row: 2, columnSpan: 1, rowSpan: 1 },
-      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 1, row: 4, columnSpan: 1, rowSpan: 2 },
-      { column: 4, row: 4, columnSpan: 1, rowSpan: 2 },
-      { column: 5, row: 4, columnSpan: 2, rowSpan: 2 },
-    ],
-  },
-  {
-    slots: [
-      { column: 2, row: 1, columnSpan: 3, rowSpan: 2 },
-      { column: 1, row: 4, columnSpan: 3, rowSpan: 2 },
-      { column: 1, row: 1, columnSpan: 1, rowSpan: 1 },
-      { column: 1, row: 2, columnSpan: 1, rowSpan: 1 },
-      { column: 1, row: 3, columnSpan: 3, rowSpan: 1 },
-      { column: 4, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 6, row: 3, columnSpan: 1, rowSpan: 1 },
-      { column: 4, row: 4, columnSpan: 1, rowSpan: 2 },
-      { column: 5, row: 4, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 5, columnSpan: 2, rowSpan: 1 },
-    ],
-  },
-  {
-    slots: [
-      { column: 3, row: 1, columnSpan: 3, rowSpan: 2 },
-      { column: 4, row: 4, columnSpan: 3, rowSpan: 2 },
-      { column: 1, row: 1, columnSpan: 2, rowSpan: 1 },
-      { column: 6, row: 1, columnSpan: 1, rowSpan: 1 },
-      { column: 1, row: 2, columnSpan: 2, rowSpan: 1 },
-      { column: 6, row: 2, columnSpan: 1, rowSpan: 1 },
-      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 3, row: 4, columnSpan: 1, rowSpan: 2 },
-      { column: 1, row: 5, columnSpan: 2, rowSpan: 1 },
-    ],
-  },
-  {
-    slots: [
-      { column: 1, row: 1, columnSpan: 2, rowSpan: 2 },
-      { column: 5, row: 4, columnSpan: 2, rowSpan: 2 },
-      { column: 3, row: 1, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 1, columnSpan: 2, rowSpan: 1 },
-      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 2, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 1, row: 4, columnSpan: 1, rowSpan: 2 },
-      { column: 2, row: 4, columnSpan: 2, rowSpan: 1 },
-      { column: 4, row: 4, columnSpan: 1, rowSpan: 2 },
-    ],
-  },
-  {
-    slots: [
-      { column: 1, row: 1, columnSpan: 3, rowSpan: 2 },
-      { column: 3, row: 4, columnSpan: 2, rowSpan: 2 },
-      { column: 4, row: 1, columnSpan: 2, rowSpan: 1 },
-      { column: 6, row: 1, columnSpan: 1, rowSpan: 1 },
-      { column: 4, row: 2, columnSpan: 1, rowSpan: 1 },
-      { column: 5, row: 2, columnSpan: 2, rowSpan: 1 },
-      { column: 1, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 1, row: 4, columnSpan: 2, rowSpan: 1 },
-    ],
-  },
-  {
-    slots: [
-      { column: 1, row: 3, columnSpan: 2, rowSpan: 2 },
-      { column: 4, row: 4, columnSpan: 3, rowSpan: 2 },
-      { column: 1, row: 1, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 1, columnSpan: 2, rowSpan: 1 },
-      { column: 1, row: 2, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 2, columnSpan: 2, rowSpan: 1 },
-      { column: 3, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 5, row: 3, columnSpan: 2, rowSpan: 1 },
-      { column: 3, row: 4, columnSpan: 1, rowSpan: 2 },
-      { column: 1, row: 5, columnSpan: 2, rowSpan: 1 },
-    ],
-  },
-]
 
 const storyThemesById: Record<string, { gradient: string; accent: string; accentSoft: string; tile: string; featured: string }> = {
   phinoi: {
@@ -246,226 +118,33 @@ function compactNumber(value: number) {
   return new Intl.NumberFormat('en-US').format(value)
 }
 
-function initials(label: string) {
-  const parts = label.split(/\s+/).filter(Boolean)
-  return (parts[0]?.[0] || 'G') + (parts[1]?.[0] || '')
-}
 
 function storyStorageKey(id: string) {
   return `gg99:viewed-story:${id}`
 }
 
-function metricKey(metric: CaseStudyMetric) {
-  return `${metric.value.trim().toLowerCase()}::${metric.label.trim().toLowerCase()}`
-}
 
-function stableHash(value: string) {
-  let hash = 0
-  for (let index = 0; index < value.length; index += 1) {
-    hash = (hash * 31 + value.charCodeAt(index)) >>> 0
-  }
-  return hash
-}
 
-function parseLayoutVariant(value: string | undefined) {
-  const trimmed = value?.trim().toLowerCase()
-  if (!trimmed || trimmed === 'auto') return undefined
-  const numeric = Number.parseInt(trimmed, 10)
-  if (!Number.isFinite(numeric)) return undefined
-  if (numeric >= 1 && numeric <= metricLayoutMaps.length) return numeric - 1
-  return undefined
-}
 
-function getStoryLayoutVariants(stories: CaseStudy[]) {
-  const variants = new Map<string, number>()
-  let previous = -1
-  stories.forEach((story) => {
-    let variant = parseLayoutVariant(story.layoutVariant) ?? (stableHash(story.id || story.brandName) % metricLayoutMaps.length)
-    if (parseLayoutVariant(story.layoutVariant) === undefined && variant === previous) variant = (variant + 1) % metricLayoutMaps.length
-    variants.set(story.id, variant)
-    previous = variant
-  })
-  return variants
-}
 
 function getStoryTheme(story: CaseStudy, storyIndex: number) {
   const fallbackThemes = Object.values(storyThemesById)
   return storyThemesById[story.id] ?? fallbackThemes[storyIndex % fallbackThemes.length]
 }
 
-function getMetricDensity(value: string) {
-  const compactLength = value.replace(/\s+/g, '').length
-  if (compactLength >= 11) return 'is-dense-value'
-  if ((/[→–]/.test(value) || /\s/.test(value.trim())) && compactLength >= 6) return 'is-long-value'
-  if (compactLength >= 8) return 'is-long-value'
-  return ''
-}
 
-function getMetricLabelDensity(label: string) {
-  const length = label.trim().length
-  if (length >= 46) return 'is-dense-label'
-  if (length >= 34) return 'is-long-label'
-  return ''
-}
 
-function getSlotArea(slot: MetricLayoutSlot) {
-  return slot.columnSpan * slot.rowSpan
-}
 
-function getSlotSortScore(slot: MetricLayoutSlot) {
-  return getSlotArea(slot) * 100 + slot.columnSpan * 10 - slot.row * 6 - slot.column
-}
 
-function getMetricWeight(metric: CaseStudyMetric) {
-  return metric.label.trim().length + metric.value.trim().length * 1.5
-}
 
-function isSmallMetricSlot(slot: MetricLayoutSlot) {
-  return slot.columnSpan === 1 && slot.rowSpan === 1
-}
 
-function createAutoShortLabel(label: string, maxLength: number) {
-  const normalized = label.replace(/\s+/g, ' ').trim()
-  if (normalized.length <= maxLength) return normalized
-  const primaryPhrase = normalized
-    .split(/\s+[·|+]\s+|\s+vs\s+|\s+from\s+|,\s+|\s+\(/i)
-    .map((part) => part.trim())
-    .find((part) => part.length >= 8) || normalized
-  const words = primaryPhrase.split(/\s+/)
-  const nextWords: string[] = []
-  words.forEach((word) => {
-    const draft = [...nextWords, word].join(' ')
-    if (draft.length <= maxLength) nextWords.push(word)
-  })
-  return (nextWords.join(' ') || primaryPhrase.slice(0, maxLength)).trim()
-}
 
-function getDisplayMetricLabel(metric: CaseStudyMetric, slot: MetricLayoutSlot) {
-  const shortLabel = metric.shortLabel?.trim()
-  if (shortLabel && (getSlotArea(slot) <= 2 || metric.label.trim().length > 38)) return shortLabel
-  if (getSlotArea(slot) <= 2) return createAutoShortLabel(metric.label, slot.columnSpan === 1 ? 28 : 34)
-  return metric.label
-}
 
-function getMobileMetricLabel(metric: CaseStudyMetric, slot: MetricLayoutSlot) {
-  const shortLabel = metric.shortLabel?.trim()
-  if (shortLabel) return createAutoShortLabel(shortLabel, 16)
-  const area = getSlotArea(slot)
-  if (area <= 1) return createAutoShortLabel(metric.label, 12)
-  if (area <= 2) return createAutoShortLabel(metric.label, 14)
-  if (area <= 3) return createAutoShortLabel(metric.label, 18)
-  return createAutoShortLabel(metric.label, 22)
-}
 
-function getCompactMetricLabel(metric: CaseStudyMetric, slot: MetricLayoutSlot) {
-  const shortLabel = metric.shortLabel?.trim()
-  if (shortLabel) return createAutoShortLabel(shortLabel, 12)
-  const area = getSlotArea(slot)
-  if (area <= 1) return createAutoShortLabel(metric.label, 8)
-  if (area <= 2) return createAutoShortLabel(metric.label, 10)
-  if (area <= 3) return createAutoShortLabel(metric.label, 12)
-  return createAutoShortLabel(metric.label, 14)
-}
 
-function canMetricFitSmallSlot(metric: CaseStudyMetric, slot: MetricLayoutSlot) {
-  if (!isSmallMetricSlot(slot)) return true
-  const label = getDisplayMetricLabel(metric, slot).trim()
-  const value = metric.value.trim()
-  return label.length <= 28 && value.length <= 7
-}
 
-function getMetricSlotStyle(slot: MetricLayoutSlot): CSSProperties {
-  return {
-    gridColumn: `${slot.column} / span ${slot.columnSpan}`,
-    gridRow: `${slot.row} / span ${slot.rowSpan}`,
-  }
-}
 
-function getMetricSlotClass(slot: MetricLayoutSlot) {
-  return `is-tile-${slot.columnSpan}x${slot.rowSpan}`
-}
 
-function buildMetricTiles(story: CaseStudy, layoutVariant: number): MetricTile[] {
-  const metricItems = story.keyMetrics.filter((metric) => metric.value.trim() || metric.label.trim())
-  const serviceItems: CaseStudyMetric[] = story.services.map((service) => ({ value: initials(service), label: service }))
-  const fallbackItems: CaseStudyMetric[] = [
-    { value: initials(story.category), label: story.category },
-    { value: initials(story.period), label: story.period || 'Project period' },
-    { value: initials(story.headline), label: story.headline || 'Growth story' },
-  ]
-  const source = [...metricItems, ...serviceItems, ...fallbackItems]
-  const uniqueMetrics: CaseStudyMetric[] = []
-  source.forEach((metric) => {
-    const value = metric.value.trim()
-    const label = metric.label.trim()
-    if (!value && !label) return
-    const normalized = { ...metric, value: value || initials(label), label: label || value }
-    if (!uniqueMetrics.some((item) => metricKey(item) === metricKey(normalized))) uniqueMetrics.push(normalized)
-  })
-  while (uniqueMetrics.length < 10) {
-    const fallback = story.services[uniqueMetrics.length % Math.max(story.services.length, 1)] || story.category || 'Growth system'
-    uniqueMetrics.push({ value: initials(fallback), label: fallback })
-  }
-
-  const featuredMetrics = uniqueMetrics.filter((metric) => metric.featured).slice(0, 2)
-  const ordered = [...featuredMetrics, ...uniqueMetrics.filter((metric) => !featuredMetrics.includes(metric))].slice(0, 10)
-  const layout = metricLayoutMaps[layoutVariant % metricLayoutMaps.length] ?? metricLayoutMaps[0]
-  const slotEntries = layout.slots.map((slot, index) => ({ index, slot }))
-  const slotsBySize = [...slotEntries].sort((left, right) => getSlotSortScore(right.slot) - getSlotSortScore(left.slot) || left.index - right.index)
-  const featuredSlots = slotsBySize.slice(0, 2)
-  const featuredSlotIndexes = new Set(featuredSlots.map((entry) => entry.index))
-  const remainingSlots = slotEntries
-    .filter((entry) => !featuredSlotIndexes.has(entry.index))
-    .sort((left, right) => getSlotSortScore(right.slot) - getSlotSortScore(left.slot) || left.index - right.index)
-  const remainingMetrics = ordered
-    .map((metric, index) => ({ metric, index }))
-    .filter(({ metric }) => !featuredMetrics.includes(metric))
-    .sort((left, right) => getMetricWeight(right.metric) - getMetricWeight(left.metric) || left.index - right.index)
-
-  const assignments = [
-    ...featuredMetrics.map((metric, index) => ({ metric, slotEntry: featuredSlots[index] ?? slotsBySize[index] })),
-    ...remainingMetrics.map(({ metric }, index) => ({ metric, slotEntry: remainingSlots[index] })),
-  ].filter((assignment): assignment is { metric: CaseStudyMetric; slotEntry: { index: number; slot: MetricLayoutSlot } } => Boolean(assignment.slotEntry))
-
-  assignments.forEach((assignment, assignmentIndex) => {
-    const slot = assignment.slotEntry.slot
-    if (canMetricFitSmallSlot(assignment.metric, slot)) return
-    const slotArea = getSlotArea(slot)
-    const swapCandidate = assignments
-      .map((candidate, candidateIndex) => ({ ...candidate, candidateIndex }))
-      .filter((candidate) => candidate.candidateIndex !== assignmentIndex)
-      .filter((candidate) => !candidate.metric.featured)
-      .filter((candidate) => getSlotArea(candidate.slotEntry.slot) > slotArea && canMetricFitSmallSlot(candidate.metric, slot))
-      .sort((left, right) => {
-        const areaDelta = getSlotArea(left.slotEntry.slot) - getSlotArea(right.slotEntry.slot)
-        if (areaDelta !== 0) return areaDelta
-        return getMetricWeight(left.metric) - getMetricWeight(right.metric)
-      })[0]
-    if (!swapCandidate) return
-    const nextMetric = swapCandidate.metric
-    assignments[swapCandidate.candidateIndex].metric = assignment.metric
-    assignments[assignmentIndex].metric = nextMetric
-  })
-
-  return assignments
-    .sort((left, right) => left.slotEntry.index - right.slotEntry.index)
-    .map(({ metric, slotEntry }) => {
-      const slot = slotEntry.slot
-      const displayLabel = getDisplayMetricLabel(metric, slot)
-
-      return {
-        ...metric,
-        className: [getMetricDensity(metric.value), getMetricLabelDensity(displayLabel), getMetricSlotClass(slot)].filter(Boolean).join(' '),
-        compactLabel: getCompactMetricLabel(metric, slot),
-        displayLabel,
-        featured: Boolean(metric.featured),
-        fullLabel: metric.label,
-        mobileLabel: getMobileMetricLabel(metric, slot),
-        slot,
-        tileStyle: getMetricSlotStyle(slot),
-      }
-    })
-}
 
 function getToneFromLuminance(luminance: number): StoryGlassTone {
   if (luminance >= 0.62) return 'tone-on-light'
@@ -634,29 +313,97 @@ function PostMoreMenu({ story, onCopy }: { story: CaseStudy; onCopy: (story: Cas
   )
 }
 
-function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; index: number; layoutVariant: number }) {
+function cloudinaryStoryImage(url: string, width: number) {
+  if (!/res\.cloudinary\.com\/[^/]+\/image\/upload\//.test(url)) return url
+  if (/\/upload\/[^/]*\bw_\d+/.test(url)) return url
+  return url.replace('/upload/', `/upload/f_auto,q_auto:good,w_${width}/`)
+}
+
+// Round 9: every story post is a 4-slide Instagram-style carousel. Slide 1 tells the
+// story (summary glass + featured BigStats + swipe hint); slides 2-4 mix numbers and
+// self-drawn charts, each on one of the client's background images.
+type StorySlide = {
+  image: string | null
+  metrics: CaseStudyMetric[]
+  isHero: boolean
+}
+
+const STORY_SLIDE_COUNT = 4
+
+// Approximate zone each slide's tiles occupy (6x8 grid) — used for adaptive luminance.
+const storySlideTileZones: MetricLayoutSlot[] = [
+  { column: 1, row: 5, columnSpan: 6, rowSpan: 3 },
+  { column: 4, row: 2, columnSpan: 3, rowSpan: 6 },
+  { column: 1, row: 2, columnSpan: 3, rowSpan: 6 },
+  { column: 4, row: 2, columnSpan: 3, rowSpan: 6 },
+]
+
+function buildStorySlides(story: CaseStudy): StorySlide[] {
+  const images = carouselImagesForStory(story)
+  const metrics = story.keyMetrics.filter((metric) => metric.value.trim() || metric.label.trim())
+  const featured = metrics.filter((metric) => metric.featured).slice(0, 2)
+  const perSlide: CaseStudyMetric[][] = [[...featured], [], [], []]
+  const unassigned: CaseStudyMetric[] = []
+
+  for (const metric of metrics) {
+    if (featured.includes(metric)) continue
+    const slide = metric.slide && metric.slide >= 1 && metric.slide <= STORY_SLIDE_COUNT ? metric.slide : null
+    if (slide === 1) {
+      if (perSlide[0].length < 3) perSlide[0].push(metric)
+      else unassigned.push(metric)
+      continue
+    }
+    if (slide) {
+      perSlide[slide - 1].push(metric)
+      continue
+    }
+    unassigned.push(metric)
+  }
+
+  // Fallback (metric without a slide): drop into the chart slide with the fewest tiles.
+  for (const metric of unassigned) {
+    let target = 1
+    for (let slideIndex = 2; slideIndex < STORY_SLIDE_COUNT; slideIndex += 1) {
+      if (perSlide[slideIndex].length < perSlide[target].length) target = slideIndex
+    }
+    perSlide[target].push(metric)
+  }
+
+  return perSlide.map((slideMetrics, slideIndex) => ({
+    // <4 images: repeat the last one; none at all: brand gradient background.
+    image: images[slideIndex] ?? images[images.length - 1] ?? null,
+    metrics: slideMetrics.slice(0, slideIndex === 0 ? 3 : 4),
+    isHero: slideIndex === 0,
+  }))
+}
+
+function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index: number; swipeHint: string }) {
   const frameRef = useRef<HTMLDivElement | null>(null)
   const summaryCopyRef = useRef<HTMLParagraphElement | null>(null)
   const summarySheetRef = useRef<HTMLDivElement | null>(null)
   const summaryCloseRef = useRef<HTMLButtonElement | null>(null)
   const touchStartX = useRef(0)
-  const images = useMemo(() => carouselImagesForStory(story), [story])
-  const metricTiles = useMemo(() => buildMetricTiles(story, layoutVariant), [layoutVariant, story])
+  const initialDelayRef = useRef(5000 + (index % 4) * 1200)
+  const slides = useMemo(() => buildStorySlides(story), [story])
   const theme = useMemo(() => getStoryTheme(story, index), [index, story])
-  const [activeImage, setActiveImage] = useState(0)
+  const [activeSlide, setActiveSlide] = useState(0)
+  const [activatedSlides, setActivatedSlides] = useState<boolean[]>(() => slides.map((_, slideIndex) => slideIndex === 0))
+  const [slideTones, setSlideTones] = useState<StoryGlassTone[]>(() => slides.map(() => 'tone-on-medium'))
   const [inView, setInView] = useState(true)
   const [reducedMotion, setReducedMotion] = useState(false)
+  const [canHover, setCanHover] = useState(false)
+  const [hovered, setHovered] = useState(false)
+  const [interacted, setInteracted] = useState(false)
   const [pausedUntil, setPausedUntil] = useState(0)
-  const [glassTones, setGlassTones] = useState(fallbackToneState)
   const [summaryExpanded, setSummaryExpanded] = useState(false)
   const [summaryNeedsMore, setSummaryNeedsMore] = useState(false)
   const summarySheetId = `${story.id}-summary-sheet`
+  const slideCount = slides.length
   const frameStyle = {
     '--story-accent': theme.accent,
     '--story-accent-soft': theme.accentSoft,
     '--story-tile-bg': theme.tile,
     '--story-featured-bg': theme.featured,
-    backgroundImage: images.length ? undefined : story.screenBackground?.gradient || theme.gradient,
   }
 
   useEffect(() => {
@@ -668,6 +415,10 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
   }, [])
 
   useEffect(() => {
+    setCanHover(window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false)
+  }, [])
+
+  useEffect(() => {
     if (!('IntersectionObserver' in window)) return
     const element = frameRef.current
     if (!element) return
@@ -676,39 +427,37 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
     return () => observer.disconnect()
   }, [])
 
+  // Chart animations run once per slide per view: remember which slides were shown.
   useEffect(() => {
-    if (images.length <= 1 || !inView || reducedMotion || summaryExpanded) return
-    const delay = Math.max(4500, pausedUntil - Date.now())
-    const timer = window.setTimeout(() => {
-      setActiveImage((current) => (current + 1) % images.length)
-    }, delay)
-    return () => window.clearTimeout(timer)
-  }, [activeImage, images.length, inView, pausedUntil, reducedMotion, summaryExpanded])
+    setActivatedSlides((current) => (current[activeSlide] ? current : current.map((value, slideIndex) => (slideIndex === activeSlide ? true : value))))
+  }, [activeSlide])
 
+  // Auto-advance every 5s while visible; posts are phase-shifted so the feed doesn't tick in unison.
+  useEffect(() => {
+    if (slideCount <= 1 || !inView || reducedMotion || summaryExpanded || (canHover && hovered)) return
+    const wait = Math.max(initialDelayRef.current, pausedUntil - Date.now())
+    const timer = window.setTimeout(() => {
+      initialDelayRef.current = 5000
+      setActiveSlide((current) => (current + 1) % slideCount)
+    }, wait)
+    return () => window.clearTimeout(timer)
+  }, [activeSlide, canHover, hovered, inView, pausedUntil, reducedMotion, slideCount, summaryExpanded])
+
+  // Adaptive luminance for the active slide's tile zone (cached per image URL).
   useEffect(() => {
     let cancelled = false
-    const image = images[activeImage]
-    if (!image) {
-      setGlassTones(fallbackToneState)
-      return
-    }
-
+    const image = slides[activeSlide]?.image
+    if (!image) return
     void loadLuminanceData(image).then((imageData) => {
-      if (cancelled) return
-      if (!imageData) {
-        setGlassTones(fallbackToneState)
-        return
-      }
-      setGlassTones({
-        metrics: metricTiles.map((metric) => getToneFromLuminance(getAverageLuminance(imageData, metric.slot))),
-        summary: getToneFromLuminance(getAverageLuminance(imageData, summaryLayoutSlot)),
-      })
+      if (cancelled || !imageData) return
+      const zone = storySlideTileZones[activeSlide] ?? storySlideTileZones[0]
+      const tone = getToneFromLuminance(getAverageLuminance(imageData, zone))
+      setSlideTones((current) => (current[activeSlide] === tone ? current : current.map((value, slideIndex) => (slideIndex === activeSlide ? tone : value))))
     })
-
     return () => {
       cancelled = true
     }
-  }, [activeImage, images, metricTiles])
+  }, [activeSlide, slides])
 
   useEffect(() => {
     const element = summaryCopyRef.current
@@ -755,18 +504,26 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
     }
   }, [summaryExpanded])
 
-  function pauseAutoplay() {
-    setPausedUntil(Date.now() + 8000)
+  function pauseAuto(ms: number) {
+    setPausedUntil(Date.now() + ms)
   }
 
-  function goTo(delta: number, pause = true) {
-    if (images.length <= 1) return
-    if (pause) pauseAutoplay()
-    setActiveImage((current) => (current + delta + images.length) % images.length)
+  // Manual navigation clamps at the ends — IG does not loop.
+  function goTo(delta: number) {
+    if (slideCount <= 1) return
+    setInteracted(true)
+    pauseAuto(canHover ? 3000 : 6000)
+    setActiveSlide((current) => Math.max(0, Math.min(slideCount - 1, current + delta)))
+  }
+
+  function goToSlide(slideIndex: number) {
+    setInteracted(true)
+    pauseAuto(canHover ? 3000 : 6000)
+    setActiveSlide(Math.max(0, Math.min(slideCount - 1, slideIndex)))
   }
 
   function openSummarySheet() {
-    pauseAutoplay()
+    pauseAuto(8000)
     setSummaryExpanded(true)
   }
 
@@ -776,6 +533,7 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
 
   function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
     touchStartX.current = event.touches[0]?.clientX ?? 0
+    pauseAuto(6000)
   }
 
   function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
@@ -785,118 +543,153 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
     goTo(delta < 0 ? 1 : -1)
   }
 
+  function handleKeyDown(event: ReactKeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'ArrowRight') {
+      event.preventDefault()
+      goTo(1)
+    } else if (event.key === 'ArrowLeft') {
+      event.preventDefault()
+      goTo(-1)
+    }
+  }
+
+  const showArrows = canHover && hovered && slideCount > 1
+  const showHint = slideCount > 1 && activeSlide === 0 && !interacted
+
   return (
     <div data-reveal="scale" className="w-full min-w-0">
     <div
       ref={frameRef}
-      className="story-media-frame relative aspect-[4/5] max-w-full overflow-hidden bg-cover bg-center"
+      tabIndex={0}
+      role="group"
+      aria-roledescription="carousel"
+      aria-label={`${getDisplayName(story)} results — slide ${activeSlide + 1} of ${slideCount}`}
+      className="story-media-frame relative aspect-[4/5] max-w-full overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-primary"
       style={frameStyle as CSSProperties}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => {
+        setHovered(false)
+        pauseAuto(3000)
+      }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
+      onKeyDown={handleKeyDown}
     >
-      {images.length > 0 && (
-        <div
-          className="absolute inset-0 flex transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]"
-          style={{ transform: `translateX(-${activeImage * 100}%)` }}
-          aria-hidden="true"
-        >
-          {images.map((image) => (
-            <img
-              key={`${story.id}-bg-${image}`}
-              src={image}
-              alt=""
-              crossOrigin="anonymous"
-              className="h-full w-full shrink-0 object-cover"
-              loading={index === 0 ? 'eager' : 'lazy'}
-            />
-          ))}
-        </div>
-      )}
-      {images.length === 0 && (
-        <img
-          src={getStoryLogo(story)}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 h-full w-full object-contain p-12 opacity-[0.14] mix-blend-screen sm:p-16"
-        />
-      )}
+      <div
+        className="absolute inset-0 flex transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+        style={{ transform: `translateX(-${activeSlide * 100}%)` }}
+      >
+        {slides.map((slide, slideIndex) => {
+          const nearActive = Math.abs(slideIndex - activeSlide) <= 1
+          const tone = slideTones[slideIndex] ?? 'tone-on-medium'
+          const activated = Boolean(activatedSlides[slideIndex]) && inView
 
-      {images.length > 1 && (
-        <>
-          <div className="absolute right-4 top-4 z-20 hidden items-center gap-2 rounded-full bg-black/32 px-2.5 py-1.5 text-xs font-extrabold text-white backdrop-blur-md sm:flex">
-            <button type="button" onClick={() => goTo(-1)} aria-label="Previous background" className="rounded-full p-1 hover:bg-white/15">
-              <ChevronLeft size={16} />
-            </button>
-            <span>{activeImage + 1}/{images.length}</span>
-            <button type="button" onClick={() => goTo(1)} aria-label="Next background" className="rounded-full p-1 hover:bg-white/15">
-              <ChevronRight size={16} />
-            </button>
-          </div>
-          <div className="story-media-dots absolute inset-x-0 z-20 flex justify-center gap-1.5">
-            {images.map((image, imageIndex) => (
-              <button
-                type="button"
-                key={`${image}-dot`}
-                onClick={() => {
-                  pauseAutoplay()
-                  setActiveImage(imageIndex)
-                }}
-                aria-label={`Show background ${imageIndex + 1}`}
-                className={`h-1.5 rounded-full transition-all ${imageIndex === activeImage ? 'w-6 bg-white' : 'w-1.5 bg-white/48'}`}
-              />
-            ))}
-          </div>
-        </>
-      )}
-
-      <div className="story-media-content-grid relative z-10 h-full min-w-0">
-        <div className="story-metric-grid min-w-0">
-          {metricTiles.map((metric, metricIndex) => (
+          return (
             <div
-              key={`${story.id}-metric-${metricIndex}`}
-              className={`story-glass-tile ${metric.className} ${glassTones.metrics[metricIndex] ?? 'tone-on-medium'} ${metric.featured ? 'is-featured' : ''}`}
-              style={{ '--ri': metricIndex, ...metric.tileStyle } as CSSProperties}
-              aria-label={`${metric.value || initials(metric.fullLabel)} ${metric.fullLabel}`}
+              key={`${story.id}-slide-${slideIndex}`}
+              className="relative h-full w-full shrink-0 overflow-hidden"
+              aria-hidden={slideIndex === activeSlide ? undefined : true}
+              aria-label={`Slide ${slideIndex + 1} of ${slideCount}`}
             >
-              <span className="story-metric-kicker">{String(metricIndex + 1).padStart(2, '0')}</span>
-              <span className={`story-metric-value ${metric.featured ? 'is-featured' : ''}`}>{metric.value || initials(metric.fullLabel)}</span>
-              <span className="story-metric-label story-metric-label-desktop" title={metric.fullLabel}>{metric.displayLabel}</span>
-              <span className="story-metric-label story-metric-label-mobile" title={metric.fullLabel}>{metric.mobileLabel}</span>
-              <span className="story-metric-label story-metric-label-compact" title={metric.fullLabel}>{metric.compactLabel}</span>
+              {slide.image && nearActive ? (
+                <img
+                  src={cloudinaryStoryImage(slide.image, 1080)}
+                  srcSet={/res\.cloudinary\.com/.test(slide.image) && !/\/upload\/[^/]*\bw_\d+/.test(slide.image)
+                    ? `${cloudinaryStoryImage(slide.image, 1080)} 1080w, ${cloudinaryStoryImage(slide.image, 2160)} 2160w`
+                    : undefined}
+                  sizes="(min-width: 900px) 860px, 100vw"
+                  alt=""
+                  crossOrigin="anonymous"
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading={index === 0 && slideIndex === 0 ? 'eager' : 'lazy'}
+                />
+              ) : (
+                <div className="absolute inset-0" style={{ backgroundImage: story.screenBackground?.gradient || theme.gradient }} aria-hidden="true" />
+              )}
+              <div className="story-slide-scrim absolute inset-0" aria-hidden="true" />
+
+              {slide.isHero ? (
+                <>
+                  {slide.metrics.length > 0 && (
+                    <div className="story-slide-hero-stats">
+                      {slide.metrics.map((metric, metricIndex) => (
+                        <div key={`${story.id}-hero-metric-${metricIndex}`} className={`story-glass-tile story-chart-tile is-hero ${tone}`}>
+                          <BigStatTile metric={metric} activated={activated} />
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div className={`story-summary-glass story-slide-summary ${tone}`}>
+                    <span className="story-summary-kicker">{story.category}</span>
+                    <p ref={summaryCopyRef} className="story-summary-copy">{story.shortDescription}</p>
+                    {summaryNeedsMore && (
+                      <button
+                        type="button"
+                        className="story-summary-more"
+                        aria-expanded={summaryExpanded}
+                        aria-controls={summarySheetId}
+                        onClick={openSummarySheet}
+                      >
+                        ... more
+                      </button>
+                    )}
+                    <div className="story-summary-tags" aria-label="Services">
+                      {story.services.slice(0, 4).map((service) => (
+                        <span key={`${story.id}-summary-${service}`}>{service}</span>
+                      ))}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <div className={`story-slide-tiles ${slideIndex === 2 ? 'is-left' : 'is-right'}`}>
+                  {slide.metrics.map((metric, metricIndex) => (
+                    <div
+                      key={`${story.id}-slide-${slideIndex}-metric-${metricIndex}`}
+                      className={`story-glass-tile story-chart-tile ${tone} ${metric.display && metric.display !== 'bignum' ? 'is-chart' : ''}`}
+                      style={{ '--ri': metricIndex } as CSSProperties}
+                    >
+                      <StoryMetricChart metric={metric} activated={activated} />
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          ))}
-        </div>
+          )
+        })}
+      </div>
 
-        <div className={`story-summary-glass ${glassTones.summary}`}>
-          <span className="story-summary-kicker">{story.category}</span>
-          <p ref={summaryCopyRef} className="story-summary-copy">{story.shortDescription}</p>
-          {summaryNeedsMore && (
-            <button
-              type="button"
-              className="story-summary-more"
-              aria-expanded={summaryExpanded}
-              aria-controls={summarySheetId}
-              onClick={openSummarySheet}
-            >
-              ... more
-            </button>
-          )}
-          <div className="story-summary-tags" aria-label="Services">
-            {story.services.slice(0, 4).map((service) => (
-              <span key={`${story.id}-summary-${service}`}>{service}</span>
-            ))}
-          </div>
-        </div>
+      {slideCount > 1 && (
+        <span className="absolute right-3 top-3 z-30 rounded-full bg-black/55 px-2.5 py-1 text-xs font-extrabold text-white">
+          {activeSlide + 1}/{slideCount}
+        </span>
+      )}
 
-        <div className="story-media-cta-shell">
-          <button
-            type="button"
-            onClick={() => openBookingModal('story-media')}
-            className="about-story-btn"
-          >
-            About this story
-          </button>
-        </div>
+      {showHint && (
+        <button type="button" className="story-swipe-hint" onClick={() => goTo(1)}>
+          {swipeHint.replace(/\s*(→|->)\s*$/, '')}
+          <span className="story-swipe-hint-arrow" aria-hidden="true">→</span>
+        </button>
+      )}
+
+      {showArrows && activeSlide > 0 && (
+        <button type="button" className="story-carousel-arrow is-left" aria-label="Previous slide" onClick={() => goTo(-1)}>
+          <ChevronLeft size={19} strokeWidth={2.6} />
+        </button>
+      )}
+      {showArrows && activeSlide < slideCount - 1 && (
+        <button type="button" className="story-carousel-arrow is-right" aria-label="Next slide" onClick={() => goTo(1)}>
+          <ChevronRight size={19} strokeWidth={2.6} />
+        </button>
+      )}
+
+      <div className="absolute inset-x-0 bottom-0 z-30 flex px-3.5 pb-3.5">
+        <button
+          type="button"
+          onClick={() => openBookingModal('story-media')}
+          className="about-story-btn"
+        >
+          About this story
+        </button>
       </div>
 
       {summaryExpanded && (
@@ -934,9 +727,26 @@ function StoryMediaFrame({ story, index, layoutVariant }: { story: CaseStudy; in
         </div>
       )}
     </div>
+
+    {slideCount > 1 && (
+      <div className="mt-2.5 flex justify-center gap-1.5" role="tablist" aria-label="Slides">
+        {slides.map((_, slideIndex) => (
+          <button
+            type="button"
+            key={`${story.id}-dot-${slideIndex}`}
+            role="tab"
+            aria-selected={slideIndex === activeSlide}
+            aria-label={`Go to slide ${slideIndex + 1}`}
+            onClick={() => goToSlide(slideIndex)}
+            className={`h-1.5 w-1.5 rounded-full transition-all duration-300 ${slideIndex === activeSlide ? 'scale-125 bg-[#FF2E88]' : 'bg-[#3d1226]/30'}`}
+          />
+        ))}
+      </div>
+    )}
     </div>
   )
 }
+
 
 function PostSocialLinks({ story }: { story: CaseStudy }) {
   const links = socialPlatforms.map((platform) => ({ ...platform, href: story.socialLinks?.[platform.key]?.trim() || '' }))
@@ -977,13 +787,13 @@ function PostSocialLinks({ story }: { story: CaseStudy }) {
 function InstagramPost({
   story,
   index,
-  layoutVariant,
+  swipeHint,
   highlighted,
   onCopy,
 }: {
   story: CaseStudy
   index: number
-  layoutVariant: number
+  swipeHint: string
   highlighted: boolean
   onCopy: (story: CaseStudy) => void
 }) {
@@ -1009,7 +819,7 @@ function InstagramPost({
         <PostMoreMenu story={story} onCopy={onCopy} />
       </header>
 
-      <StoryMediaFrame story={story} index={index} layoutVariant={layoutVariant} />
+      <StoryMediaFrame story={story} index={index} swipeHint={swipeHint} />
 
       <footer className="px-4 pb-4 pt-3">
         <PostSocialLinks story={story} />
@@ -1117,6 +927,7 @@ export default function TheOnePage({ lang = 'en', cmsPage, siteSettings }: { lan
   const heroBlock = getLocalizedCmsBlock(cmsPage, 'hero', lang)
   const storiesBlock = getLocalizedCmsBlock(cmsPage, 'stories', lang)
   const orderedCaseStudies = useMemo(() => getOrderedCaseStudies(storiesBlock), [storiesBlock])
+  const swipeHintText = storiesBlock?.swipeHintText?.trim() || 'Swipe for more records →'
   const [viewedStories, setViewedStories] = useState<Set<string>>(() => new Set())
   const [highlightedId, setHighlightedId] = useState('')
   const [toast, setToast] = useState('')
@@ -1126,7 +937,6 @@ export default function TheOnePage({ lang = 'en', cmsPage, siteSettings }: { lan
   const storyHeading = heroBlock?.heading?.trim() || 'The One Stories'
   const storyIntro = heroBlock?.body?.trim()
   const finalCtaLabel = heroBlock?.ctaLabel?.trim() || 'How about our stories?'
-  const storyLayoutVariants = useMemo(() => getStoryLayoutVariants(orderedCaseStudies), [orderedCaseStudies])
 
   useScrollReveal()
 
@@ -1282,7 +1092,7 @@ export default function TheOnePage({ lang = 'en', cmsPage, siteSettings }: { lan
                 key={story.id}
                 story={story}
                 index={index}
-                layoutVariant={storyLayoutVariants.get(story.id) ?? 0}
+                swipeHint={swipeHintText}
                 highlighted={highlightedId === story.id}
                 onCopy={handleCopy}
               />
