@@ -241,7 +241,10 @@ export default function SiteSettingsScreen() {
         <div className="mt-4 grid gap-4 md:grid-cols-2">
           <RangeField label="Flow speed" value={background.flow} min={0.2} max={1.5} step={0.05} onChange={(value) => updateBackground({ flow: value })} />
           <RangeField label="Wave height" value={background.waveHeight} min={1} max={4} step={0.1} onChange={(value) => updateBackground({ waveHeight: value })} />
-          <RangeField label="Particle opacity" value={background.opacity} min={0.3} max={0.7} step={0.05} onChange={(value) => updateBackground({ opacity: value })} />
+          <RangeField label="Particle opacity" value={background.opacity} min={0.12} max={0.7} step={0.02} onChange={(value) => updateBackground({ opacity: value })} />
+          <RangeField label="Particle size" value={background.pointSize} min={2} max={7} step={0.1} onChange={(value) => updateBackground({ pointSize: value })} />
+          <RangeField label="Particle density" value={background.density} min={0.35} max={1} step={0.05} onChange={(value) => updateBackground({ density: value })} />
+          <RangeField label="Scroll rise" value={background.scrollRise} min={0} max={1.5} step={0.05} onChange={(value) => updateBackground({ scrollRise: value })} />
           <RangeField label="Pointer strength" value={background.pointerStrength} min={0} max={1.5} step={0.1} onChange={(value) => updateBackground({ pointerStrength: value })} />
         </div>
         <div className="mt-5 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">

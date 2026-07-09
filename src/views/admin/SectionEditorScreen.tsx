@@ -798,13 +798,13 @@ function StoryItemEditor({
   }).length
   const featuredMetricCount = storyMetricSlots.filter((metricIndex) => Boolean(getMetricFrom(keyMetrics, metricIndex).featured)).length
   const metricWarning = filledMetricCount !== 10 || featuredMetricCount !== 2
-  // Round 9: carousel-specific validation — 2-4 tiles per chart slide, 4 background images.
+  // Round 13: chart slides should stay roomy — max 3 tiles per slide, 4 background images.
   const filledMetrics = storyMetricSlots
     .map((metricIndex) => getMetricFrom(keyMetrics, metricIndex))
     .filter((metric) => metric.value.trim() || metric.label.trim())
   const metricsWithoutSlide = filledMetrics.filter((metric) => !metric.featured && !metric.slide).length
   const slideTileCounts = [2, 3, 4].map((slide) => filledMetrics.filter((metric) => metric.slide === slide).length)
-  const slideBalanceWarning = slideTileCounts.some((count) => count > 0 && (count < 2 || count > 4))
+  const slideBalanceWarning = slideTileCounts.some((count) => count > 0 && (count < 2 || count > 3))
   const backgroundImageCount = (item.backgroundImages ?? []).filter((url) => url.trim()).length
 
   function updateText(patch: CmsLocalizedBlockItemFields) {
@@ -820,6 +820,7 @@ function StoryItemEditor({
       featured?: boolean
       slide?: number
       display?: 'bignum' | 'beforeafter' | 'donut' | 'bars' | 'trend'
+      tileAnchor?: 'auto' | 'left-stack' | 'right-stack' | 'top-band' | 'split-diagonal' | 'center-low'
       from?: string
       to?: string
       benchmarkLabel?: string
@@ -1015,7 +1016,7 @@ function StoryItemEditor({
           )}
           {slideBalanceWarning && (
             <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs font-bold leading-relaxed text-amber-800">
-              Moi slide 2-4 nen co 2-4 tile. Hien tai: slide 2 = {slideTileCounts[0]}, slide 3 = {slideTileCounts[1]}, slide 4 = {slideTileCounts[2]}.
+              Moi slide 2-4 nen co 2-3 tile. Hien tai: slide 2 = {slideTileCounts[0]}, slide 3 = {slideTileCounts[1]}, slide 4 = {slideTileCounts[2]}.
             </p>
           )}
           {backgroundImageCount < 4 && (
@@ -1075,6 +1076,20 @@ function StoryItemEditor({
                         <option value="donut">Donut %</option>
                         <option value="bars">Bars vs benchmark</option>
                         <option value="trend">Trend line</option>
+                      </select>
+                    </Field>
+                    <Field label="Tile anchor" hint="Auto = layout sequence. Set this on one metric in a slide to override the whole slide.">
+                      <select
+                        value={metric.tileAnchor ?? 'auto'}
+                        onChange={(event) => updateMetric(metricIndex, { tileAnchor: event.target.value as 'auto' | 'left-stack' | 'right-stack' | 'top-band' | 'split-diagonal' | 'center-low' })}
+                        className="h-10 w-full rounded-lg border border-outline-variant bg-surface px-3 text-sm font-semibold text-on-surface"
+                      >
+                        <option value="auto">Auto</option>
+                        <option value="left-stack">Left stack</option>
+                        <option value="right-stack">Right stack</option>
+                        <option value="top-band">Top band</option>
+                        <option value="split-diagonal">Split diagonal</option>
+                        <option value="center-low">Center low</option>
                       </select>
                     </Field>
                   </div>
@@ -1351,7 +1366,7 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
   const isTheOneHero = pageId === 'the-one' && block.id === 'hero'
   const canEditBlockMedia = !isStoryBlock && (isHomepageHero || isHomepageClosing || (pageId === 'about' && block.id === 'hero'))
   const canEditItemMedia = !isStoryBlock && !isPackageList && !isBasicCards && !isFaqBlock && Boolean((block.items ?? []).some((item) => item.icon || item.imageUrl || item.imageAlt))
-  const showBlockCtaLabel = isHomepageHero || isTheOneHero
+  const showBlockCtaLabel = isHomepageHero || isTheOneHero || isHomepageClosing
   const showBlockCtaHref = false
   const showBlockHeading = !isPackageList
   const showBlockItems = !isHomepageHero && !isTheOneHero && !(block.id === 'intro' && !block.items?.length)
@@ -1448,8 +1463,8 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                 <TextInput value={blockCtaLabel} onChange={(value) => updateBlockText({ ctaLabel: value })} placeholder="Call Your Shot" />
               </Field>
             )}
-            {isHomepageHero && (
-              <Field label="CTA subtext">
+            {(isHomepageHero || isHomepageClosing) && (
+              <Field label={isHomepageClosing ? 'Pre-footer CTA line' : 'CTA subtext'}>
                 <TextInput value={blockCtaSubtext} onChange={(value) => updateBlockText({ ctaSubtext: value })} placeholder="Free 30-min call" />
               </Field>
             )}
@@ -1575,8 +1590,16 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
           )}
 
           {pageId === 'homepage' && block.id === 'closing' && (
-            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-on-surface-variant">
-              Items in this Closing section are rendered as homepage FAQ. Use item title as the question and item body as the answer.
+            <div className="grid gap-3 rounded-xl border border-primary/20 bg-primary/5 p-4 text-sm leading-relaxed text-on-surface-variant">
+              <p>Items in this Closing section are rendered as homepage FAQ. Use item title as the question and item body as the answer.</p>
+              <div className="grid gap-3 md:grid-cols-2">
+                <Field label="Closing video line 1">
+                  <TextInput value={blockClosingLine1} onChange={(value) => updateBlockText({ closingLine1: value })} />
+                </Field>
+                <Field label="Closing video line 2">
+                  <TextInput value={blockClosingLine2} onChange={(value) => updateBlockText({ closingLine2: value })} />
+                </Field>
+              </div>
             </div>
           )}
 
@@ -1633,15 +1656,17 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
               <Field label="Subtitle">
                 <TextInput value={blockSubtitle} onChange={(value) => updateBlockText({ subtitle: value })} />
               </Field>
-              {block.id === 'hero' && pageId === 'homepage' && (
+              {(isHomepageHero || isHomepageClosing) && (
                 <div className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
-                  <p className="text-xs font-extrabold uppercase tracking-widest text-primary">Hero background video</p>
+                  <p className="text-xs font-extrabold uppercase tracking-widest text-primary">{isHomepageClosing ? 'Closing cinematic video' : 'Hero background video'}</p>
                   <p className="text-xs font-semibold text-on-surface-variant">
-                    When a video URL is set the hero plays it (autoplay, muted, loop) and the aurora + wave show through below. Leave all fields empty to fall back to the aurora background. Mobile fields serve the 720p versions.
+                    {isHomepageClosing
+                      ? 'When a video URL is set the closing band plays it (autoplay, muted, loop). Leave all fields empty to fall back to the FAQ-only layout. Mobile fields serve the 1280px versions.'
+                      : 'When a video URL is set the hero plays it (autoplay, muted, loop) and the aurora + wave show through below. Leave all fields empty to fall back to the aurora background. Mobile fields serve the 720p versions.'}
                   </p>
                   <Field label="Video URL - desktop MP4">
                     <div className="grid gap-2">
-                      <TextInput value={block.backgroundVideoUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoUrl: value })} placeholder="https://res.cloudinary.com/.../hero-1080.mp4" />
+                      <TextInput value={block.backgroundVideoUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoUrl: value })} placeholder="https://res.cloudinary.com/.../video.mp4" />
                       <VideoUploadButton
                         folder={`cms/pages/${pageId}/${blockId}/video`}
                         onUploaded={(url) => updateBlock(pageId, blockId, { backgroundVideoUrl: url })}
@@ -1651,17 +1676,17 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                     </div>
                   </Field>
                   <Field label="Video URL - desktop WebM (optional, lighter)">
-                    <TextInput value={block.backgroundVideoWebmUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoWebmUrl: value })} placeholder="https://res.cloudinary.com/.../hero-1080.webm" />
+                    <TextInput value={block.backgroundVideoWebmUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoWebmUrl: value })} placeholder="https://res.cloudinary.com/.../video.webm" />
                   </Field>
-                  <Field label="Video URL - mobile MP4 (720p)">
-                    <TextInput value={block.backgroundVideoMobileUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoMobileUrl: value })} placeholder="https://res.cloudinary.com/.../hero-720.mp4" />
+                  <Field label="Video URL - mobile MP4">
+                    <TextInput value={block.backgroundVideoMobileUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoMobileUrl: value })} placeholder="https://res.cloudinary.com/.../mobile.mp4" />
                   </Field>
-                  <Field label="Video URL - mobile WebM (720p, optional)">
-                    <TextInput value={block.backgroundVideoMobileWebmUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoMobileWebmUrl: value })} placeholder="https://res.cloudinary.com/.../hero-720.webm" />
+                  <Field label="Video URL - mobile WebM (optional)">
+                    <TextInput value={block.backgroundVideoMobileWebmUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoMobileWebmUrl: value })} placeholder="https://res.cloudinary.com/.../mobile.webm" />
                   </Field>
                   <Field label="Video poster (image shown before/instead of video)">
                     <div className="grid gap-2">
-                      <TextInput value={block.backgroundVideoPoster ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoPoster: value })} placeholder="https://res.cloudinary.com/.../hero-poster.webp" />
+                      <TextInput value={block.backgroundVideoPoster ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoPoster: value })} placeholder="https://res.cloudinary.com/.../poster.webp" />
                       <ImageUploadButton
                         folder={`cms/pages/${pageId}/${blockId}/video`}
                         onUploaded={(url) => updateBlock(pageId, blockId, { backgroundVideoPoster: url })}
@@ -1674,6 +1699,24 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
               )}
               {block.id === 'hero' && (
                 <div className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+                  {isHomepageHero && (
+                    <Field label="Hero text alignment" hint="center = current layout, left = move headline to the left dark wing.">
+                      <div className="inline-flex w-fit rounded-xl border border-outline-variant/45 bg-surface p-1">
+                        {(['center', 'left'] as const).map((align) => (
+                          <button
+                            key={align}
+                            type="button"
+                            onClick={() => updateBlock(pageId, blockId, { heroTextAlign: align })}
+                            className={`rounded-lg px-4 py-2 text-xs font-extrabold transition-colors ${
+                              (block.heroTextAlign ?? 'center') === align ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-primary'
+                            }`}
+                          >
+                            {align}
+                          </button>
+                        ))}
+                      </div>
+                    </Field>
+                  )}
                   <Field label="Text color mode">
                     <TextInput value={block.textColor ?? ''} onChange={(value) => updateBlock(pageId, blockId, { textColor: value as 'light' | 'dark' | 'gradient' })} placeholder="light / dark / gradient" />
                   </Field>

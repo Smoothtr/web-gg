@@ -1,8 +1,9 @@
 'use client'
 
-import { useEffect, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useRef, useState, type CSSProperties } from 'react'
 import {
   ArrowUpRight,
+  ChevronDown,
   ChevronLeft,
   ChevronRight,
   Heart,
@@ -18,7 +19,7 @@ import { PackageCards } from '../components/PackageCards'
 import { SeoHead } from '../components/SeoHead'
 import { whenIntroGone } from '../hooks/useIntroGate'
 import { FlowWaveBackground } from '../components/FlowWaveBackground'
-import { HeroBackgroundVideo } from '../components/HeroBackgroundVideo'
+import { HeroBackgroundVideo, type HeroVideoSources } from '../components/HeroBackgroundVideo'
 import { getCmsBlock, getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
 import { mergeHomepageBackground } from '../cms/siteSettings'
 import { cldSrcSet, cldWidth } from '../lib/cloudinaryImage'
@@ -29,6 +30,13 @@ import type { CaseStudy } from '../data/caseStudies'
 
 const primaryBookingCtaLabel = 'Schedule Our Date'
 const defaultHeroGradient = 'linear-gradient(180deg,#FF7AA8 0%,#FF4D7D 45%,#FFB199 100%)'
+const defaultClosingPortalSources: HeroVideoSources = {
+  mp4: '/closing/closing-portal-1920.mp4',
+  webm: '/closing/closing-portal-1920.webm',
+  mobileMp4: '/closing/closing-portal-1280.mp4',
+  mobileWebm: '/closing/closing-portal-1280.webm',
+  poster: '/closing/closing-portal-poster.webp',
+}
 const heroFirstWordDelayMs = 420
 const heroWordStepMs = 90
 const heroWordDurationMs = 430
@@ -224,6 +232,93 @@ function heroBackgroundStyle(block: ReturnType<typeof getCmsBlock>): CSSProperti
   }
 }
 
+function getClosingPortalSources(block?: ReturnType<typeof getCmsBlock>): HeroVideoSources {
+  return {
+    mp4: block?.backgroundVideoUrl?.trim() || defaultClosingPortalSources.mp4,
+    webm: block?.backgroundVideoWebmUrl?.trim() || defaultClosingPortalSources.webm,
+    mobileMp4: block?.backgroundVideoMobileUrl?.trim() || defaultClosingPortalSources.mobileMp4,
+    mobileWebm: block?.backgroundVideoMobileWebmUrl?.trim() || defaultClosingPortalSources.mobileWebm,
+    poster: block?.backgroundVideoPoster?.trim() || defaultClosingPortalSources.poster,
+  }
+}
+
+function hasVideoSource(sources: HeroVideoSources) {
+  return Boolean(sources.mp4 || sources.webm || sources.mobileMp4 || sources.mobileWebm)
+}
+
+function prefersStaticMedia() {
+  if (typeof window === 'undefined') return true
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true
+  const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
+  return connection?.saveData === true
+}
+
+function ClosingPortalVideo({ sources }: { sources: HeroVideoSources }) {
+  const cleanupRef = useRef<(() => void) | null>(null)
+  const [active, setActive] = useState<{ mp4?: string; webm?: string } | null>(null)
+
+  useEffect(() => {
+    if (prefersStaticMedia()) return
+    const mobile = window.matchMedia('(max-width: 767px)').matches
+    setActive(
+      mobile
+        ? { mp4: sources.mobileMp4 || sources.mp4, webm: sources.mobileWebm || sources.webm }
+        : { mp4: sources.mp4, webm: sources.webm },
+    )
+    // Source choice follows the first viewport load; CMS edits arrive through a new render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const attachVideo = useCallback((video: HTMLVideoElement | null) => {
+    cleanupRef.current?.()
+    cleanupRef.current = null
+    if (!video) return
+
+    let inView = false
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        inView = entry.isIntersecting
+        if (inView) void video.play().catch(() => undefined)
+        else video.pause()
+      },
+      { threshold: 0.2 },
+    )
+    observer.observe(video)
+
+    const onVisible = () => {
+      if (!document.hidden && inView && video.paused) void video.play().catch(() => undefined)
+    }
+    document.addEventListener('visibilitychange', onVisible)
+    cleanupRef.current = () => {
+      observer.disconnect()
+      document.removeEventListener('visibilitychange', onVisible)
+    }
+  }, [])
+
+  useEffect(() => () => cleanupRef.current?.(), [])
+
+  return (
+    <div className="closing-portal-media" aria-hidden="true">
+      {sources.poster && <img src={sources.poster} alt="" className="closing-portal-poster" />}
+      {active && (
+        <video
+          ref={attachVideo}
+          autoPlay
+          muted
+          loop
+          playsInline
+          preload="metadata"
+          poster={sources.poster || undefined}
+          className="closing-portal-video"
+        >
+          {active.webm && <source src={active.webm} type="video/webm" />}
+          {active.mp4 && <source src={active.mp4} type="video/mp4" />}
+        </video>
+      )}
+    </div>
+  )
+}
+
 function resolveStoryHref(lang: BrandLang, href: string, storyId?: string) {
   const candidate = href.trim()
   if (/^https?:\/\//i.test(candidate) || candidate.startsWith('/')) return candidate
@@ -355,6 +450,7 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
   const [activeImage, setActiveImage] = useState(0)
   const href = resolveStoryHref(lang, story.id, story.id)
   const theme = getStoryPreviewTheme(story)
+  const aboutLabel = lang === 'vi' ? 'Xem câu chuyện' : 'About this one'
 
   useEffect(() => {
     setActiveImage(0)
@@ -424,9 +520,9 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
         </div>
         <a
           href={href}
-          className="btn-shine mt-auto inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-4 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] transition hover:opacity-95"
+          className="mt-auto inline-flex w-fit items-center justify-center gap-2 rounded-full border border-[#3d1226]/12 bg-white/70 px-3.5 py-2 text-sm font-extrabold text-[#3d1226] shadow-[0_10px_24px_rgba(43,23,33,0.1)] transition hover:-translate-y-0.5 hover:bg-white"
         >
-          About this one
+          {aboutLabel}
           <ArrowUpRight size={15} strokeWidth={2.5} aria-hidden="true" />
         </a>
       </div>
@@ -484,6 +580,8 @@ function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: Case
   const activeStory = showcaseStories[activeBannerIndex] ?? showcaseStories[0]
   const activeStoryHref = resolveStoryHref(lang, activeStory.id, activeStory.id)
   const activeStats = getFeaturedStats(activeStory)
+  const allStoriesHref = localizedPath(lang, '/the-one')
+  const allStoriesLabel = lang === 'vi' ? 'Xem tất cả stories' : 'View all stories'
 
   function moveRail(direction: -1 | 1) {
     const rail = railRef.current
@@ -524,7 +622,7 @@ function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: Case
   }
 
   return (
-    <section className="home-section-pad home-section-pad--featured relative overflow-visible px-5 lg:px-10" onMouseLeave={closePreviewSoon}>
+    <section id="featured-cases" className="home-section-pad home-section-pad--featured relative overflow-visible px-5 lg:px-10" onMouseLeave={closePreviewSoon}>
       {/* Round 7 A2.1: warm bridge from the video's bottom tone into the shared wave background */}
       <div
         aria-hidden="true"
@@ -667,6 +765,25 @@ function CaseStudyShowcase({ stories, lang, openingBaseMs = 0 }: { stories: Case
                 </span>
               </button>
             ))}
+            <a
+              href={allStoriesHref}
+              data-reveal="tile-in"
+              data-tile-direction="right"
+              data-reveal-open
+              style={{ '--ri': showcaseStories.length, '--rd': `${openingBaseMs + 320}ms` } as CSSProperties}
+              className="group featured-ghost-card glass-panel glass-panel--strong relative flex shrink-0 basis-[42vw] snap-start flex-col items-center justify-center gap-3 rounded-[18px] p-5 text-center outline-none transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2.25)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]"
+            >
+              <span className="flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] transition-transform group-hover:translate-x-1">
+                <ArrowUpRight size={19} strokeWidth={2.7} aria-hidden="true" />
+              </span>
+              <span className="text-sm font-black text-[#3d1226]">{allStoriesLabel}</span>
+            </a>
+          </div>
+          <div className="mt-2 flex justify-end">
+            <a href={allStoriesHref} className="inline-flex items-center gap-1.5 text-sm font-black text-primary transition hover:text-primary/70">
+              {allStoriesLabel}
+              <ArrowUpRight size={15} strokeWidth={2.6} aria-hidden="true" />
+            </a>
           </div>
         </div>
       </div>
@@ -753,7 +870,7 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
           </div>
         </div>
 
-        <div className="glass-panel relative w-full p-5 md:p-6">
+        <div className="glass-panel quiet-zone relative w-full p-5 md:p-6">
           <div className="thread-line" aria-hidden="true" style={{ left: 39, top: 64 }} />
 
           <article data-reveal="tile-in" data-tile-direction="bottom" style={{ '--ri': 0 } as CSSProperties} className="relative grid grid-cols-[40px_1fr] gap-3">
@@ -872,7 +989,7 @@ function splitPeopleRoles(value?: string) {
     .slice(0, 6) ?? []
 }
 
-function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
+function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<typeof getCmsBlock>; showClosingLines?: boolean }) {
   const members = (block?.items ?? []).filter((item) => item.published !== false).slice(0, 6)
   const railRef = useRef<HTMLDivElement | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
@@ -1086,12 +1203,14 @@ function PeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) {
             })()}
           </div>
         )}
-        <div className="mx-auto mt-16 max-w-3xl text-center">
-          <p data-reveal="soft" className="home-people-closing-one text-[24px] italic leading-tight text-on-surface/85 md:text-[28px]">{closingLine1}</p>
-          <p data-reveal="soft" style={{ '--ri': 1 } as CSSProperties} className="home-people-closing-two mt-3 bg-gradient-to-r from-primary via-tertiary to-secondary bg-clip-text text-[28px] font-semibold leading-tight text-transparent md:text-[44px]">
-            {closingLine2}
-          </p>
-        </div>
+        {showClosingLines && (
+          <div className="mx-auto mt-16 max-w-3xl text-center">
+            <p data-reveal="soft" className="home-people-closing-one text-[24px] italic leading-tight text-on-surface/85 md:text-[28px]">{closingLine1}</p>
+            <p data-reveal="soft" style={{ '--ri': 1 } as CSSProperties} className="home-people-closing-two mt-3 bg-gradient-to-r from-primary via-tertiary to-secondary bg-clip-text text-[28px] font-semibold leading-tight text-transparent md:text-[44px]">
+              {closingLine2}
+            </p>
+          </div>
+        )}
       </div>
     </section>
   )
@@ -1113,55 +1232,85 @@ function ClosingBanner({
   const faqSubtitle = block.subtitle?.trim() || block.body?.trim()
   const closingCharacterCount = countStaggerCharacters(faqTitle)
   const closingFollowDelay = Math.max(360, closingCharacterCount * 18 + 220)
+  const portalSources = getClosingPortalSources(block)
+  const hasPortalVideo = hasVideoSource(portalSources)
+  const line1 = block.closingLine1?.trim() || 'We quit our 9-5 and started our own business.'
+  const line2 = block.closingLine2?.trim() || "Isn't it your turn now?"
+  const prefooterLine = block.ctaSubtext?.trim() || 'See you on our first date?'
+  const ctaLabel = resolvePrimaryBookingCtaLabel(block.ctaLabel)
 
   // Round 7 A5: no solid gradient background and no logo marquee — glass items float
   // directly on the shared aurora + wave background.
   return (
-    <section className="closing-section home-section-pad px-5 lg:px-10">
-      <div className="closing-content relative mx-auto w-full max-w-[880px]" data-reveal="closing-content">
-        {/* Round 8 A5.2: left-aligned, lined up with the other zone headings */}
-        <div className="mb-7 text-left">
-          <h2 className="text-[30px] font-black leading-tight text-[#3d1226] md:text-[42px]">
-            <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
-          </h2>
-          <div className="home-gradient-underline mt-3" aria-hidden="true" />
-          {faqSubtitle && (
-            <p className="closing-follow mt-4 text-[15px] font-bold leading-relaxed text-[#3d1226]/75 md:text-[18px]" style={{ '--closing-delay': `${closingFollowDelay}ms` } as CSSProperties}>
-              {faqSubtitle}
-            </p>
-          )}
-        </div>
-        {faqItems.length > 0 && (
-          <div className="closing-faq grid gap-3 text-left">
-            {faqItems.map((item, index) => {
-              const open = openFaqIndex === index
-              return (
-                <div
-                  key={`${item.question}-${index}`}
-                  className={`closing-faq-item glass-panel overflow-hidden !rounded-2xl text-[#3d1226] ${open ? 'glass-panel--strong' : ''}`}
-                  style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + 140 + index * 80}ms` } as CSSProperties}
-                >
-                  <button
-                    type="button"
-                    onClick={() => setOpenFaqIndex(open ? -1 : index)}
-                    className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-[15px] font-bold leading-snug md:text-[16px]"
-                    aria-expanded={open}
+    <>
+      <section className="closing-section home-section-pad px-5 lg:px-10">
+        <div className="closing-content quiet-zone quiet-zone--faq relative mx-auto w-full max-w-[880px]" data-reveal="closing-content">
+          {/* Round 8 A5.2: left-aligned, lined up with the other zone headings */}
+          <div className="mb-7 text-left">
+            <h2 className="text-[30px] font-black leading-tight text-[#3d1226] md:text-[42px]">
+              <StaggeredText text={faqTitle} className="inline" charClassName="closing-char" nowrap={false} />
+            </h2>
+            <div className="home-gradient-underline mt-3" aria-hidden="true" />
+            {faqSubtitle && (
+              <p className="closing-follow mt-4 text-[15px] font-bold leading-relaxed text-[#3d1226]/75 md:text-[18px]" style={{ '--closing-delay': `${closingFollowDelay}ms` } as CSSProperties}>
+                {faqSubtitle}
+              </p>
+            )}
+          </div>
+          {faqItems.length > 0 && (
+            <div className="closing-faq grid gap-3 text-left">
+              {faqItems.map((item, index) => {
+                const open = openFaqIndex === index
+                return (
+                  <div
+                    key={`${item.question}-${index}`}
+                    className={`closing-faq-item glass-panel overflow-hidden !rounded-2xl text-[#3d1226] ${open ? 'glass-panel--strong' : ''}`}
+                    style={{ '--ri': index, '--closing-delay': `${closingFollowDelay + 140 + index * 80}ms` } as CSSProperties}
                   >
-                    <span>{item.question}</span>
-                    <span className={`closing-faq-plus flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3d1226]/10 text-xl leading-none transition-transform ${open ? 'rotate-45' : ''}`}>+</span>
-                  </button>
-                  <div className={`closing-faq-answer grid transition-[grid-template-rows] duration-300 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
-                    <div className="overflow-hidden">
-                      <p className="px-4 pb-4 text-sm font-semibold leading-relaxed text-[#3d1226]/75">{item.answer}</p>
+                    <button
+                      type="button"
+                      onClick={() => setOpenFaqIndex(open ? -1 : index)}
+                      className="flex w-full items-center justify-between gap-4 px-4 py-4 text-left text-[15px] font-bold leading-snug md:text-[16px]"
+                      aria-expanded={open}
+                    >
+                      <span>{item.question}</span>
+                      <span className={`closing-faq-plus flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-[#3d1226]/10 text-xl leading-none transition-transform ${open ? 'rotate-45' : ''}`}>+</span>
+                    </button>
+                    <div className={`closing-faq-answer grid transition-[grid-template-rows] duration-300 ${open ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]'}`}>
+                      <div className="overflow-hidden">
+                        <p className="px-4 pb-4 text-sm font-semibold leading-relaxed text-[#3d1226]/75">{item.answer}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </section>
+      {hasPortalVideo && (
+        <section className="closing-portal-section" data-reveal="closing-portal">
+          <ClosingPortalVideo sources={portalSources} />
+          <div className="closing-portal-scrim" aria-hidden="true" />
+          <div className="closing-portal-copy">
+            <p className="closing-portal-line-one">{line1}</p>
+            <h2 className="closing-portal-line-two" data-reveal="words">
+              <RevealWords text={line2} />
+            </h2>
           </div>
-        )}
-      </div>
-    </section>
+          <div className="closing-portal-cta" data-reveal="soft" style={{ '--rd': '520ms' } as CSSProperties}>
+            <p>{prefooterLine}</p>
+            <button
+              type="button"
+              onClick={() => openBookingModal('closing-video')}
+              className="btn-shine cta-idle inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-8 py-4 text-[16px] font-extrabold text-white shadow-[0_18px_44px_rgba(219,39,119,0.28)] hover:opacity-95 md:px-11 md:py-[18px] md:text-[18px]"
+            >
+              {ctaLabel}
+            </button>
+          </div>
+        </section>
+      )}
+    </>
   )
 }
 
@@ -1177,6 +1326,7 @@ export default function BrandHomePage({
   siteSettings?: CmsSiteSettings | null
 }) {
   const [heroReady, setHeroReady] = useState(false)
+  const [heroCueHidden, setHeroCueHidden] = useState(false)
 
   const c = compactHomeByLang[lang]
   const homeBackground = mergeHomepageBackground(siteSettings?.homepageBackground)
@@ -1201,6 +1351,8 @@ export default function BrandHomePage({
     poster: heroBlock?.backgroundVideoPoster?.trim() || undefined,
   }
   const heroHasVideo = Boolean(heroVideoSources.mp4 || heroVideoSources.webm)
+  const heroTextAlign = heroBlock?.heroTextAlign === 'left' ? 'left' : 'center'
+  const heroAlignLeft = heroTextAlign === 'left'
   const heroHasOwnBackground = !heroHasVideo && (!flowWaveActive || Boolean(heroBlock?.backgroundImageUrl?.trim()))
   const rawHeroTextMode = heroBlock?.textColor ?? 'light'
   // "light" was chosen for opaque hero backgrounds (gradient/video); on the transparent aurora canvas it is unreadable.
@@ -1209,7 +1361,9 @@ export default function BrandHomePage({
   const heroWordCount = countStaggerWords(heroLineOne)
   const heroDelays = getHeroAnimationDelays(heroWordCount, showHeroDivider)
   const heroStatChips = (heroBlock?.statChips ?? []).filter((chip) => chip.value.trim() || chip.label.trim()).slice(0, 3)
-  const showHeroStatChips = heroBlock?.showStatChips === true && heroStatChips.length > 0
+  const showHeroStatChips = heroBlock?.showStatChips !== false && heroStatChips.length > 0
+  const closingPortalSources = getClosingPortalSources(closingBlock)
+  const closingHasPortal = hasVideoSource(closingPortalSources)
   const closingFaqItems = getHomeClosingFaqItems(cmsPage, lang)
   const homeSchemas = [organizationSchema, websiteSchema, homeWebPageSchema, buildHomeFaqSchema(cmsPage, lang)].filter(Boolean)
   const packageItems: CmsBlockItem[] = packagesBlock?.items?.length
@@ -1224,6 +1378,38 @@ export default function BrandHomePage({
   useEffect(() => {
     whenIntroGone(() => setHeroReady(true))
   }, [])
+
+  useEffect(() => {
+    const storageKey = 'gg99:hero-scroll-cue-hidden'
+    try {
+      setHeroCueHidden(window.sessionStorage.getItem(storageKey) === 'true')
+    } catch {
+      setHeroCueHidden(false)
+    }
+
+    const hide = () => {
+      if (window.scrollY <= 24) return
+      setHeroCueHidden(true)
+      try {
+        window.sessionStorage.setItem(storageKey, 'true')
+      } catch {
+        // sessionStorage can be blocked; hiding in-memory is enough.
+      }
+      window.removeEventListener('scroll', hide)
+    }
+    window.addEventListener('scroll', hide, { passive: true })
+    return () => window.removeEventListener('scroll', hide)
+  }, [])
+
+  function scrollToFeaturedCases() {
+    setHeroCueHidden(true)
+    try {
+      window.sessionStorage.setItem('gg99:hero-scroll-cue-hidden', 'true')
+    } catch {
+      // no-op
+    }
+    document.getElementById('featured-cases')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
 
   return (
     <BrandLayout
@@ -1249,8 +1435,8 @@ export default function BrandHomePage({
           // the sub-line sits on the brightest part of the sky.
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute left-1/2 top-[6%] h-[46%] w-[min(920px,94vw)] -translate-x-1/2"
-            style={{ background: 'radial-gradient(closest-side, rgba(40,10,25,0.22), transparent 100%)' }}
+            className={`pointer-events-none absolute top-[6%] h-[46%] w-[min(920px,94vw)] ${heroAlignLeft ? 'left-[26%] -translate-x-1/2' : 'left-1/2 -translate-x-1/2'}`}
+            style={{ background: `radial-gradient(closest-side, rgba(40,10,25,${heroAlignLeft ? 0.34 : 0.32}), transparent 100%)` }}
           />
         )}
         {heroHasOwnBackground && (
@@ -1261,9 +1447,9 @@ export default function BrandHomePage({
           </>
         )}
         <div
-          className={`relative mx-auto flex w-full max-w-5xl flex-col items-center px-5 text-center lg:px-10 ${
+          className={`relative mx-auto flex w-full ${heroAlignLeft ? 'max-w-6xl items-start text-left' : 'max-w-5xl items-center text-center'} flex-col px-5 lg:px-10 ${
             heroHasVideo ? 'home-hero-copy home-hero-copy--video' : 'home-hero-copy home-hero-copy--static justify-center'
-          }`}
+          } ${heroAlignLeft ? 'home-hero-copy--left' : ''}`}
         >
           <h1
             className={[
@@ -1302,23 +1488,31 @@ export default function BrandHomePage({
           {showHeroStatChips && (
             <div
               style={{ '--hero-delay': `${heroDelays.cta + 230}ms` } as CSSProperties}
-              className="home-hero-item mt-5 flex flex-wrap justify-center gap-2"
+              className={`home-hero-item mt-5 flex flex-wrap gap-2 ${heroAlignLeft ? 'justify-start' : 'justify-center'}`}
             >
               {heroStatChips.map((chip) => (
-                <span key={`${chip.value}-${chip.label}`} className="rounded-full border border-white/24 bg-white/16 px-3 py-1.5 text-xs font-black text-white shadow-[0_10px_26px_rgba(0,0,0,0.12)] backdrop-blur-md md:text-sm">
+                <span key={`${chip.value}-${chip.label}`} className="rounded-full border border-white/40 bg-white/[0.12] px-3 py-1.5 text-xs font-semibold text-white shadow-[0_10px_26px_rgba(0,0,0,0.1)] backdrop-blur-md">
                   {chip.value}{chip.label ? ` ${chip.label}` : ''}
                 </span>
               ))}
             </div>
           )}
         </div>
+        <button
+          type="button"
+          onClick={scrollToFeaturedCases}
+          className={`hero-scroll-cue ${heroCueHidden ? 'is-hidden' : ''}`}
+          aria-label={lang === 'vi' ? 'Cuộn xuống case nổi bật' : 'Scroll to featured cases'}
+        >
+          <ChevronDown size={26} strokeWidth={1.9} aria-hidden="true" />
+        </button>
       </section>
 
       <CaseStudyShowcase stories={storyTargets} lang={lang} openingBaseMs={heroDelays.cta + 200} />
       <RedFlagsSection block={redFlagsBlock} />
 
       <section id="packages" className="home-section-pad px-5 lg:px-10">
-        <div className="max-w-6xl mx-auto">
+        <div className="quiet-zone quiet-zone--strong max-w-6xl mx-auto">
           <SectionHeader
             title={packagesBlock?.heading || 'The One Packages'}
             intro={packagesBlock?.body || (lang === 'vi' ? 'Chọn nhịp tăng trưởng phù hợp với giai đoạn của bạn.' : 'Choose the growth system that fits your stage.')}
@@ -1331,7 +1525,7 @@ export default function BrandHomePage({
             // card so it stays legible over the drifting wave blobs.
             <div
               data-reveal="soft"
-              className="mx-auto mt-8 flex max-w-[760px] items-start gap-2.5 rounded-[14px] border border-primary/[0.12] bg-white/85 px-6 py-[18px] shadow-[0_12px_34px_rgba(219,39,119,0.08)] backdrop-blur-[12px]"
+              className="quiet-zone mx-auto mt-8 flex max-w-[760px] items-start gap-2.5 rounded-[14px] border border-primary/[0.12] bg-white/85 px-6 py-[18px] shadow-[0_12px_34px_rgba(219,39,119,0.08)] backdrop-blur-[12px]"
             >
               <Info size={15} strokeWidth={2.5} className="mt-0.5 shrink-0 text-[#B3124B]" aria-hidden="true" />
               <p className="whitespace-pre-line text-left text-[13px] italic leading-[1.6] text-[#6b4a58]">
@@ -1343,7 +1537,7 @@ export default function BrandHomePage({
         </div>
       </section>
 
-      <PeopleSection block={peopleBlock} />
+      <PeopleSection block={peopleBlock} showClosingLines={!closingHasPortal} />
       <ClosingBanner block={closingBlock} stories={storyTargets} faqItems={closingFaqItems} />
     </BrandLayout>
   )

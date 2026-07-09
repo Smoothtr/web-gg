@@ -7,3 +7,5 @@ backups
 
 _test-flow-wave-theone*.html
 scripts/_r12-inspect*.mjs
+_assets/
+.env.vercel.local

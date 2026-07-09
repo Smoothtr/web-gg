@@ -32,6 +32,7 @@ type MetricLayoutSlot = {
   rowSpan: number
 }
 type StoryGlassTone = 'tone-on-dark' | 'tone-on-medium' | 'tone-on-light'
+type StoryTileAnchor = 'left-stack' | 'right-stack' | 'top-band' | 'split-diagonal' | 'center-low'
 
 // Round 11 P0-C: adaptive-tone cache. Tones are computed ONCE per image from a tiny
 // w_64 Cloudinary variant during idle time, then cached in memory + localStorage.
@@ -362,6 +363,7 @@ type StorySlide = {
   image: string | null
   metrics: CaseStudyMetric[]
   isHero: boolean
+  tileAnchor: StoryTileAnchor
 }
 
 const STORY_SLIDE_COUNT = 4
@@ -373,6 +375,14 @@ const storySlideTileZones: MetricLayoutSlot[] = [
   { column: 1, row: 2, columnSpan: 3, rowSpan: 6 },
   { column: 4, row: 2, columnSpan: 3, rowSpan: 6 },
 ]
+
+const storyTileAnchors: StoryTileAnchor[] = ['left-stack', 'right-stack', 'top-band', 'split-diagonal', 'center-low']
+
+function resolveSlideTileAnchor(slideMetrics: CaseStudyMetric[], slideIndex: number): StoryTileAnchor {
+  const explicit = slideMetrics.find((metric) => metric.tileAnchor && metric.tileAnchor !== 'auto')?.tileAnchor
+  if (explicit && explicit !== 'auto') return explicit
+  return storyTileAnchors[slideIndex % storyTileAnchors.length]
+}
 
 function buildStorySlides(story: CaseStudy): StorySlide[] {
   const images = carouselImagesForStory(story)
@@ -408,8 +418,9 @@ function buildStorySlides(story: CaseStudy): StorySlide[] {
   return perSlide.map((slideMetrics, slideIndex) => ({
     // <4 images: repeat the last one; none at all: brand gradient background.
     image: images[slideIndex] ?? images[images.length - 1] ?? null,
-    metrics: slideMetrics.slice(0, slideIndex === 0 ? 3 : 4),
+    metrics: slideMetrics.slice(0, 3),
     isHero: slideIndex === 0,
+    tileAnchor: resolveSlideTileAnchor(slideMetrics, slideIndex),
   }))
 }
 
@@ -709,7 +720,7 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
                   </div>
                 </>
               ) : (
-                <div className={`story-slide-tiles ${slideIndex === 2 ? 'is-left' : 'is-right'}`}>
+                <div className={`story-slide-tiles is-${slide.tileAnchor}`}>
                   {slide.metrics.map((metric, metricIndex) => (
                     <div
                       key={`${story.id}-slide-${slideIndex}-metric-${metricIndex}`}

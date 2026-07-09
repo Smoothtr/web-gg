@@ -6,6 +6,7 @@ export type CaseStudyMetric = {
   // Round 9: carousel slide + chart display config (from CMS)
   slide?: number
   display?: 'bignum' | 'beforeafter' | 'donut' | 'bars' | 'trend'
+  tileAnchor?: 'auto' | 'left-stack' | 'right-stack' | 'top-band' | 'split-diagonal' | 'center-low'
   from?: string
   to?: string
   benchmarkLabel?: string

@@ -49,6 +49,7 @@ export type CmsLocalizedBlockItemFields = {
     // Round 9: Instagram-carousel slide assignment + chart display type
     slide?: number
     display?: 'bignum' | 'beforeafter' | 'donut' | 'bars' | 'trend'
+    tileAnchor?: 'auto' | 'left-stack' | 'right-stack' | 'top-band' | 'split-diagonal' | 'center-low'
     from?: string
     to?: string
     benchmarkLabel?: string
@@ -130,6 +131,7 @@ export type CmsBlockItem = {
     // Round 9: Instagram-carousel slide assignment + chart display type
     slide?: number
     display?: 'bignum' | 'beforeafter' | 'donut' | 'bars' | 'trend'
+    tileAnchor?: 'auto' | 'left-stack' | 'right-stack' | 'top-band' | 'split-diagonal' | 'center-low'
     from?: string
     to?: string
     benchmarkLabel?: string
@@ -179,6 +181,7 @@ export type CmsBlock = {
   backgroundVideoMobileUrl?: string
   backgroundVideoMobileWebmUrl?: string
   backgroundVideoPoster?: string
+  heroTextAlign?: 'center' | 'left'
   subtitle?: string
   textColor?: 'light' | 'dark' | 'gradient'
   dividerShow?: boolean
@@ -316,6 +319,9 @@ export type CmsHomepageBackground = {
   atmoColor: string
   atmoCount: number
   opacity: number
+  pointSize: number
+  density: number
+  scrollRise: number
   flow: number
   waveHeight: number
   pointerStrength: number

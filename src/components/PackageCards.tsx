@@ -2,18 +2,12 @@
 
 import { useEffect, useMemo, useRef, useState, type CSSProperties, type KeyboardEvent, type MouseEvent } from 'react'
 import { ArrowRight, Check, ChevronDown, Megaphone, Rocket, Workflow } from 'lucide-react'
-import type { BrandLang } from '../brandContent'
+import { localizedPath, type BrandLang } from '../brandContent'
 import type { CmsBlockItem } from '../cms/types'
 import { CmsIcon } from './CmsIcon'
 import { openBookingModal } from './openBookingModal'
 
 const packageIcons = [Rocket, Workflow, Megaphone]
-const fallbackCaseStudyLinks: Record<string, string> = {
-  'the-one-start': '/the-one#cota-cuti',
-  'the-one-system': '/the-one#curnon',
-  'the-one-scale': '/the-one#inkaholic',
-}
-
 function resolvePackageId(item: CmsBlockItem) {
   const hash = item.href?.match(/#([^#?]+)/)?.[1]
   if (hash) return decodeURIComponent(hash)
@@ -105,6 +99,18 @@ function rowGroupName(row: PackageFeatureRow) {
   if (!source) return 'Deliverables'
   // Legacy labels are stored UPPERCASE; show them in title case.
   return source.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())
+}
+
+function normalizePackageCtaLabel(value: string | undefined, fallback: string) {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed || /choose this package|chọn gói này/i.test(trimmed)) return fallback
+  return trimmed
+}
+
+function normalizePackageStoryLabel(value: string | undefined, fallback: string) {
+  const trimmed = value?.trim() ?? ''
+  if (!trimmed || /see case studies|xem chuyện tình|stories\s*[?�→]/i.test(trimmed)) return fallback
+  return trimmed
 }
 
 // Round 7 A4: compact card shows the content chip + up to 4 featured rows; every
@@ -209,8 +215,8 @@ export function PackageCards({
   const [selectedIndex, setSelectedIndex] = useState(systemIndex)
   const [highlightedId, setHighlightedId] = useState('')
   const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>({})
-  const chooseLabel = lang === 'vi' ? 'Chọn gói này' : 'Choose this package'
-  const caseStudyLabel = lang === 'vi' ? 'Xem chuyện tình tụi mình' : 'See case studies'
+  const chooseLabel = lang === 'vi' ? 'Chọn The One này' : 'Pick this One'
+  const caseStudyLabel = lang === 'vi' ? 'Xem tất cả stories' : 'View all stories'
 
   useEffect(() => {
     setSelectedIndex(systemIndex)
@@ -258,7 +264,7 @@ export function PackageCards({
           const highlight = highlightedId === id
           const expanded = Boolean(expandedIds[id])
           const Icon = packageIcons[index] ?? Rocket
-          const caseStudyLink = item.caseStudyLink?.trim() || fallbackCaseStudyLinks[id] || ''
+          const caseStudyLink = localizedPath(lang, '/the-one')
 
           const selected = selectedIndex === index
 
@@ -375,16 +381,16 @@ export function PackageCards({
                   <button
                     type="button"
                     onClick={openBookingModal}
-                    className="btn-shine cta-idle inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-4 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] hover:opacity-95"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border-[1.5px] border-primary bg-white/30 px-4 py-2.5 text-sm font-extrabold text-primary transition hover:bg-primary hover:text-white"
                   >
-                    {item.ctaText || chooseLabel}
+                    {normalizePackageCtaLabel(item.ctaText, chooseLabel)}
                   </button>
                   {caseStudyLink && (
                     <a
                       href={caseStudyLink}
-                      className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 bg-white/40 px-4 py-2.5 text-sm font-extrabold text-primary transition-colors hover:bg-primary/10"
+                      className="inline-flex items-center justify-center gap-2 px-2 py-2 text-sm font-extrabold text-primary transition-colors hover:text-primary/70"
                     >
-                      {item.caseStudyLabel || caseStudyLabel}
+                      {normalizePackageStoryLabel(item.caseStudyLabel, caseStudyLabel)}
                       <ArrowRight size={15} />
                     </a>
                   )}
@@ -406,7 +412,7 @@ export function PackageCards({
         const id = cardIds[index]
         const highlight = highlightedId === id
         const Icon = packageIcons[index] ?? Rocket
-        const caseStudyLink = item.caseStudyLink?.trim() || fallbackCaseStudyLinks[id] || ''
+        const caseStudyLink = localizedPath(lang, '/the-one')
 
         return (
           <div
@@ -464,16 +470,16 @@ export function PackageCards({
               <button
                 type="button"
                 onClick={openBookingModal}
-                className="btn-shine cta-idle inline-flex items-center justify-center gap-2 rounded-full bg-primary px-4 py-2.5 text-sm font-bold text-on-primary gg-btn-primary glow-orange hover:opacity-90"
+                className="inline-flex items-center justify-center gap-2 rounded-full border-[1.5px] border-primary bg-white/20 px-4 py-2.5 text-sm font-extrabold text-primary transition hover:bg-primary hover:text-white"
               >
-                {item.ctaText || chooseLabel}
+                {normalizePackageCtaLabel(item.ctaText, chooseLabel)}
               </button>
               {caseStudyLink && (
                 <a
                   href={caseStudyLink}
-                  className="inline-flex items-center justify-center gap-2 rounded-full border border-primary/25 px-4 py-2.5 text-sm font-extrabold text-primary transition-colors hover:bg-primary/10"
+                  className="inline-flex items-center justify-center gap-2 px-2 py-2 text-sm font-extrabold text-primary transition-colors hover:text-primary/70"
                 >
-                  {item.caseStudyLabel || caseStudyLabel}
+                  {normalizePackageStoryLabel(item.caseStudyLabel, caseStudyLabel)}
                   <ArrowRight size={15} />
                 </a>
               )}

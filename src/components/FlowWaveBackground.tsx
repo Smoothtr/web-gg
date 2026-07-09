@@ -15,9 +15,10 @@ const LOOK_START_Z = 2
 const LOOK_END_Z = -16
 const PARALLAX = 1.0
 const POINTER_RADIUS = 7.0
-const POINT_SIZE = 5.5
+const POINT_SIZE = 3.5
 const SCALE = 0.275
-const SCROLL_RISE = 1.0
+const SCROLL_RISE = 0
+const GEOMETRY_DENSITY = 0.8
 const ATMO_SIZE = 22
 const ATMO_SPEED = 0.8
 
@@ -112,6 +113,9 @@ type TunableConfig = {
   colorHigh: string
   atmoColor: string
   opacity: number
+  pointSize: number
+  density: number
+  scrollRise: number
   flow: number
   waveHeight: number
   pointerStrength: number
@@ -214,7 +218,10 @@ export function FlowWaveBackground({ settings }: { settings: CmsHomepageBackgrou
       const cfg = tunablesRef.current
       const group = new THREE.Group()
       scene.add(group)
-      const geo = mobile ? new THREE.SphereGeometry(4.2, 120, 360) : new THREE.SphereGeometry(4.2, 200, 600)
+      const geometryDensity = clamp(cfg.density || GEOMETRY_DENSITY, 0.35, 1)
+      const widthSegments = Math.max(72, Math.round((mobile ? 120 : 200) * geometryDensity))
+      const heightSegments = Math.max(216, Math.round((mobile ? 360 : 600) * geometryDensity))
+      const geo = new THREE.SphereGeometry(4.2, widthSegments, heightSegments)
       const uniforms = {
         uTime: { value: 0 },
         uStream: { value: 0 },
@@ -222,7 +229,7 @@ export function FlowWaveBackground({ settings }: { settings: CmsHomepageBackgrou
         uColLow: { value: hexToVec3(cfg.colorLow) },
         uColHigh: { value: hexToVec3(cfg.colorHigh) },
         uOpacity: { value: cfg.opacity },
-        uSize: { value: mobile ? 7 : POINT_SIZE },
+        uSize: { value: (cfg.pointSize || POINT_SIZE) * (mobile ? 1.25 : 1) },
         uWaveHeight: { value: cfg.waveHeight },
         uFlow: { value: cfg.flow },
         uScale: { value: SCALE },
@@ -243,7 +250,7 @@ export function FlowWaveBackground({ settings }: { settings: CmsHomepageBackgrou
       pts.frustumCulled = false
       group.add(pts)
 
-      const atmoN = mobile ? 110 : settings.atmoCount
+      const atmoN = mobile ? Math.round(Math.min(110, settings.atmoCount) * geometryDensity) : Math.round(settings.atmoCount * geometryDensity)
       const atmoPositions = new Float32Array(atmoN * 3)
       const atmoSizes = new Float32Array(atmoN)
       const atmoSeeds = new Float32Array(atmoN)
@@ -330,12 +337,13 @@ export function FlowWaveBackground({ settings }: { settings: CmsHomepageBackgrou
         uniforms.uColLow.value.copy(hexToVec3(live.colorLow))
         uniforms.uColHigh.value.copy(hexToVec3(live.colorHigh))
         uniforms.uOpacity.value = live.opacity
+        uniforms.uSize.value = (live.pointSize || POINT_SIZE) * (mobile ? 1.25 : 1)
         uniforms.uFlow.value = live.flow
         uniforms.uRepelStrength.value = mobile ? 0 : live.pointerStrength
         atmoMat.uniforms.uColor.value.copy(hexToVec3(live.atmoColor))
         state.stream += dt * (live.flow * 2.0) * 4.0
         uniforms.uStream.value = state.stream
-        uniforms.uWaveHeight.value = live.waveHeight * (1 + scroll * SCROLL_RISE)
+        uniforms.uWaveHeight.value = live.waveHeight * (1 + scroll * (live.scrollRise ?? SCROLL_RISE))
         const ea = Math.min(scroll / 0.35, 1.0)
         const e = ea * ea * (3 - 2 * ea)
         camera.position.set(m.x * PARALLAX, lerp(CAM_START_Y, CAM_END_Y, e) + m.y * PARALLAX * 0.3, lerp(CAM_START_Z, CAM_END_Z, e))

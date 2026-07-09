@@ -1,14 +1,17 @@
 import { footerCopyByLang, navItemsByLang, type BrandLang } from '../brandContent'
 import type { CmsHomepageBackground, CmsLink, CmsLocalizedSiteSettings, CmsSiteSettings } from './types'
 
-// Defaults from GG99-FlowWave-Background-Spec.md — Plan B "Ink Wave" v2 aurora (tested values).
+// Defaults from Round 13 "Wave Option A": lighter, finer particles with no scroll-thickening.
 export const defaultHomepageBackground: CmsHomepageBackground = {
   mode: 'flow-wave',
   colorLow: '#ffc9d2',
-  colorHigh: '#b3124b',
+  colorHigh: '#F0A8C4',
   atmoColor: '#ff5f8f',
-  atmoCount: 220,
-  opacity: 0.5,
+  atmoCount: 150,
+  opacity: 0.28,
+  pointSize: 3.5,
+  density: 0.8,
+  scrollRise: 0,
   flow: 0.6,
   waveHeight: 2.6,
   pointerStrength: 0.8,
@@ -34,6 +37,9 @@ export function mergeHomepageBackground(value?: Partial<CmsHomepageBackground> |
     atmoColor: value?.atmoColor?.trim() || fallback.atmoColor,
     atmoCount: num(value?.atmoCount, fallback.atmoCount),
     opacity: num(value?.opacity, fallback.opacity),
+    pointSize: num(value?.pointSize, fallback.pointSize),
+    density: num(value?.density, fallback.density),
+    scrollRise: num(value?.scrollRise, fallback.scrollRise),
     flow: num(value?.flow, fallback.flow),
     waveHeight: num(value?.waveHeight, fallback.waveHeight),
     pointerStrength: num(value?.pointerStrength, fallback.pointerStrength),
