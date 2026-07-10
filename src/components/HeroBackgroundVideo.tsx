@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { getHomepageVideoDeliveryWidth, retargetCloudinaryVideoWidth } from '../lib/cloudinaryVideo'
 
 export type HeroVideoSources = {
   mp4?: string
@@ -9,6 +10,8 @@ export type HeroVideoSources = {
   mobileWebm?: string
   poster?: string
   mobilePoster?: string
+  posterSrcSet?: string
+  mobilePosterSrcSet?: string
 }
 
 type ActiveSources = {
@@ -31,13 +34,16 @@ export function HeroBackgroundVideo({ sources }: { sources: HeroVideoSources }) 
 
   useEffect(() => {
     const mobile = window.matchMedia('(max-width: 767px)').matches
+    const deliveryWidth = getHomepageVideoDeliveryWidth(window.innerWidth, window.devicePixelRatio, mobile)
     setActivePoster((mobile ? sources.mobilePoster : sources.poster) || sources.poster || sources.mobilePoster)
     if (prefersStaticHero()) return
-    setActive(
-      mobile
-        ? { mp4: sources.mobileMp4 || sources.mp4, webm: sources.mobileWebm || sources.webm }
-        : { mp4: sources.mp4, webm: sources.webm },
-    )
+    const selected = mobile
+      ? { mp4: sources.mobileMp4 || sources.mp4, webm: sources.mobileWebm || sources.webm }
+      : { mp4: sources.mp4, webm: sources.webm }
+    setActive({
+      mp4: retargetCloudinaryVideoWidth(selected.mp4, deliveryWidth),
+      webm: retargetCloudinaryVideoWidth(selected.webm, deliveryWidth),
+    })
     // Source choice is made once on mount; CMS URL changes arrive via full page render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -87,8 +93,20 @@ export function HeroBackgroundVideo({ sources }: { sources: HeroVideoSources }) 
         // Poster paints immediately (SSR) and is the permanent fallback for
         // reduced-motion / Data Saver, where the <video> never mounts.
         <picture>
-          {sources.mobilePoster && <source media="(max-width: 767px)" srcSet={sources.mobilePoster} />}
-          <img src={sources.poster || sources.mobilePoster} alt="" className="absolute inset-0 h-full w-full object-cover [object-position:center_65%]" />
+          {sources.mobilePoster && (
+            <source
+              media="(max-width: 767px)"
+              srcSet={sources.mobilePosterSrcSet || sources.mobilePoster}
+              sizes="100vw"
+            />
+          )}
+          <img
+            src={sources.poster || sources.mobilePoster}
+            srcSet={sources.posterSrcSet}
+            sizes="100vw"
+            alt=""
+            className="absolute inset-0 h-full w-full object-cover [object-position:center_65%]"
+          />
         </picture>
       )}
       {active && (

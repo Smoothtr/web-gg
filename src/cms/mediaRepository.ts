@@ -1,4 +1,5 @@
 import { getFirebaseClient } from './firebaseClient'
+import { getImageRequirements, getVideoRequirements } from './mediaRequirements'
 
 const MAX_IMAGE_BYTES = 10 * 1024 * 1024
 const MAX_VIDEO_BYTES = 25 * 1024 * 1024
@@ -26,28 +27,6 @@ type CompleteUploadResponse = {
   url?: string
 }
 
-type ImageRequirements = {
-  label: string
-  minWidth: number
-  minHeight: number
-  minRatio: number
-  maxRatio: number
-}
-
-function getImageRequirements(folder: string): ImageRequirements | null {
-  const value = folder.toLowerCase()
-  if (value.includes('background-carousel')) return { label: 'Story image', minWidth: 1080, minHeight: 1350, minRatio: 0.72, maxRatio: 0.9 }
-  if (value.includes('homepage-banner-desktop')) return { label: 'Homepage desktop banner', minWidth: 1600, minHeight: 650, minRatio: 2, maxRatio: 2.8 }
-  if (value.includes('homepage-banner-mobile') || value.includes('banner-mobile')) return { label: 'Mobile banner', minWidth: 900, minHeight: 675, minRatio: 1.1, maxRatio: 1.6 }
-  if (value.includes('homepage-thumbnails')) return { label: 'Homepage thumbnail', minWidth: 960, minHeight: 540, minRatio: 1.55, maxRatio: 1.95 }
-  if (value.includes('/avatars')) return { label: 'Avatar', minWidth: 176, minHeight: 176, minRatio: 0.8, maxRatio: 1.25 }
-  if (value.includes('background-mobile') || value.includes('video-mobile')) return { label: 'Mobile hero/poster', minWidth: 720, minHeight: 960, minRatio: 0.5, maxRatio: 1.05 }
-  if (/\/hero\/background$/.test(value)) return { label: 'Desktop hero background', minWidth: 1600, minHeight: 900, minRatio: 1.5, maxRatio: 2.1 }
-  if (/\/people\/[^/]+\/banner$/.test(value)) return { label: 'People desktop banner', minWidth: 1600, minHeight: 600, minRatio: 1.8, maxRatio: 3.2 }
-  if (/\/people\/[^/]+\/thumbnail$/.test(value)) return { label: 'People thumbnail', minWidth: 640, minHeight: 400, minRatio: 1.4, maxRatio: 1.9 }
-  return null
-}
-
 async function getImageDimensions(file: File) {
   if ('createImageBitmap' in window) {
     const bitmap = await createImageBitmap(file)
@@ -71,6 +50,29 @@ async function getImageDimensions(file: File) {
   })
 }
 
+async function getVideoDimensions(file: File) {
+  return await new Promise<{ width: number; height: number }>((resolve, reject) => {
+    const url = URL.createObjectURL(file)
+    const video = document.createElement('video')
+    const cleanup = () => {
+      video.removeAttribute('src')
+      video.load()
+      URL.revokeObjectURL(url)
+    }
+    video.preload = 'metadata'
+    video.onloadedmetadata = () => {
+      const dimensions = { width: video.videoWidth, height: video.videoHeight }
+      cleanup()
+      resolve(dimensions)
+    }
+    video.onerror = () => {
+      cleanup()
+      reject(new Error('Could not read video dimensions.'))
+    }
+    video.src = url
+  })
+}
+
 async function validateUploadFile(file: File, kind: CmsUploadKind, folder: string) {
   if (kind === 'video') {
     if (!['video/mp4', 'video/webm', 'video/ogg'].includes(file.type)) {
@@ -78,6 +80,17 @@ async function validateUploadFile(file: File, kind: CmsUploadKind, folder: strin
     }
     if (file.size > MAX_VIDEO_BYTES) {
       throw new Error('Video files must be 25MB or smaller.')
+    }
+    const requirements = getVideoRequirements(folder)
+    if (requirements) {
+      const { width, height } = await getVideoDimensions(file)
+      const ratio = width / Math.max(1, height)
+      if (width < requirements.minWidth || height < requirements.minHeight) {
+        throw new Error(`${requirements.label} must be at least ${requirements.minWidth}x${requirements.minHeight}px. Selected video is ${width}x${height}px.`)
+      }
+      if (ratio < requirements.minRatio || ratio > requirements.maxRatio) {
+        throw new Error(`${requirements.label} has the wrong aspect ratio.`)
+      }
     }
     return
   }

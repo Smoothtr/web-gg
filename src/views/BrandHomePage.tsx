@@ -9,8 +9,6 @@ import {
   Heart,
   Info,
   MessageCircle,
-  Pause,
-  Play,
   Repeat2,
   Send,
 } from 'lucide-react'
@@ -24,7 +22,8 @@ import { FlowWaveBackground } from '../components/FlowWaveBackground'
 import { HeroBackgroundVideo, type HeroVideoSources } from '../components/HeroBackgroundVideo'
 import { getCmsBlock, getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
 import { mergeHomepageBackground } from '../cms/siteSettings'
-import { cldSrcSet, cldWidth } from '../lib/cloudinaryImage'
+import { cldResponsiveSrcSet, cldSrcSet, cldWidth } from '../lib/cloudinaryImage'
+import { getHomepageVideoDeliveryWidth, retargetCloudinaryVideoWidth } from '../lib/cloudinaryVideo'
 import { buildHomeFaqSchema, getHomeClosingFaqItems } from '../cms/homeFaqSchema'
 import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference'
 import type { CmsBlock, CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
@@ -36,14 +35,76 @@ const defaultHeroGradient = 'linear-gradient(180deg,#FF7AA8 0%,#FF4D7D 45%,#FFB1
 const defaultClosingPortalSources: HeroVideoSources = {
   mp4: '/closing/closing-portal-1920.mp4',
   webm: '/closing/closing-portal-1920.webm',
-  mobileMp4: '/closing/closing-portal-1280.mp4',
-  mobileWebm: '/closing/closing-portal-1280.webm',
+  mobileMp4: '/closing/closing-portal-1440.mp4',
+  mobileWebm: '/closing/closing-portal-1440.webm',
   poster: '/closing/closing-portal-poster.webp',
   mobilePoster: '/closing/closing-portal-poster.webp',
 }
+const homepageVideoTargetWidth = {
+  mobile: 1440,
+  desktop: 3840,
+} as const
+const legacyLowResolutionMobileVideoMarkers = [
+  // Current hero mobile exports are only 1280x720. Until a true 1440px mobile
+  // master is uploaded, derive the mobile rendition from the sharper desktop
+  // master instead. New mobile uploads are not on this list and stay respected.
+  '/njmm9y7l4xpdoi6rr07t.mp4',
+  '/togvf3ict63sjnoj807s.webm',
+  '/closing/closing-portal-1280.',
+] as const
+const cloudinaryVideoUploadMarker = '/video/upload/'
 const heroFirstWordDelayMs = 420
 const heroWordStepMs = 90
 const heroWordDurationMs = 430
+
+function isCloudinaryVideo(url: string | undefined) {
+  return Boolean(url?.includes('res.cloudinary.com/') && url.includes(cloudinaryVideoUploadMarker))
+}
+
+function cloudinaryVideoVariant(url: string | undefined, width: number) {
+  const value = url?.trim()
+  if (!value || !isCloudinaryVideo(value)) return value || undefined
+
+  // Never fake detail: c_limit preserves the native source ceiling. A future
+  // 4K CMS master will automatically use the full desktop target, while
+  // q_auto:best + vc_auto keeps each rendition efficient for its codec.
+  return value.replace(
+    cloudinaryVideoUploadMarker,
+    `${cloudinaryVideoUploadMarker}c_limit,w_${width},q_auto:best,vc_auto/`,
+  )
+}
+
+function mobileVideoMaster(desktop: string | undefined, mobile: string | undefined) {
+  const desktopValue = desktop?.trim()
+  const mobileValue = mobile?.trim()
+
+  if (
+    desktopValue
+    && mobileValue
+    && legacyLowResolutionMobileVideoMarkers.some((marker) => mobileValue.includes(marker))
+  ) return desktopValue
+
+  // Respect every new/bespoke mobile crop. Upload validation guarantees future
+  // CMS mobile videos are at least 1440px wide.
+  if (mobileValue) return mobileValue
+  return mobileValue || desktopValue
+}
+
+function getAdaptiveHomepageVideoSources(sources: HeroVideoSources): HeroVideoSources {
+  const mobileMp4Master = mobileVideoMaster(sources.mp4, sources.mobileMp4)
+  const mobileWebmMaster = mobileVideoMaster(sources.webm, sources.mobileWebm)
+
+  return {
+    mp4: cloudinaryVideoVariant(sources.mp4, homepageVideoTargetWidth.desktop),
+    webm: cloudinaryVideoVariant(sources.webm, homepageVideoTargetWidth.desktop),
+    mobileMp4: cloudinaryVideoVariant(mobileMp4Master, homepageVideoTargetWidth.mobile),
+    mobileWebm: cloudinaryVideoVariant(mobileWebmMaster, homepageVideoTargetWidth.mobile),
+    poster: cldWidth(sources.poster, 1920, 'best') || undefined,
+    mobilePoster: cldWidth(sources.mobilePoster || sources.poster, 1080, 'best') || undefined,
+    posterSrcSet: cldResponsiveSrcSet(sources.poster, 'full', 'best'),
+    mobilePosterSrcSet: cldResponsiveSrcSet(sources.mobilePoster || sources.poster, 'mobile', 'best'),
+  }
+}
 
 function resolvePrimaryBookingCtaLabel(label?: string) {
   const trimmed = label?.trim() ?? ''
@@ -243,13 +304,13 @@ function StaticHeroBackground({ block }: { block: ReturnType<typeof getCmsBlock>
         {mobile && (
           <source
             media="(max-width: 767px)"
-            srcSet={cldSrcSet(mobile, [640, 960, 1280]) || undefined}
+            srcSet={cldResponsiveSrcSet(mobile, 'mobile', 'best') || undefined}
             sizes="100vw"
           />
         )}
         <img
-          src={cldWidth(desktop || mobile, 1600)}
-          srcSet={cldSrcSet(desktop || mobile, [1280, 1600, 2400])}
+          src={cldWidth(desktop || mobile, 1920, 'best')}
+          srcSet={cldResponsiveSrcSet(desktop || mobile, 'full', 'best')}
           sizes="100vw"
           alt=""
           decoding="async"
@@ -262,14 +323,20 @@ function StaticHeroBackground({ block }: { block: ReturnType<typeof getCmsBlock>
 }
 
 function getClosingPortalSources(block?: ReturnType<typeof getCmsBlock>): HeroVideoSources {
-  return {
+  const configuredMobileMp4 = block?.backgroundVideoMobileUrl?.trim()
+  const configuredMobileWebm = block?.backgroundVideoMobileWebmUrl?.trim()
+  return getAdaptiveHomepageVideoSources({
     mp4: block?.backgroundVideoUrl?.trim() || defaultClosingPortalSources.mp4,
     webm: block?.backgroundVideoWebmUrl?.trim() || defaultClosingPortalSources.webm,
-    mobileMp4: block?.backgroundVideoMobileUrl?.trim() || defaultClosingPortalSources.mobileMp4,
-    mobileWebm: block?.backgroundVideoMobileWebmUrl?.trim() || defaultClosingPortalSources.mobileWebm,
+    mobileMp4: !configuredMobileMp4 || configuredMobileMp4 === '/closing/closing-portal-1280.mp4'
+      ? defaultClosingPortalSources.mobileMp4
+      : configuredMobileMp4,
+    mobileWebm: !configuredMobileWebm || configuredMobileWebm === '/closing/closing-portal-1280.webm'
+      ? defaultClosingPortalSources.mobileWebm
+      : configuredMobileWebm,
     poster: block?.backgroundVideoPoster?.trim() || defaultClosingPortalSources.poster,
     mobilePoster: block?.backgroundVideoMobilePoster?.trim() || block?.backgroundVideoPoster?.trim() || defaultClosingPortalSources.mobilePoster,
-  }
+  })
 }
 
 function hasVideoSource(sources: HeroVideoSources) {
@@ -308,11 +375,15 @@ function ClosingPortalVideo({ sources }: { sources: HeroVideoSources }) {
     if (!nearViewport) return
     if (prefersStaticMedia()) return
     const mobile = window.matchMedia('(max-width: 767px)').matches
-    setActive(
-      mobile
-        ? { mp4: sources.mobileMp4 || sources.mp4, webm: sources.mobileWebm || sources.webm, poster: sources.mobilePoster || sources.poster }
-        : { mp4: sources.mp4, webm: sources.webm, poster: sources.poster || sources.mobilePoster },
-    )
+    const deliveryWidth = getHomepageVideoDeliveryWidth(window.innerWidth, window.devicePixelRatio, mobile)
+    const selected = mobile
+      ? { mp4: sources.mobileMp4 || sources.mp4, webm: sources.mobileWebm || sources.webm, poster: sources.mobilePoster || sources.poster }
+      : { mp4: sources.mp4, webm: sources.webm, poster: sources.poster || sources.mobilePoster }
+    setActive({
+      mp4: retargetCloudinaryVideoWidth(selected.mp4, deliveryWidth),
+      webm: retargetCloudinaryVideoWidth(selected.webm, deliveryWidth),
+      poster: selected.poster,
+    })
     // Source choice follows the first viewport load; CMS edits arrive through a new render.
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [nearViewport, sources.mobileMp4, sources.mobileWebm, sources.mp4, sources.webm])
@@ -349,8 +420,16 @@ function ClosingPortalVideo({ sources }: { sources: HeroVideoSources }) {
     <div ref={wrapperRef} className="closing-portal-media" aria-hidden="true">
       {(sources.poster || sources.mobilePoster) && (
         <picture>
-          {sources.mobilePoster && <source media="(max-width: 767px)" srcSet={sources.mobilePoster} />}
-          <img src={sources.poster || sources.mobilePoster} alt="" className="closing-portal-poster" />
+          {sources.mobilePoster && (
+            <source media="(max-width: 767px)" srcSet={sources.mobilePosterSrcSet || sources.mobilePoster} sizes="100vw" />
+          )}
+          <img
+            src={sources.poster || sources.mobilePoster}
+            srcSet={sources.posterSrcSet}
+            sizes="100vw"
+            alt=""
+            className="closing-portal-poster"
+          />
         </picture>
       )}
       {active && (
@@ -550,7 +629,7 @@ function CaseStudyPreviewPopover({ story, lang }: { story: CaseStudy; lang: Bran
             aria-hidden={index === 0 ? undefined : true}
             className={`absolute inset-0 h-full w-full transition duration-700 ${
               isLogoLikeImage(imageUrl) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffe3ef)] object-contain p-10' : 'object-cover'
-            } ${activeImage === index ? 'opacity-100 scale-100' : 'opacity-0 scale-[1.03]'}`}
+            } ${activeImage === index ? 'scale-100 opacity-100' : 'scale-[1.03] opacity-0'}`}
           />
         ))}
         <div className="absolute inset-0 bg-gradient-to-t from-black/10 via-transparent to-white/18" aria-hidden="true" />
@@ -607,7 +686,6 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
   const [bannerIndex, setBannerIndex] = useState(0)
   const [previewStory, setPreviewStory] = useState<StoryPreviewState | null>(null)
   const [canHover, setCanHover] = useState(false)
-  const [manuallyPaused, setManuallyPaused] = useState(false)
   const [interacting, setInteracting] = useState(false)
   const [pageVisible, setPageVisible] = useState(true)
   const reducedMotion = useReducedMotionPreference()
@@ -628,13 +706,13 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
   }, [])
 
   useEffect(() => {
-    if (showcaseStories.length < 2 || reducedMotion || manuallyPaused || interacting || !pageVisible) return
+    if (showcaseStories.length < 2 || reducedMotion || interacting || !pageVisible) return
     const interval = window.setInterval(() => {
       if (Date.now() < pauseUntilRef.current) return
       setBannerIndex((index) => (index + 1) % showcaseStories.length)
     }, 8000)
     return () => window.clearInterval(interval)
-  }, [interacting, manuallyPaused, pageVisible, reducedMotion, showcaseStories.length])
+  }, [interacting, pageVisible, reducedMotion, showcaseStories.length])
 
   useEffect(() => {
     const rail = railRef.current
@@ -746,12 +824,12 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
                 <picture key={`${story.id}-banner-${index}`}>
                   <source
                     media="(max-width: 767px)"
-                    srcSet={cldSrcSet(media.mobile, [640, 960, 1280])}
+                    srcSet={cldResponsiveSrcSet(media.mobile, 'mobile', 'best')}
                     sizes="100vw"
                   />
                   <img
-                    src={cldWidth(media.desktop, 1600)}
-                    srcSet={cldSrcSet(media.desktop, [1280, 1600, 2400])}
+                    src={cldWidth(media.desktop, 1920, 'best')}
+                    srcSet={cldResponsiveSrcSet(media.desktop, 'full', 'best')}
                     sizes="(min-width: 1280px) 1152px, 96vw"
                     alt={index === activeBannerIndex ? `${story.brandName} case study` : ''}
                     aria-hidden={index === activeBannerIndex ? undefined : true}
@@ -828,7 +906,6 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
                   showPreview(story, event.currentTarget)
                 }}
                 onMouseLeave={closePreviewSoon}
-                onClick={() => pauseAuto(12000)}
                 className={[
                   // Round 7 A2.2: two-tier card — clean 16:9 image on top, glass caption bar below.
                   'group relative shrink-0 basis-[42vw] snap-start rounded-[18px] p-[2px] text-left outline-none transition duration-300 hover:-translate-y-1 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primary sm:basis-[calc((100%_-_8px)/2.25)] md:basis-[calc((100%_-_16px)/3)] lg:basis-[calc((100%_-_24px)/4)]',
@@ -875,19 +952,7 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
               <span className="text-sm font-black text-[#3d1226]">{allStoriesLabel}</span>
             </a>
           </div>
-          <div className="mt-2 flex items-center justify-between gap-3">
-            {showcaseStories.length > 1 && (
-              <button
-                type="button"
-                onClick={() => setManuallyPaused((paused) => !paused)}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-xs font-black text-[#3d1226] shadow-sm transition hover:border-primary/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                aria-pressed={manuallyPaused}
-                aria-label={manuallyPaused ? 'Play featured case studies' : 'Pause featured case studies'}
-              >
-                {manuallyPaused ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}
-                <span>{manuallyPaused ? 'Play' : 'Pause'}</span>
-              </button>
-            )}
+          <div className="mt-2 flex items-center justify-end gap-3">
             <a href={allStoriesHref} className="inline-flex items-center gap-1.5 text-sm font-black text-primary transition hover:text-primary/70">
               {allStoriesLabel}
               <ArrowUpRight size={15} strokeWidth={2.6} aria-hidden="true" />
@@ -1111,7 +1176,6 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
   const [activeIndex, setActiveIndex] = useState(0)
   const [previewMember, setPreviewMember] = useState<{ member: CmsBlockItem; style: CSSProperties } | null>(null)
   const [canHover, setCanHover] = useState(false)
-  const [manuallyPaused, setManuallyPaused] = useState(false)
   const [interacting, setInteracting] = useState(false)
   const [pageVisible, setPageVisible] = useState(true)
   const reducedMotion = useReducedMotionPreference()
@@ -1134,13 +1198,13 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
   }, [])
 
   useEffect(() => {
-    if (!hasPeople || members.length < 2 || reducedMotion || manuallyPaused || interacting || !pageVisible) return
+    if (!hasPeople || members.length < 2 || reducedMotion || interacting || !pageVisible) return
     const interval = window.setInterval(() => {
       if (Date.now() < pauseUntilRef.current) return
       setActiveIndex((index) => (index + 1) % members.length)
     }, autoSlideSeconds * 1000)
     return () => window.clearInterval(interval)
-  }, [autoSlideSeconds, hasPeople, interacting, manuallyPaused, members.length, pageVisible, reducedMotion])
+  }, [autoSlideSeconds, hasPeople, interacting, members.length, pageVisible, reducedMotion])
 
   useEffect(() => {
     const rail = railRef.current
@@ -1229,10 +1293,10 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
             </div>
           ) : (
             <picture>
-              <source media="(max-width: 767px)" srcSet={cldSrcSet(activeMobileBanner, [640, 960, 1280])} sizes="100vw" />
+              <source media="(max-width: 767px)" srcSet={cldResponsiveSrcSet(activeMobileBanner, 'mobile', 'best')} sizes="100vw" />
               <img
-                src={cldWidth(activeBanner, 1280)}
-                srcSet={cldSrcSet(activeBanner, [1280, 2400])}
+                src={cldWidth(activeBanner, 1920, 'best')}
+                srcSet={cldResponsiveSrcSet(activeBanner, 'full', 'best')}
                 sizes="(min-width: 1280px) 1152px, 96vw"
                 decoding="async"
                 alt={`${activeMember.title} banner`}
@@ -1329,20 +1393,6 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
             )
           })}
           </div>
-          {members.length > 1 && (
-            <div className="mt-2 flex justify-start">
-              <button
-                type="button"
-                onClick={() => setManuallyPaused((paused) => !paused)}
-                className="inline-flex min-h-11 items-center gap-2 rounded-full border border-primary/20 bg-white/80 px-4 py-2 text-xs font-black text-[#3d1226] shadow-sm transition hover:border-primary/45 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary"
-                aria-pressed={manuallyPaused}
-                aria-label={manuallyPaused ? 'Play people carousel' : 'Pause people carousel'}
-              >
-                {manuallyPaused ? <Play size={16} aria-hidden="true" /> : <Pause size={16} aria-hidden="true" />}
-                <span>{manuallyPaused ? 'Play' : 'Pause'}</span>
-              </button>
-            </div>
-          )}
         </div>
         {previewMember && canHover && (
           <div
@@ -1535,17 +1585,15 @@ export default function BrandHomePage({
   const heroLineOne = heroBlock?.heading?.trim() || 'The One by gg99'
   const heroLineTwo = heroBlock?.subtitle?.trim() || heroLines[0] || 'The only one digital agency you needed'
   const isDefaultHeroTitle = heroLineOne.toLowerCase() === 'the one by gg99'
-  const heroVideoSources = {
+  const heroVideoSources = getAdaptiveHomepageVideoSources({
     mp4: heroBlock?.backgroundVideoUrl?.trim() || undefined,
     webm: heroBlock?.backgroundVideoWebmUrl?.trim() || undefined,
     mobileMp4: heroBlock?.backgroundVideoMobileUrl?.trim() || undefined,
     mobileWebm: heroBlock?.backgroundVideoMobileWebmUrl?.trim() || undefined,
     poster: heroBlock?.backgroundVideoPoster?.trim() || undefined,
     mobilePoster: heroBlock?.backgroundVideoMobilePoster?.trim() || heroBlock?.backgroundVideoPoster?.trim() || undefined,
-  }
+  })
   const heroHasVideo = Boolean(heroVideoSources.mp4 || heroVideoSources.webm)
-  const heroTextAlign = heroBlock?.heroTextAlign === 'center' ? 'center' : 'left'
-  const heroAlignLeft = heroTextAlign === 'left'
   const heroHasOwnBackground = !heroHasVideo && (!flowWaveActive || Boolean(heroBlock?.backgroundImageUrl?.trim() || heroBlock?.backgroundImageMobileUrl?.trim()))
   const rawHeroTextMode = heroBlock?.textColor ?? 'light'
   // "light" was chosen for opaque hero backgrounds (gradient/video); on the transparent aurora canvas it is unreadable.
@@ -1622,7 +1670,7 @@ export default function BrandHomePage({
 
       <section
         className={`home-hero relative flex overflow-hidden ${
-          heroHasVideo ? 'home-hero--video items-start' : 'home-hero--static items-center'
+          heroHasVideo ? 'home-hero--video items-center' : 'home-hero--static items-center'
         } ${heroReady ? 'is-ready' : ''}`}
         style={heroHasOwnBackground ? heroBackgroundStyle(heroBlock) : undefined}
       >
@@ -1633,8 +1681,8 @@ export default function BrandHomePage({
           // the sub-line sits on the brightest part of the sky.
           <div
             aria-hidden="true"
-            className={`pointer-events-none absolute top-[6%] h-[46%] w-[min(920px,94vw)] ${heroAlignLeft ? 'left-[26%] -translate-x-1/2' : 'left-1/2 -translate-x-1/2'}`}
-            style={{ background: `radial-gradient(closest-side, rgba(40,10,25,${heroAlignLeft ? 0.34 : 0.32}), transparent 100%)` }}
+            className="pointer-events-none absolute left-1/2 top-[6%] h-[58%] w-[min(980px,96vw)] -translate-x-1/2"
+            style={{ background: 'radial-gradient(closest-side, rgba(40,10,25,0.34), transparent 100%)' }}
           />
         )}
         {heroHasOwnBackground && (
@@ -1645,9 +1693,9 @@ export default function BrandHomePage({
           </>
         )}
         <div
-          className={`relative mx-auto flex w-full ${heroAlignLeft ? 'max-w-6xl items-start text-left' : 'max-w-5xl items-center text-center'} flex-col px-5 lg:px-10 ${
+          className={`home-hero-copy--centered relative mx-auto flex w-full max-w-5xl flex-col items-center px-5 text-center lg:px-10 ${
             heroHasVideo ? 'home-hero-copy home-hero-copy--video' : 'home-hero-copy home-hero-copy--static justify-center'
-          } ${heroAlignLeft ? 'home-hero-copy--left' : ''}`}
+          }`}
         >
           <h1
             className={[
@@ -1686,7 +1734,7 @@ export default function BrandHomePage({
           {showHeroStatChips && (
             <div
               style={{ '--hero-delay': `${heroDelays.cta + 230}ms` } as CSSProperties}
-              className={`home-hero-item home-hero-stat-chips mt-5 flex flex-wrap gap-2 ${heroAlignLeft ? 'justify-start' : 'justify-center'}`}
+              className="home-hero-item home-hero-stat-chips mt-5 flex flex-wrap justify-center gap-2"
             >
               {heroStatChips.map((chip) => (
                 <span

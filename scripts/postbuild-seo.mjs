@@ -75,7 +75,7 @@ function hrefFor(lang, href) {
   return content.localizedPath(lang, href)
 }
 
-const clientNames = ['Wefresh Market', 'Cota Cuti', 'Curnon', 'Phi Noi', 'HIS', 'Inkaholic', 'Qanda Book', 'DTX Asia', 'Annita']
+const clientNames = ['Wefresh Market', 'Cota Cuti', 'Curnon', 'PHINƠI', 'HIS', 'Inkaholic', 'Qanda Book', 'DTX Asia', 'Annita']
 
 const audienceByLang = {
   vi: {

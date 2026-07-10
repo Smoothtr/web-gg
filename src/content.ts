@@ -48,7 +48,7 @@ export const clients = [
   { name: 'Wefresh Market', logo: '/logo-wefresh.png',    slotW: 139, imgW: 125, imgH: 125, imgL: 5,  imgT: -27 },
   { name: 'Cota Cuti',      logo: '/logo-cotacuti.png',   slotW: 174, imgW: 173, imgH: 173, imgL: 1,  imgT: -54 },
   { name: 'Curnon',         logo: '/logo-curnon.png',     slotW: 130, imgW: 108, imgH: 108, imgL: 11, imgT: -26 },
-  { name: 'Phi Noi',        logo: '/logo-phinoi.png',     slotW: 174, imgW: 183, imgH: 183, imgL: -4, imgT: -63 },
+  { name: 'PHINƠI',         logo: '/logo-phinoi.png',     slotW: 174, imgW: 183, imgH: 183, imgL: -4, imgT: -63 },
   { name: 'HIS',            logo: '/logo-his.png',        slotW: 119, imgW: 126, imgH: 126, imgL: -3, imgT: -33 },
   { name: 'Inkaholic',      logo: '/logo-inkaholic.png',  slotW: 174, imgW: 174, imgH: 174, imgL: 0,  imgT: -59 },
   { name: 'Qanda Book',     logo: '/logo-qandabook.png',  slotW: 174, imgW: 177, imgH: 177, imgL: -1, imgT: -59 },

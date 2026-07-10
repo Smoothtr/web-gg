@@ -1,28 +1,96 @@
-// Round 11 P0-A: the single Cloudinary delivery helper. The frontend must never
-// render a raw upload URL — every Cloudinary image goes through here.
-//
-// Quality guardrails (Round 11 §2, PO constraint):
-// - q_auto:good minimum (never eco/low), f_auto (AVIF/WebP are sharper per byte)
-// - widths in the role table are already ×2 DPR; callers pass 1x/2x pairs via srcset
-// - c_limit: never upscale beyond the original — originals stay untouched in Cloudinary
+// Central Cloudinary delivery helpers. Keep originals in Cloudinary and let the
+// browser select the smallest candidate that is sharp for its layout width and
+// device pixel ratio.
 
 const CLOUDINARY_IMAGE_URL = /res\.cloudinary\.com\/[^/]+\/image\/upload\//
+const CLOUDINARY_DELIVERY_TRANSFORM = /\/upload\/[^/]*\b[wcqf]_[^/]*\//
+
+export const CLOUDINARY_IMAGE_MAX_WIDTH = 3840
+
+export const CLOUDINARY_RESPONSIVE_WIDTHS = {
+  // A 360px phone at DPR 3 and the widest common mobile layout are covered by
+  // 1080px without downloading a desktop-sized source.
+  mobile: [360, 540, 720, 900, 1080],
+  // Browser width-descriptor selection is DPR-aware when the caller supplies an
+  // accurate `sizes` attribute. The 4K candidate is therefore only requested
+  // for a genuinely large/high-DPR rendered image.
+  desktop: [1080, 1440, 1920, 2560, 3200, 3840],
+  full: [360, 540, 720, 900, 1080, 1440, 1920, 2560, 3200, 3840],
+} as const
+
+export type CloudinaryImageQuality = 'good' | 'best'
+export type CloudinaryResponsiveProfile = keyof typeof CLOUDINARY_RESPONSIVE_WIDTHS
 
 function isTransformableCloudinaryUrl(url: string) {
   if (!CLOUDINARY_IMAGE_URL.test(url)) return false
-  // Already carries a transform (w_/c_/q_ segment right after /upload/) — leave it alone.
-  if (/\/upload\/[^/]*\b[wcq]_[^/]*\//.test(url)) return false
+  // Do not stack delivery transforms on top of a URL intentionally transformed
+  // in the CMS. Raw upload URLs and URLs produced by this helper remain stable.
+  if (CLOUDINARY_DELIVERY_TRANSFORM.test(url)) return false
   return true
 }
 
-export function cldWidth(url: string | undefined, width: number, quality: 'good' | 'best' = 'good') {
-  const value = (url ?? '').trim()
-  if (!value || !isTransformableCloudinaryUrl(value)) return value
-  return value.replace('/upload/', `/upload/f_auto,q_auto:${quality},c_limit,w_${width}/`)
+function normalizeWidth(width: number) {
+  if (!Number.isFinite(width) || width <= 0) return 0
+  return Math.min(CLOUDINARY_IMAGE_MAX_WIDTH, Math.round(width))
 }
 
-export function cldSrcSet(url: string | undefined, widths: number[], quality: 'good' | 'best' = 'good') {
+function normalizeWidths(widths: readonly number[]) {
+  return [...new Set(widths.map(normalizeWidth).filter(Boolean))].sort((left, right) => left - right)
+}
+
+export function cldWidth(
+  url: string | undefined,
+  width: number,
+  quality: CloudinaryImageQuality = 'good',
+) {
+  const value = (url ?? '').trim()
+  const safeWidth = normalizeWidth(width)
+  if (!value || !safeWidth || !isTransformableCloudinaryUrl(value)) return value
+  if (quality === 'best') {
+    return value.replace(
+      '/upload/',
+      `/upload/c_limit,w_${safeWidth}/e_sharpen:40/f_auto,q_auto:best/`,
+    )
+  }
+  return value.replace('/upload/', `/upload/f_auto,q_auto:${quality},c_limit,w_${safeWidth}/`)
+}
+
+export function cldSrcSet(
+  url: string | undefined,
+  widths: readonly number[],
+  quality: CloudinaryImageQuality = 'good',
+) {
   const value = (url ?? '').trim()
   if (!value || !isTransformableCloudinaryUrl(value)) return undefined
-  return widths.map((width) => `${cldWidth(value, width, quality)} ${width}w`).join(', ')
+  const candidates = normalizeWidths(widths)
+  if (!candidates.length) return undefined
+  return candidates.map((width) => `${cldWidth(value, width, quality)} ${width}w`).join(', ')
+}
+
+export function cldResponsiveSrcSet(
+  url: string | undefined,
+  profile: CloudinaryResponsiveProfile = 'full',
+  quality: CloudinaryImageQuality = 'good',
+) {
+  return cldSrcSet(url, CLOUDINARY_RESPONSIVE_WIDTHS[profile], quality)
+}
+
+export function cldResponsiveImage(
+  url: string | undefined,
+  options: {
+    profile?: CloudinaryResponsiveProfile
+    quality?: CloudinaryImageQuality
+    sizes: string
+    fallbackWidth?: number
+  },
+) {
+  const profile = options.profile ?? 'full'
+  const widths = CLOUDINARY_RESPONSIVE_WIDTHS[profile]
+  const fallbackWidth = options.fallbackWidth ?? (profile === 'mobile' ? 1080 : 1920)
+
+  return {
+    src: cldWidth(url, fallbackWidth, options.quality),
+    srcSet: cldSrcSet(url, widths, options.quality),
+    sizes: options.sizes,
+  }
 }

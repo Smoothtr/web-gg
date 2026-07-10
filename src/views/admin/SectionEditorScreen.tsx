@@ -1800,8 +1800,8 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                   <p className="text-xs font-extrabold uppercase tracking-widest text-primary">{isHomepageClosing ? 'Closing cinematic video' : 'Hero background video'}</p>
                   <p className="text-xs font-semibold text-on-surface-variant">
                     {isHomepageClosing
-                      ? 'When a video URL is set the closing band plays it (autoplay, muted, loop). Leave all fields empty to fall back to the FAQ-only layout. Mobile fields serve the 1280px versions.'
-                      : 'When a video URL is set the hero plays it (autoplay, muted, loop) and the aurora + wave show through below. Leave all fields empty to fall back to the aurora background. Mobile fields serve the 720p versions.'}
+                      ? 'The closing band uses adaptive, muted loop video. Upload a 3840×2160 desktop master and a 1440px-wide mobile master; the site generates lighter responsive delivery URLs.'
+                      : 'The hero uses adaptive, muted loop video. Upload a 3840×2160 desktop master and a 1440px-wide mobile master; the site generates lighter responsive delivery URLs.'}
                   </p>
                   <Field label="Video URL - desktop MP4">
                     <div className="grid gap-2">
@@ -1818,7 +1818,15 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
                     <TextInput value={block.backgroundVideoWebmUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoWebmUrl: value })} placeholder="https://res.cloudinary.com/.../video.webm" />
                   </Field>
                   <Field label="Video URL - mobile MP4">
-                    <TextInput value={block.backgroundVideoMobileUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoMobileUrl: value })} placeholder="https://res.cloudinary.com/.../mobile.mp4" />
+                    <div className="grid gap-2">
+                      <TextInput value={block.backgroundVideoMobileUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoMobileUrl: value })} placeholder="https://res.cloudinary.com/.../mobile.mp4" />
+                      <VideoUploadButton
+                        folder={`cms/pages/${pageId}/${blockId}/video-mobile`}
+                        onUploaded={(url) => updateBlock(pageId, blockId, { backgroundVideoMobileUrl: url })}
+                        onError={setUploadError}
+                        label={block.backgroundVideoMobileUrl ? 'Replace mobile video' : 'Upload mobile video'}
+                      />
+                    </div>
                   </Field>
                   <Field label="Video URL - mobile WebM (optional)">
                     <TextInput value={block.backgroundVideoMobileWebmUrl ?? ''} onChange={(value) => updateBlock(pageId, blockId, { backgroundVideoMobileWebmUrl: value })} placeholder="https://res.cloudinary.com/.../mobile.webm" />
@@ -1850,20 +1858,9 @@ export default function SectionEditorScreen({ pageId, blockId }: { pageId: strin
               {block.id === 'hero' && (
                 <div className="grid gap-3 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
                   {isHomepageHero && (
-                    <Field label="Hero text alignment" hint="center = current layout, left = move headline to the left dark wing.">
-                      <div className="inline-flex w-fit rounded-xl border border-outline-variant/45 bg-surface p-1">
-                        {(['center', 'left'] as const).map((align) => (
-                          <button
-                            key={align}
-                            type="button"
-                            onClick={() => updateBlock(pageId, blockId, { heroTextAlign: align })}
-                            className={`rounded-lg px-4 py-2 text-xs font-extrabold transition-colors ${
-                              (block.heroTextAlign ?? 'center') === align ? 'bg-primary text-on-primary' : 'text-on-surface-variant hover:text-primary'
-                            }`}
-                          >
-                            {align}
-                          </button>
-                        ))}
+                    <Field label="Hero text alignment" hint="Locked to the approved responsive composition.">
+                      <div className="inline-flex w-fit rounded-xl border border-primary/20 bg-primary/10 px-4 py-2 text-xs font-extrabold text-primary">
+                        Center — mobile and desktop
                       </div>
                     </Field>
                   )}

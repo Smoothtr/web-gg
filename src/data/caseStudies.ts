@@ -72,7 +72,7 @@ export const caseStudies: CaseStudy[] = [
   {
     id: 'phinoi',
     accountName: 'phinoi.vn',
-    displayName: 'PHINOI',
+    displayName: 'PHINƠI',
     logoUrl: '/logo-phinoi.png',
     verified: true,
     brandName: 'PHINƠI',

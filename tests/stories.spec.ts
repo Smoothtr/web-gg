@@ -9,7 +9,7 @@ test('treats the CMS story and metric collections as authoritative', () => {
     body: '',
     items: [{
       id: 'phinoi',
-      title: 'PHINOI',
+      title: 'PHINƠI',
       keyMetrics: [{ value: '+1', label: 'CMS-only metric', tileAnchor: 'center-low' }],
     }],
   }
@@ -57,7 +57,8 @@ test.describe('The One Stories', () => {
     await expect(page.locator(`#${targetId}`)).toBeFocused()
   })
 
-  test('keeps every metric, limits slides to two tiles, and exposes explicit autoplay controls', async ({ page }) => {
+  test('keeps every metric, limits slides to two tiles, and uses manual navigation only', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
     const firstPost = page.locator('article.story-post').first()
     await firstPost.scrollIntoViewIfNeeded()
 
@@ -65,8 +66,11 @@ test.describe('The One Stories', () => {
     const slideCount = await dots.count()
     expect(slideCount).toBeGreaterThan(1)
 
-    const toggle = firstPost.getByRole('button', { name: /carousel autoplay is disabled by reduced-motion settings/i })
-    await expect(toggle).toBeDisabled()
+    await expect(firstPost.locator('.story-carousel-toggle')).toHaveCount(0)
+    await expect(firstPost.getByRole('button', { name: /^(play|pause) carousel$/i })).toHaveCount(0)
+    await expect(dots.first()).toHaveAttribute('aria-pressed', 'true')
+    await page.waitForTimeout(5_500)
+    await expect(dots.first()).toHaveAttribute('aria-pressed', 'true')
 
     let carouselMetricCount = 0
     for (let index = 0; index < slideCount; index += 1) {

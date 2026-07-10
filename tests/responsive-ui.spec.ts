@@ -65,20 +65,34 @@ test.describe('responsive UI matrix', () => {
     expect(await page.evaluate(() => window.scrollY)).toBe(initialScroll)
   })
 
-  test('keeps the Stories header, feed and controls usable at boundary widths', async ({ page }) => {
-    for (const width of [1024, 768, 767, 390, 360]) {
+  test('keeps the Stories feed and Instagram-style pagination compact at every breakpoint', async ({ page }) => {
+    for (const width of [1440, 1024, 768, 767, 430, 390, 360]) {
       await openAt(page, '/the-one', width, width <= 390 ? 844 : 900)
 
       const firstPost = page.locator('article.story-post').first()
       const postBox = await firstPost.boundingBox()
       expect(postBox).not.toBeNull()
-      expect(postBox!.width).toBeLessThanOrEqual(width >= 1024 ? 661 : width >= 768 ? 641 : width)
+      expect(postBox!.width).toBeLessThanOrEqual(width >= 1280 ? 860 : width >= 1024 ? 661 : width >= 768 ? 641 : width)
 
       const firstDot = firstPost.locator('.story-carousel-dot').first()
       const dotBox = await firstDot.boundingBox()
       expect(dotBox).not.toBeNull()
-      expect(dotBox!.width).toBeGreaterThanOrEqual(44)
-      expect(dotBox!.height).toBeGreaterThanOrEqual(44)
+      expect(dotBox!.width).toBeGreaterThanOrEqual(24)
+      expect(dotBox!.width).toBeLessThanOrEqual(28)
+      expect(dotBox!.height).toBeGreaterThanOrEqual(24)
+      expect(dotBox!.height).toBeLessThanOrEqual(28)
+
+      const dotIndicatorBox = await firstDot.locator('.story-carousel-dot-indicator').boundingBox()
+      expect(dotIndicatorBox).not.toBeNull()
+      expect(dotIndicatorBox!.width).toBeLessThanOrEqual(7)
+      expect(dotIndicatorBox!.height).toBeLessThanOrEqual(7)
+
+      const dotRail = firstPost.locator('.story-carousel-dots')
+      const dotRailBox = await dotRail.boundingBox()
+      expect(dotRailBox).not.toBeNull()
+      expect(dotRailBox!.width).toBeLessThanOrEqual(postBox!.width)
+      expect(dotRailBox!.height).toBeLessThanOrEqual(28)
+      await expect(firstPost.locator('.story-carousel-toggle')).toHaveCount(0)
 
       if (width <= 767) {
         await expect(page.locator('header .ig-script-title', { hasText: 'The One Stories' })).toBeVisible()

@@ -171,7 +171,7 @@ for (const update of pageUpdates) {
     sourcePath: update.snapshot.ref.path,
     archivedAt,
     archivedAtServer: FieldValue.serverTimestamp(),
-    reason: 'Approved PHINOI metric consistency sync.',
+    reason: 'Approved PHINƠI metric consistency sync.',
     data: update.snapshot.data(),
   })
   batch.set(update.snapshot.ref, {

@@ -16,6 +16,7 @@ import { CmsIcon } from '../components/CmsIcon'
 import { SeoHead } from '../components/SeoHead'
 import { getCmsBlock, getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
 import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
+import { cldResponsiveImage, cldWidth } from '../lib/cloudinaryImage'
 
 const cardIcons = [Building2, Orbit, Network]
 
@@ -43,8 +44,31 @@ function AboutPeopleSection({ block }: { block?: ReturnType<typeof getCmsBlock> 
             style={{ '--photo-rotation': memberRotation(index) } as CSSProperties}
           >
             <div className="relative aspect-square overflow-hidden bg-surface-container-low">
-              <img src={member.imageUrl || member.photoUrl || '/logo-gg.png'} alt={member.imageAlt || member.title} className="h-full w-full object-cover transition duration-300 group-hover:opacity-0" />
-              <img src={member.funPhotoUrl || member.backgroundImageUrl || member.imageUrl || '/logo-gg.png'} alt="" aria-hidden="true" className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-300 group-hover:opacity-100" />
+              <img
+                {...cldResponsiveImage(member.imageUrl || member.photoUrl || '/logo-gg.png', {
+                  profile: 'full',
+                  quality: 'best',
+                  sizes: '(min-width: 1024px) 352px, (min-width: 640px) 50vw, 100vw',
+                  fallbackWidth: 1080,
+                })}
+                alt={member.imageAlt || member.title}
+                className="h-full w-full object-cover transition duration-300 group-hover:opacity-0"
+                loading="lazy"
+                decoding="async"
+              />
+              <img
+                {...cldResponsiveImage(member.funPhotoUrl || member.backgroundImageUrl || member.imageUrl || '/logo-gg.png', {
+                  profile: 'full',
+                  quality: 'best',
+                  sizes: '(min-width: 1024px) 352px, (min-width: 640px) 50vw, 100vw',
+                  fallbackWidth: 1080,
+                })}
+                alt=""
+                aria-hidden="true"
+                className="absolute inset-0 h-full w-full object-cover opacity-0 transition duration-300 group-hover:opacity-100"
+                loading="lazy"
+                decoding="async"
+              />
             </div>
             <div className="px-1 pb-2 pt-4 text-center">
               <h3 className="people-signature text-[24px] leading-none text-on-surface">{member.title}</h3>
@@ -119,7 +143,7 @@ export default function AboutBrandPage({ lang = 'en', cmsPage, homePage, siteSet
               <div className="absolute inset-0 opacity-[0.04]" style={{ backgroundImage: 'radial-gradient(circle at 2px 2px, white 1px, transparent 0)', backgroundSize: '28px 28px' }} />
               <div className="relative">
                 {heroBlock?.imageUrl ? (
-                  <img src={heroBlock.imageUrl} alt={heroBlock.imageAlt || 'GG99'} className="mb-5 h-14 w-auto object-contain" />
+                  <img src={cldWidth(heroBlock.imageUrl, 224, 'best')} alt={heroBlock.imageAlt || 'GG99'} className="mb-5 h-14 w-auto object-contain" decoding="async" />
                 ) : (
                   <Sparkles size={28} className="text-primary-fixed-dim mb-5" />
                 )}
@@ -149,7 +173,7 @@ export default function AboutBrandPage({ lang = 'en', cmsPage, homePage, siteSet
                     <article key={`${card.title}-${index}`} className="glass-card card-hover rounded-2xl p-6">
                       <span className="icon-chip h-11 w-11 mb-4">
                         {card.imageUrl ? (
-                          <img src={card.imageUrl} alt={card.imageAlt || card.title} className="h-6 w-6 object-contain" />
+                          <img src={cldWidth(card.imageUrl, 96, 'best')} alt={card.imageAlt || card.title} className="h-6 w-6 object-contain" loading="lazy" decoding="async" />
                         ) : (
                           <CmsIcon name={card.icon} fallback={Icon} size={20} />
                         )}

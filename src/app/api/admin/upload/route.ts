@@ -3,6 +3,7 @@ import { FieldValue } from 'firebase-admin/firestore'
 import { NextResponse, type NextRequest } from 'next/server'
 import { authenticateAdminRequest } from '../../../../cms/adminAuth'
 import { getFirebaseAdminDb } from '../../../../cms/firebaseAdmin'
+import { getImageRequirements, getVideoRequirements } from '../../../../cms/mediaRequirements'
 import { checkRateLimit, rateLimitResponse } from '../../../../security/serverRateLimit'
 
 export const runtime = 'nodejs'
@@ -24,14 +25,6 @@ const VIDEO_TYPES = new Map([
 ])
 
 type UploadKind = 'image' | 'video'
-
-type ImageRequirements = {
-  label: string
-  minWidth: number
-  minHeight: number
-  minRatio: number
-  maxRatio: number
-}
 
 type UploadIntent = {
   uid: string
@@ -87,20 +80,6 @@ function buildPublicId(fileName: string) {
   const dotIndex = fileName.lastIndexOf('.')
   const base = dotIndex >= 0 ? fileName.slice(0, dotIndex) : fileName
   return `${Date.now()}-${slugify(base).slice(0, 48) || 'asset'}-${randomUUID().slice(0, 12)}`
-}
-
-function getImageRequirements(folder: string): ImageRequirements | null {
-  const value = folder.toLowerCase()
-  if (value.includes('background-carousel')) return { label: 'Story image', minWidth: 1080, minHeight: 1350, minRatio: 0.72, maxRatio: 0.9 }
-  if (value.includes('homepage-banner-desktop')) return { label: 'Homepage desktop banner', minWidth: 1600, minHeight: 650, minRatio: 2, maxRatio: 2.8 }
-  if (value.includes('homepage-banner-mobile') || value.includes('banner-mobile')) return { label: 'Mobile banner', minWidth: 900, minHeight: 675, minRatio: 1.1, maxRatio: 1.6 }
-  if (value.includes('homepage-thumbnails')) return { label: 'Homepage thumbnail', minWidth: 960, minHeight: 540, minRatio: 1.55, maxRatio: 1.95 }
-  if (value.includes('/avatars')) return { label: 'Avatar', minWidth: 176, minHeight: 176, minRatio: 0.8, maxRatio: 1.25 }
-  if (value.includes('background-mobile') || value.includes('video-mobile')) return { label: 'Mobile hero/poster', minWidth: 720, minHeight: 960, minRatio: 0.5, maxRatio: 1.05 }
-  if (/\/hero\/background$/.test(value)) return { label: 'Desktop hero background', minWidth: 1600, minHeight: 900, minRatio: 1.5, maxRatio: 2.1 }
-  if (/\/people\/[^/]+\/banner$/.test(value)) return { label: 'People desktop banner', minWidth: 1600, minHeight: 600, minRatio: 1.8, maxRatio: 3.2 }
-  if (/\/people\/[^/]+\/thumbnail$/.test(value)) return { label: 'People thumbnail', minWidth: 640, minHeight: 400, minRatio: 1.4, maxRatio: 1.9 }
-  return null
 }
 
 function createSignature(params: Record<string, string>, apiSecret: string) {
@@ -231,6 +210,19 @@ function validateCloudinaryResource(resource: CloudinaryResource, intent: Upload
     if (requirements) {
       const ratio = width / height
       if (width < requirements.minWidth || height < requirements.minHeight) {
+        return `${requirements.label} must be at least ${requirements.minWidth}x${requirements.minHeight}px.`
+      }
+      if (ratio < requirements.minRatio || ratio > requirements.maxRatio) {
+        return `${requirements.label} has the wrong aspect ratio.`
+      }
+    }
+  } else {
+    const requirements = getVideoRequirements(intent.folder)
+    if (requirements) {
+      const width = Number(resource.width)
+      const height = Number(resource.height)
+      const ratio = width / height
+      if (!width || !height || width < requirements.minWidth || height < requirements.minHeight) {
         return `${requirements.label} must be at least ${requirements.minWidth}x${requirements.minHeight}px.`
       }
       if (ratio < requirements.minRatio || ratio > requirements.maxRatio) {

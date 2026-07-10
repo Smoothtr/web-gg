@@ -19,6 +19,7 @@ import { openBookingModal } from '../components/openBookingModal'
 import { SeoHead } from '../components/SeoHead'
 import type { ServerInsightPost } from '../cms/serverRepository'
 import type { CmsSiteSettings } from '../cms/types'
+import { cldResponsiveImage } from '../lib/cloudinaryImage'
 
 type RenderableInsightPost = InsightPost | ServerInsightPost
 
@@ -28,6 +29,12 @@ function getInsightCoverImage(post: RenderableInsightPost) {
 
 function ArticleCard({ post, featured = false }: { post: RenderableInsightPost; featured?: boolean }) {
   const coverImage = getInsightCoverImage(post)
+  const responsiveCover = cldResponsiveImage(coverImage, {
+    profile: 'full',
+    quality: 'best',
+    sizes: featured ? '(min-width: 1024px) 552px, 100vw' : '(min-width: 768px) 50vw, 100vw',
+    fallbackWidth: 1080,
+  })
 
   return (
     <a
@@ -39,7 +46,7 @@ function ArticleCard({ post, featured = false }: { post: RenderableInsightPost; 
     >
       <div className={featured ? 'min-h-[280px]' : 'aspect-[1200/630]'}>
         <img
-          src={coverImage}
+          {...responsiveCover}
           width={1200}
           height={630}
           alt={post.coverAlt}
@@ -216,7 +223,20 @@ export function InsightArticlePage({
 
         <section className="px-5 pb-12 lg:px-10">
           <div className="mx-auto max-w-5xl overflow-hidden rounded-2xl border border-outline-variant/40 bg-surface shadow-xl">
-            <img src={getInsightCoverImage(post)} width={1200} height={630} alt={post.coverAlt} className="aspect-[1200/630] w-full object-cover" />
+            <img
+              {...cldResponsiveImage(getInsightCoverImage(post), {
+                profile: 'full',
+                quality: 'best',
+                sizes: '(min-width: 1024px) 1024px, 100vw',
+                fallbackWidth: 1920,
+              })}
+              width={1200}
+              height={630}
+              alt={post.coverAlt}
+              className="aspect-[1200/630] w-full object-cover"
+              fetchPriority="high"
+              decoding="async"
+            />
           </div>
         </section>
 

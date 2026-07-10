@@ -13,8 +13,6 @@ import {
   Instagram,
   MoreHorizontal,
   Music2,
-  Pause,
-  Play,
   Plus,
   X,
 } from 'lucide-react'
@@ -27,7 +25,7 @@ import type { CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
 import type { CaseStudy, CaseStudyMetric } from '../data/caseStudies'
 import { BigStatTile, StoryMetricChart } from '../components/StoryMetricCharts'
-import { cldSrcSet, cldWidth } from '../lib/cloudinaryImage'
+import { cldResponsiveSrcSet, cldSrcSet, cldWidth } from '../lib/cloudinaryImage'
 import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference'
 
 type SocialKey = 'facebook' | 'instagram' | 'tiktok' | 'website'
@@ -458,21 +456,14 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
   const summaryCloseRef = useRef<HTMLButtonElement | null>(null)
   const touchStartX = useRef(0)
   const touchStartY = useRef(0)
-  const initialDelayRef = useRef(5000 + (index % 4) * 1200)
   const slides = useMemo(() => buildStorySlides(story), [story])
   const theme = useMemo(() => getStoryTheme(story, index), [index, story])
   const [activeSlide, setActiveSlide] = useState(0)
   const [activatedSlides, setActivatedSlides] = useState<boolean[]>(() => slides.map((_, slideIndex) => slideIndex === 0))
   const [slideTones, setSlideTones] = useState<StoryGlassTone[]>(() => slides.map(() => 'tone-on-medium'))
   const [inView, setInView] = useState(false)
-  const [pageVisible, setPageVisible] = useState(true)
-  const [reducedMotion, setReducedMotion] = useState(false)
   const [canHover, setCanHover] = useState(false)
-  const [hovered, setHovered] = useState(false)
-  const [focusWithin, setFocusWithin] = useState(false)
   const [interacted, setInteracted] = useState(false)
-  const [manuallyPaused, setManuallyPaused] = useState(false)
-  const [pausedUntil, setPausedUntil] = useState(0)
   const [summaryExpanded, setSummaryExpanded] = useState(false)
   const [summaryNeedsMore, setSummaryNeedsMore] = useState(false)
   const summarySheetId = `${story.id}-summary-sheet`
@@ -485,14 +476,6 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
   }
 
   useEffect(() => {
-    const media = window.matchMedia('(prefers-reduced-motion: reduce)')
-    const sync = () => setReducedMotion(media.matches)
-    sync()
-    media.addEventListener('change', sync)
-    return () => media.removeEventListener('change', sync)
-  }, [])
-
-  useEffect(() => {
     setCanHover(window.matchMedia?.('(hover: hover) and (pointer: fine)').matches ?? false)
   }, [])
 
@@ -500,7 +483,7 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
     if (!('IntersectionObserver' in window)) return
     const element = frameRef.current
     if (!element) return
-    // Round 11 P0-C: threshold 0.3 — autoplay/charts only for posts truly in view.
+    // Round 11 P0-C: threshold 0.3 — chart effects only run for posts truly in view.
     // Observe the outer .story-post article: it carries content-visibility:auto and
     // is never itself skipped — IO does NOT fire for elements inside skipped subtrees.
     const target = element.closest('.story-post') ?? element
@@ -509,38 +492,10 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
     return () => observer.disconnect()
   }, [])
 
-  // Round 11 P0-C: everything stops while the tab is hidden.
-  useEffect(() => {
-    const sync = () => setPageVisible(!document.hidden)
-    sync()
-    document.addEventListener('visibilitychange', sync)
-    return () => document.removeEventListener('visibilitychange', sync)
-  }, [])
-
   // Chart animations run once per slide per view: remember which slides were shown.
   useEffect(() => {
     setActivatedSlides((current) => (current[activeSlide] ? current : current.map((value, slideIndex) => (slideIndex === activeSlide ? true : value))))
   }, [activeSlide])
-
-  // Auto-advance every 5s while visible; posts are phase-shifted so the feed doesn't tick in unison.
-  useEffect(() => {
-    if (
-      slideCount <= 1
-      || !inView
-      || !pageVisible
-      || reducedMotion
-      || summaryExpanded
-      || manuallyPaused
-      || focusWithin
-      || (canHover && hovered)
-    ) return
-    const wait = Math.max(initialDelayRef.current, pausedUntil - Date.now())
-    const timer = window.setTimeout(() => {
-      initialDelayRef.current = 5000
-      setActiveSlide((current) => (current + 1) % slideCount)
-    }, wait)
-    return () => window.clearTimeout(timer)
-  }, [activeSlide, canHover, focusWithin, hovered, inView, manuallyPaused, pageVisible, pausedUntil, reducedMotion, slideCount, summaryExpanded])
 
   // Round 11 P0-C: adaptive tones resolve once per post during idle time from the
   // w_64 thumbnail cache. Slide changes never trigger decode or pixel sampling.
@@ -615,29 +570,19 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
     }
   }, [summaryExpanded])
 
-  function pauseAuto(ms: number) {
-    setPausedUntil(Date.now() + ms)
-  }
-
   // Manual navigation clamps at the ends — IG does not loop.
   function goTo(delta: number) {
     if (slideCount <= 1) return
     setInteracted(true)
-    setManuallyPaused(true)
-    pauseAuto(canHover ? 3000 : 6000)
     setActiveSlide((current) => Math.max(0, Math.min(slideCount - 1, current + delta)))
   }
 
   function goToSlide(slideIndex: number) {
     setInteracted(true)
-    setManuallyPaused(true)
-    pauseAuto(canHover ? 3000 : 6000)
     setActiveSlide(Math.max(0, Math.min(slideCount - 1, slideIndex)))
   }
 
   function openSummarySheet() {
-    pauseAuto(8000)
-    setManuallyPaused(true)
     setSummaryExpanded(true)
   }
 
@@ -648,9 +593,7 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
   function handleTouchStart(event: TouchEvent<HTMLDivElement>) {
     touchStartX.current = event.touches[0]?.clientX ?? 0
     touchStartY.current = event.touches[0]?.clientY ?? 0
-    pauseAuto(6000)
     setInteracted(true)
-    setManuallyPaused(true)
   }
 
   function handleTouchEnd(event: TouchEvent<HTMLDivElement>) {
@@ -685,27 +628,9 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
       aria-label={`${getDisplayName(story)} results — slide ${activeSlide + 1} of ${slideCount}`}
       className={`story-media-frame relative aspect-[4/5] max-w-full overflow-hidden outline-none focus-visible:ring-2 focus-visible:ring-primary ${inView ? 'glass-active' : ''}`}
       style={frameStyle as CSSProperties}
-      onMouseEnter={() => setHovered(true)}
-      onPointerEnter={(event) => {
-        if (event.pointerType === 'mouse') setHovered(true)
-      }}
-      onMouseLeave={() => {
-        setHovered(false)
-        pauseAuto(3000)
-      }}
-      onPointerLeave={(event) => {
-        if (event.pointerType === 'mouse') {
-          setHovered(false)
-          pauseAuto(3000)
-        }
-      }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
       onKeyDown={handleKeyDown}
-      onFocusCapture={() => setFocusWithin(true)}
-      onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) setFocusWithin(false)
-      }}
     >
       <div
         className="story-slide-track absolute inset-0 flex transition-transform duration-[450ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
@@ -725,9 +650,10 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
             >
               {slide.image && nearActive ? (
                 <img
-                  /* The feed reaches 860px; 960/1920 delivery stays sharp at DPR 2. */
-                  src={cldWidth(slide.image, 960)}
-                  srcSet={cldSrcSet(slide.image, [960, 1920])}
+                  /* Accurate sizes keep mobile near 1080 while high-DPR/large screens
+                     can select up to the 3840 candidate when the master supports it. */
+                  src={cldWidth(slide.image, 1080, 'best')}
+                  srcSet={cldResponsiveSrcSet(slide.image, 'full', 'best')}
                   sizes="(min-width: 900px) 860px, (min-width: 640px) calc(100vw - 40px), calc(100vw - 24px)"
                   alt=""
                   crossOrigin="anonymous"
@@ -792,25 +718,10 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
       </div>
 
       {slideCount > 1 && (
-        <div className="story-carousel-status absolute right-3 top-3 z-30 flex items-center gap-2">
+        <div className="story-carousel-status absolute right-3 top-3 z-30" aria-hidden="true">
           <span className="rounded-full bg-black/55 px-2.5 py-1 text-xs font-extrabold text-white" aria-hidden="true">
             {activeSlide + 1}/{slideCount}
           </span>
-          <button
-            type="button"
-            disabled={reducedMotion}
-            aria-pressed={manuallyPaused}
-            aria-label={reducedMotion ? 'Carousel autoplay is disabled by reduced-motion settings' : manuallyPaused ? 'Play carousel' : 'Pause carousel'}
-            className="story-carousel-toggle inline-flex h-11 w-11 items-center justify-center rounded-full bg-black/55 text-white disabled:cursor-not-allowed disabled:opacity-60"
-            onClick={(event) => {
-              event.preventDefault()
-              event.stopPropagation()
-              setInteracted(true)
-              setManuallyPaused((current) => !current)
-            }}
-          >
-            {manuallyPaused || reducedMotion ? <Play size={17} aria-hidden="true" /> : <Pause size={17} aria-hidden="true" />}
-          </button>
         </div>
       )}
 
@@ -962,20 +873,21 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
     </div>
 
     {slideCount > 1 && (
-      <div className="story-carousel-dots mt-2.5 flex justify-center" role="group" aria-label={`${getDisplayName(story)} carousel slides`}>
+      <div className="story-carousel-dots" role="group" aria-label={`${getDisplayName(story)} carousel slides`}>
         <span className="sr-only" aria-live="polite">Slide {activeSlide + 1} of {slideCount}</span>
         {slides.map((_, slideIndex) => (
           <button
             type="button"
             key={`${story.id}-dot-${slideIndex}`}
             aria-pressed={slideIndex === activeSlide}
+            aria-current={slideIndex === activeSlide ? 'true' : undefined}
             aria-label={`Show slide ${slideIndex + 1} of ${slideCount}`}
             onClick={() => goToSlide(slideIndex)}
-            className="story-carousel-dot inline-flex h-11 w-11 items-center justify-center rounded-full"
+            className="story-carousel-dot"
           >
             <span
               aria-hidden="true"
-              className={`story-carousel-dot-indicator h-1.5 w-1.5 rounded-full transition-all duration-300 ${slideIndex === activeSlide ? 'scale-125 bg-[#FF2E88]' : 'bg-[#3d1226]/30'}`}
+              className={`story-carousel-dot-indicator ${slideIndex === activeSlide ? 'is-active' : ''}`}
             />
           </button>
         ))}
