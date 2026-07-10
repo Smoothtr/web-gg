@@ -4,6 +4,10 @@ import { google } from 'googleapis'
 import { NextResponse, type NextRequest } from 'next/server'
 import { getFirebaseAdminDb } from '../../../cms/firebaseAdmin'
 import { checkRateLimit, rateLimitResponse } from '../../../security/serverRateLimit'
+import {
+  normalizeAcquisitionAttribution,
+  type AcquisitionAttribution,
+} from '../../../analytics/acquisition'
 
 export const runtime = 'nodejs'
 
@@ -35,6 +39,7 @@ type BookingPayload = {
   startedAt: number
   idempotencyKey: string
   challengeToken: string
+  attribution: AcquisitionAttribution
 }
 
 function jsonError(status: number, error: string) {
@@ -85,6 +90,7 @@ function validatePayload(value: unknown): { ok: true; value: BookingPayload } | 
   const challengeToken = cleanText(body.challengeToken, 4096)
   const startedAt = Number(body.startedAt)
   const consent = body.consent === true
+  const attribution = normalizeAcquisitionAttribution(body.attribution)
   const today = dateInTimeZone()
 
   if (website) return { ok: false, error: 'Invalid booking request.' }
@@ -119,6 +125,7 @@ function validatePayload(value: unknown): { ok: true; value: BookingPayload } | 
       startedAt,
       idempotencyKey,
       challengeToken,
+      attribution,
     },
   }
 }
@@ -136,8 +143,16 @@ function isAllowedOrigin(request: NextRequest) {
   const origin = request.headers.get('origin')
   if (!origin) return true
   try {
-    const host = new URL(origin).hostname
-    return host === 'www.gg99.vn' || host === 'localhost' || host === '127.0.0.1'
+    const { hostname, protocol } = new URL(origin)
+    const localOrigin = hostname === 'localhost' || hostname === '127.0.0.1'
+    const productionOrigin = [
+      'gg99.vn',
+      'www.gg99.vn',
+      'theone.marketing',
+      'www.theone.marketing',
+    ].includes(hostname)
+    return (localOrigin && (protocol === 'http:' || protocol === 'https:'))
+      || (productionOrigin && protocol === 'https:')
   } catch {
     return false
   }
@@ -236,7 +251,7 @@ export async function POST(request: NextRequest) {
       createdAt: FieldValue.serverTimestamp(),
       expiresAt: pendingExpiry,
     }
-    transaction.set(requestRef, common)
+    transaction.set(requestRef, { ...common, attribution: payload.attribution })
     transaction.set(reservationRef, common)
     return 'created' as const
   })

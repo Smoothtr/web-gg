@@ -117,7 +117,7 @@ export function InsightsIndexPage({ posts = insightPosts, siteSettings }: { post
                 Call Your Shot <ArrowRight size={16} />
               </button>
               <a
-                href="/packages"
+                href="/#packages"
                 className="inline-flex items-center gap-2 rounded-xl border border-white/35 px-5 py-3 text-sm font-extrabold text-white transition-colors hover:bg-white/12"
               >
                 Explore The One Packages <ArrowRight size={16} />

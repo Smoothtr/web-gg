@@ -10,7 +10,8 @@ import { openBookingModal } from './openBookingModal'
 const packageIcons = [Rocket, Workflow, Megaphone]
 function resolvePackageId(item: CmsBlockItem) {
   const hash = item.href?.match(/#([^#?]+)/)?.[1]
-  if (hash) return decodeURIComponent(hash)
+  // `#packages` is the shared homepage-section destination, not a card id.
+  if (hash && hash !== 'packages') return decodeURIComponent(hash)
   return item.title
     .trim()
     .toLowerCase()

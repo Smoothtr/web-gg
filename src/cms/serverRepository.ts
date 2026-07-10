@@ -76,7 +76,11 @@ function normalizeInsight(slug: string, data: FirebaseFirestore.DocumentData): S
 }
 
 function normalizeSiteSettings(data: FirebaseFirestore.DocumentData): CmsSiteSettings {
-  return mergeCmsSiteSettings(stripServerFields(data as Record<string, unknown>) as CmsSiteSettings)
+  const settings = stripServerFields(data as Record<string, unknown>) as CmsSiteSettings
+  return mergeCmsSiteSettings({
+    ...settings,
+    updatedAt: timestampToIso(data.updatedAt) ?? settings.updatedAt,
+  })
 }
 
 function fallbackInsight(post: CmsInsightContent): ServerInsightPost {

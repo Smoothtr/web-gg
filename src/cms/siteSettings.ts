@@ -48,7 +48,7 @@ export function mergeHomepageBackground(value?: Partial<CmsHomepageBackground> |
 }
 
 const defaultFooterNavLinks: CmsLink[] = [
-  { label: 'The One Story', href: '/about' },
+  { label: 'About The One', href: '/about' },
   { label: 'The One Stories', href: '/the-one' },
   { label: 'Insights', href: '/insights' },
 ]
@@ -141,16 +141,14 @@ function createDefaultLocale(lang: BrandLang): CmsLocalizedSiteSettings {
       companyName: 'C\u00f4ng ty TNHH MTV Th\u1ebf H\u1ec7 V\u00e0ng Vi\u1ec7t Nam',
       taxCode: '0111274327',
       companyAddress: 'S\u1ed1 4/146 Ph\u1ea1m Ng\u1ecdc Th\u1ea1ch, \u0110\u1ed1ng \u0110a, H\u00e0 N\u1ed9i',
-      copyright: isVi ? '\u00a9 2026 The One - GG99. \u0110\u00e3 \u0111\u0103ng k\u00fd b\u1ea3n quy\u1ec1n.' : '\u00a9 2026 The One - GG99. All rights reserved.',
+      copyright: isVi ? '\u00a9 2026 The One - GG99. \u0110\u00e3 \u0111\u0103ng k\u00fd b\u1ea3n quy\u1ec1n.' : '\u00a9 2026 The One — GG99. All rights reserved.',
       privacyLabel: isVi ? 'B\u1ea3o m\u1eadt' : 'Privacy',
       privacyHref: '/chinh-sach-bao-mat',
       termsLabel: isVi ? '\u0110i\u1ec1u kho\u1ea3n' : 'Terms',
       termsHref: '/dieu-khoan-dich-vu',
-      ctaHeading: 'See you on our first date?',
-      qrCaption: 'Say hi on Zalo',
-      socials: {
-        zalo: 'https://zalo.me/smoothgg',
-      },
+      ctaHeading: '',
+      qrCaption: '',
+      socials: {},
     },
   }
 }

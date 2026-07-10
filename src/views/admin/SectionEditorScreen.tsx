@@ -59,7 +59,7 @@ function listToText(items: string[] | undefined) {
 }
 
 function isPackageListBlock(pageId: string, blockId: string) {
-  return (pageId === 'homepage' || pageId === 'packages') && blockId === 'packages'
+  return pageId === 'homepage' && blockId === 'packages'
 }
 
 function isPackageDetailCardsBlock(pageId: string, blockId: string) {
@@ -528,7 +528,7 @@ function PackageItemEditor({
           <TextInput value={label} onChange={(value) => updateText({ label: value })} placeholder="Most Popular" />
         </Field>
         <Field label="Package anchor / href">
-          <TextInput value={item.href ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { href: value })} placeholder="/packages#the-one-system" />
+          <TextInput value={item.href ?? ''} onChange={(value) => updateBlockItem(pageId, blockId, index, { href: value })} placeholder="/#packages" />
         </Field>
         <Field label="CTA text">
           <TextInput value={ctaText} onChange={(value) => updateText({ ctaText: value })} placeholder="Choose this package" />

@@ -23,19 +23,18 @@ export function localizedPath(_lang: BrandLang, path: string) {
 }
 
 export const footerCopy = {
-  brand: 'The One - GG99',
-  slogan: 'Growth partner for startups & SMEs.',
-  description:
-    'Growth partner for brand, website, CRM, automation and performance marketing.',
+  brand: 'The One — GG99',
+  slogan: 'One partner. One system. One growth direction.',
+  description: 'One partner. One system. One growth direction.',
   packages: [
-    { label: 'The One Start', href: '/packages#the-one-start' },
-    { label: 'The One System', href: '/packages#the-one-system' },
-    { label: 'The One Scale', href: '/packages#the-one-scale' },
+    { label: 'The One Start', href: '/#packages' },
+    { label: 'The One System', href: '/#packages' },
+    { label: 'The One Scale', href: '/#packages' },
   ],
 }
 
 export const navItems = [
-  { label: 'The One Packages', href: '/packages' },
+  { label: 'The One Packages', href: '/#packages' },
   { label: 'The One Story', href: '/about', visible: false },
   { label: 'The One Stories', href: '/the-one' },
 ]
@@ -497,9 +496,9 @@ export const footerCopyByLang: Record<BrandLang, typeof footerCopy> = {
     description:
       'Đối tác tăng trưởng cho thương hiệu, website, CRM, tự động hóa và marketing hiệu suất.',
     packages: [
-      { label: 'The One Start', href: '/packages#the-one-start' },
-      { label: 'The One System', href: '/packages#the-one-system' },
-      { label: 'The One Scale', href: '/packages#the-one-scale' },
+      { label: 'The One Start', href: '/#packages' },
+      { label: 'The One System', href: '/#packages' },
+      { label: 'The One Scale', href: '/#packages' },
     ],
   },
   en: footerCopy,
@@ -873,9 +872,9 @@ export const compactHomeByLang = {
       labels: ['Thương hiệu', 'Website', 'CRM', 'Tự động hóa', 'Tăng trưởng'],
     },
     packages: [
-      { name: 'The One Start', href: '/packages#the-one-start', title: 'Dành cho thương hiệu cần nhận diện rõ ràng và website sẵn sàng ra mắt.', text: 'Nhận diện thương hiệu. Website. Nền tảng ra mắt.' },
-      { name: 'The One System', href: '/packages#the-one-system', title: 'Dành cho đội ngũ cần website, CRM và tự động hóa hoạt động cùng nhau.', text: 'Website. CRM. Quy trình tự động hóa.' },
-      { name: 'The One Scale', href: '/packages#the-one-scale', title: 'Dành cho doanh nghiệp sẵn sàng mở rộng bằng marketing hiệu suất và vận hành tăng trưởng.', text: 'Marketing hiệu suất. Vận hành tăng trưởng. Tối ưu.' },
+      { name: 'The One Start', href: '/#packages', title: 'Dành cho thương hiệu cần nhận diện rõ ràng và website sẵn sàng ra mắt.', text: 'Nhận diện thương hiệu. Website. Nền tảng ra mắt.' },
+      { name: 'The One System', href: '/#packages', title: 'Dành cho đội ngũ cần website, CRM và tự động hóa hoạt động cùng nhau.', text: 'Website. CRM. Quy trình tự động hóa.' },
+      { name: 'The One Scale', href: '/#packages', title: 'Dành cho doanh nghiệp sẵn sàng mở rộng bằng marketing hiệu suất và vận hành tăng trưởng.', text: 'Marketing hiệu suất. Vận hành tăng trưởng. Tối ưu.' },
     ],
     builds: [
       { title: 'Hệ thống tiếp thị', text: 'Chiến dịch, đo lường và nhịp tăng trưởng.' },
@@ -908,9 +907,9 @@ export const compactHomeByLang = {
       labels: ['Brand', 'Website', 'CRM', 'Automation', 'Growth'],
     },
     packages: [
-      { name: 'The One Start', href: '/packages#the-one-start', title: 'For brands that need a clear identity and launch-ready website.', text: 'Brand identity. Website. Launch foundation.' },
-      { name: 'The One System', href: '/packages#the-one-system', title: 'For teams that need website, CRM and automation working together.', text: 'Website. CRM. Automation workflow.' },
-      { name: 'The One Scale', href: '/packages#the-one-scale', title: 'For businesses ready to scale with performance marketing and growth operations.', text: 'Performance marketing. Growth operations. Optimization.' },
+      { name: 'The One Start', href: '/#packages', title: 'For brands that need a clear identity and launch-ready website.', text: 'Brand identity. Website. Launch foundation.' },
+      { name: 'The One System', href: '/#packages', title: 'For teams that need website, CRM and automation working together.', text: 'Website. CRM. Automation workflow.' },
+      { name: 'The One Scale', href: '/#packages', title: 'For businesses ready to scale with performance marketing and growth operations.', text: 'Performance marketing. Growth operations. Optimization.' },
     ],
     builds: [
       { title: 'Marketing System', text: 'Campaigns, tracking and growth rhythm.' },
@@ -1014,27 +1013,6 @@ export const theOneFaqSchemaByLang: Record<BrandLang, unknown> = {
         text: item.a,
       },
     })),
-  },
-}
-
-export const packagesMetaByLang: Record<BrandLang, PageMeta> = {
-  vi: {
-    title: 'The One Packages | GG99',
-    description:
-      'The One Packages của GG99 gồm The One Start, The One System và The One Scale cho thương hiệu, website, CRM, tự động hóa và tăng trưởng.',
-    path: '/packages',
-    ogTitle: 'The One Packages | GG99',
-    ogDescription: 'Chọn hệ tăng trưởng phù hợp với giai đoạn của doanh nghiệp.',
-    ogImage: ogTheOneImagePath,
-  },
-  en: {
-    title: 'The One Packages | GG99',
-    description:
-      'The One Packages by GG99 include The One Start, The One System and The One Scale for brand, website, CRM, automation and growth.',
-    path: '/packages',
-    ogTitle: 'The One Packages | GG99',
-    ogDescription: 'Choose the growth system that fits your stage.',
-    ogImage: ogTheOneImagePath,
   },
 }
 
@@ -1479,7 +1457,7 @@ export const insightPosts: InsightPost[] = [
       {
         heading: 'What to read next',
         paragraphs: [
-          'The One explains the overall positioning. The Packages page helps businesses choose Start, System or Scale. About explains The One - GG99 in more detail. Contact is the starting point for a system consultation.',
+          'The One explains the overall positioning. The Packages section on the homepage helps businesses choose Start, System or Scale. About explains The One - GG99 in more detail. Contact is the starting point for a system consultation.',
         ],
       },
     ],
@@ -1529,7 +1507,7 @@ export const insightPosts: InsightPost[] = [
         ],
       },
     ],
-    ctaHref: '/packages',
+    ctaHref: '/#packages',
     ctaLabel: 'Explore The One Packages',
   },
   {
@@ -1571,7 +1549,7 @@ export const insightPosts: InsightPost[] = [
       {
         heading: 'What to read next',
         paragraphs: [
-          'Read The One to understand the positioning, explore Packages to choose the right model, read About to understand the role of The One - GG99 and contact GG99 when you need a growth partner.',
+          'Read The One to understand the positioning, explore the Packages section on the homepage to choose the right model, read About to understand the role of The One - GG99 and contact GG99 when you need a growth partner.',
         ],
       },
     ],
@@ -1617,11 +1595,11 @@ export const insightPosts: InsightPost[] = [
       {
         heading: 'What to read next',
         paragraphs: [
-          'Read The One to understand the system, explore Packages to choose the right implementation stage, read About to understand The One - GG99, or contact us if you need to build a connected growth system.',
+          'Read The One to understand the system, explore the Packages section on the homepage to choose the right implementation stage, read About to understand The One - GG99, or contact us if you need to build a connected growth system.',
         ],
       },
     ],
-    ctaHref: '/packages',
+    ctaHref: '/#packages',
     ctaLabel: 'Explore The One Packages',
   },
 ]
@@ -1640,7 +1618,7 @@ export function getRelatedInsightPosts(slug: InsightSlug) {
 
 export const insightInternalLinks = [
   { label: 'The One', href: '/the-one' },
-  { label: 'The One Packages', href: '/packages' },
+  { label: 'The One Packages', href: '/#packages' },
   { label: 'About GG99', href: '/about' },
   { label: 'Contact GG99', href: '/contact' },
 ]

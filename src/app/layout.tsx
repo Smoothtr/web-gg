@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { Grand_Hotel, Inter, Sora } from 'next/font/google'
 import '../index.css'
 import { homeMetaByLang, logoUrl, siteUrl } from '../brandContent'
+import { GoogleTagManager } from '../analytics/GoogleTagManager'
 import { getServerCmsSiteSettings } from '../cms/serverRepository'
 import { AppShell } from './AppShell'
 
@@ -59,6 +60,7 @@ export default async function RootLayout({ children }: Readonly<{ children: Reac
   return (
     <html lang="en">
       <body className={`${inter.variable} ${sora.variable} ${grandHotel.variable}`}>
+        <GoogleTagManager id={process.env.NEXT_PUBLIC_GTM_ID} />
         {!introLoaderEnabled && (
           // Lets whenIntroGone() resolve immediately (pre-hydration) when the loader is off.
           <script dangerouslySetInnerHTML={{ __html: 'window.__gg99IntroOff=1' }} />

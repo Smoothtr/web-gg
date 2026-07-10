@@ -1,22 +1,38 @@
 import type { NextConfig } from 'next'
 
-const contentSecurityPolicy = [
-  "default-src 'self'",
-  "base-uri 'self'",
-  "object-src 'none'",
-  "frame-ancestors 'none'",
-  "form-action 'self'",
-  "script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://challenges.cloudflare.com",
-  "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
-  "font-src 'self' data: https://fonts.gstatic.com",
-  "img-src 'self' data: blob: https://res.cloudinary.com https://flagcdn.com https://api.dicebear.com",
-  "media-src 'self' blob: https://res.cloudinary.com",
-  "connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.cloudinary.com https://challenges.cloudflare.com",
-  "frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://challenges.cloudflare.com",
-  "worker-src 'self' blob:",
-  "manifest-src 'self'",
-  'upgrade-insecure-requests',
-].join('; ')
+// CMS-managed image fields should remain on Cloudinary. Keep this explicit;
+// adding a new provider requires a reviewed source here rather than a wildcard.
+export const trustedCmsImageSources = ['https://res.cloudinary.com'] as const
+const trustedSiteImageSources = ['https://flagcdn.com', 'https://api.dicebear.com'] as const
+
+export function buildContentSecurityPolicy(
+  productionDeployment = process.env.VERCEL_ENV === 'production',
+  analyticsEnabled = /^GTM-[A-Z0-9]+$/i.test(process.env.NEXT_PUBLIC_GTM_ID?.trim() ?? ''),
+) {
+  const analyticsScriptSource = analyticsEnabled ? ' https://www.googletagmanager.com' : ''
+  const analyticsImageSource = analyticsEnabled ? ' https://www.google-analytics.com' : ''
+  const analyticsConnectSources = analyticsEnabled ? ' https://www.google-analytics.com https://region1.google-analytics.com' : ''
+  const analyticsFrameSource = analyticsEnabled ? ' https://www.googletagmanager.com' : ''
+  return [
+    "default-src 'self'",
+    "base-uri 'self'",
+    "object-src 'none'",
+    "frame-ancestors 'none'",
+    "form-action 'self'",
+    `script-src 'self' 'unsafe-inline' https://www.gstatic.com https://apis.google.com https://challenges.cloudflare.com${analyticsScriptSource}`,
+    "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
+    "font-src 'self' data: https://fonts.gstatic.com",
+    `img-src 'self' data: blob: ${[...trustedCmsImageSources, ...trustedSiteImageSources].join(' ')}${analyticsImageSource}`,
+    "media-src 'self' blob: https://res.cloudinary.com",
+    `connect-src 'self' https://*.googleapis.com https://*.firebaseio.com wss://*.firebaseio.com https://securetoken.googleapis.com https://identitytoolkit.googleapis.com https://api.cloudinary.com https://challenges.cloudflare.com${analyticsConnectSources}`,
+    `frame-src 'self' https://accounts.google.com https://*.firebaseapp.com https://challenges.cloudflare.com${analyticsFrameSource}`,
+    "worker-src 'self' blob:",
+    "manifest-src 'self'",
+    ...(productionDeployment ? ['upgrade-insecure-requests'] : []),
+  ].join('; ')
+}
+
+const contentSecurityPolicy = buildContentSecurityPolicy()
 
 const securityHeaders = [
   { key: 'Content-Security-Policy', value: contentSecurityPolicy },
@@ -77,6 +93,26 @@ const nextConfig: NextConfig = {
       permanent: true,
     },
     {
+      source: '/packages',
+      destination: '/#packages',
+      permanent: true,
+    },
+    {
+      source: '/en/packages',
+      destination: '/#packages',
+      permanent: true,
+    },
+    {
+      source: '/vi/packages',
+      destination: '/#packages',
+      permanent: true,
+    },
+    {
+      source: '/ko/packages',
+      destination: '/#packages',
+      permanent: true,
+    },
+    {
       source: '/en/:path*',
       destination: '/:path*',
       permanent: true,
@@ -99,14 +135,8 @@ const nextConfig: NextConfig = {
     },
     {
       source: '/:path*',
-      has: [{ type: 'host', value: 'theone.marketing' }],
-      destination: 'https://www.gg99.vn/:path*',
-      permanent: true,
-    },
-    {
-      source: '/:path*',
       has: [{ type: 'host', value: 'www.theone.marketing' }],
-      destination: 'https://www.gg99.vn/:path*',
+      destination: 'https://theone.marketing/:path*',
       permanent: true,
     },
   ],

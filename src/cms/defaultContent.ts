@@ -7,9 +7,7 @@
   contactMeta,
   homeMetaByLang,
   insightPosts,
-  packagesMetaByLang,
   servicesMeta,
-  theOnePackagesByLang,
 } from '../brandContent'
 import { caseStudies } from '../data/caseStudies'
 import type { CmsBlockItem, CmsInsightContent, CmsPageContent } from './types'
@@ -19,7 +17,7 @@ const theOnePackageItems: CmsBlockItem[] = [
   {
     title: 'The One Start',
     icon: 'Rocket',
-    href: '/packages#the-one-start',
+    href: '/#packages',
     caseStudyLink: '/the-one#cota-cuti',
     imageUrl: '',
     body: [
@@ -69,7 +67,7 @@ const theOnePackageItems: CmsBlockItem[] = [
     title: 'The One System',
     label: 'Được chọn nhiều nhất',
     icon: 'Workflow',
-    href: '/packages#the-one-system',
+    href: '/#packages',
     caseStudyLink: '/the-one#curnon',
     imageUrl: '',
     body: [
@@ -119,7 +117,7 @@ const theOnePackageItems: CmsBlockItem[] = [
   {
     title: 'The One Scale',
     icon: 'Megaphone',
-    href: '/packages#the-one-scale',
+    href: '/#packages',
     caseStudyLink: '/the-one#inkaholic',
     imageUrl: '',
     body: [
@@ -872,43 +870,6 @@ export const defaultCmsPages: CmsPageContent[] = [
         locales: {
           en: {
             body: 'Reorder the items below to control which brand appears first on The One Stories page and homepage showcase. Keep each Href equal to the story id.',
-          },
-        },
-      },
-    ],
-  },
-  {
-    id: 'packages',
-    title: 'Packages',
-    status: 'published',
-    meta: { ...packagesMetaByLang.vi, path: '/packages' },
-    metaLocales: {
-      en: packagesMetaByLang.en,
-    },
-    blocks: [
-      {
-        id: 'intro',
-        heading: theOnePackagesByLang.vi.h1,
-        body: `${theOnePackagesByLang.vi.subtitle}\n\n${theOnePackagesByLang.vi.intro}`,
-        imageUrl: '/logo-gg.png',
-        imageAlt: 'The One Packages — GG99',
-        locales: {
-          en: {
-            heading: theOnePackagesByLang.en.h1,
-            body: `${theOnePackagesByLang.en.subtitle}\n\n${theOnePackagesByLang.en.intro}`,
-          },
-        },
-      },
-      {
-        id: 'packages',
-        heading: 'The One Packages',
-        body: 'Mối quan hệ nào cũng cần đúng nhịp. Chọn nhịp của bạn - mình không vội.',
-        pricingNote: 'Giá thật. Không phí ẩn. Cam kết theo quý - hợp thì đi tiếp, không hợp thì chia tay văn minh, dữ liệu và tài khoản là của bạn.',
-        items: theOnePackageItems,
-        locales: {
-          en: {
-            body: 'Choose the growth system that fits your stage.',
-            pricingNote: 'Transparent pricing. No hidden fees. Quarterly commitment - if it works, we continue; if not, we part cleanly and your data stays yours.',
           },
         },
       },

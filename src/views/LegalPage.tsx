@@ -53,11 +53,11 @@ function LegalPage({ title, sections, siteSettings }: LegalPageProps) {
         {/* Hero */}
         <div className="max-w-3xl mx-auto px-5 lg:px-10 pt-12 pb-6">
           <div className="inline-block px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-widest mb-4 bg-secondary-container/20 text-secondary">
-            The One - GG99 · GG99.vn
+            The One — GG99 · gg99.vn
           </div>
           <h1 className="bg-gradient-to-r from-primary via-tertiary to-secondary bg-clip-text text-[26px] font-extrabold leading-tight text-transparent md:text-[34px]">{title}</h1>
           <p className="text-sm text-on-surface/50 mt-2">
-            Cập nhật: tháng 5/2026 · Công ty TNHH MTV Thế Hệ Vàng Việt Nam
+            Last updated: July 2026 · Golden Generation Vietnam One Member Company Limited
           </p>
         </div>
 
@@ -82,13 +82,13 @@ function LegalPage({ title, sections, siteSettings }: LegalPageProps) {
           {/* Company info */}
           <div className="mt-6 px-6 py-4 rounded-xl border border-outline-variant/40 bg-surface/80">
             <p className="text-[11px] font-bold text-on-surface/70 uppercase tracking-wide mb-1">
-              Công ty TNHH MTV Thế Hệ Vàng Việt Nam
+              Golden Generation Vietnam One Member Company Limited
             </p>
             <p className="text-xs text-on-surface/55 leading-relaxed">
-              MST: 0111274327
+              Tax ID: 0111274327
             </p>
             <p className="text-xs text-on-surface/55 leading-relaxed">
-              Địa chỉ: Số 4/146 đường Phạm Ngọc Thạch, Phường Đống Đa, Thành phố Hà Nội, Việt Nam
+              Registered address: No. 4/146 Pham Ngoc Thach Street, Dong Da Ward, Hanoi, Vietnam
             </p>
             <p className="text-xs text-on-surface/55 mt-0.5">Email: smooth@gg99.vn</p>
           </div>
@@ -99,14 +99,14 @@ function LegalPage({ title, sections, siteSettings }: LegalPageProps) {
               href="/"
               className="px-6 py-2.5 rounded-xl border-2 border-primary/20 text-sm font-semibold text-primary hover:bg-surface-container-low transition-colors"
             >
-              ← Quay lại trang chủ
+              ← Back to homepage
             </a>
             <button
               type="button"
               onClick={() => setBookingOpen(true)}
               className="px-6 py-2.5 rounded-xl bg-primary text-on-primary gg-btn-primary text-sm font-bold hover:opacity-90 transition-opacity"
             >
-              Liên hệ tư vấn →
+              Contact us →
             </button>
           </div>
         </div>
@@ -122,76 +122,85 @@ export function PrivacyPage({ siteSettings }: { siteSettings?: CmsSiteSettings |
   return (
     <LegalPage
       siteSettings={siteSettings}
-      title="Chính sách bảo mật"
+      title="Privacy Policy"
       sections={[
         {
-          title: 'Thông tin chúng tôi thu thập',
+          title: 'Information we collect',
           content: (
             <>
-              <p>Khi người dùng liên hệ, đăng ký tư vấn hoặc đặt lịch tư vấn trên website, chúng tôi có thể thu thập:</p>
+              <p>When you contact us, request a consultation, or book a call through this website, we may collect:</p>
               <ul className="list-disc pl-4 space-y-1 mt-2">
-                <li>Họ tên, số điện thoại, email</li>
-                <li>Tên công ty/thương hiệu</li>
-                <li>Nội dung cần tư vấn, thời gian đặt lịch</li>
-                <li>Thông tin người dùng chủ động cung cấp</li>
+                <li>Your name, phone number, and email address</li>
+                <li>Your company or brand name</li>
+                <li>Your consultation needs and preferred booking time</li>
+                <li>Other information you choose to provide</li>
               </ul>
-              <p className="mt-2">Website cũng có thể ghi nhận một số thông tin kỹ thuật cơ bản như trình duyệt, thiết bị, thời gian truy cập để cải thiện trải nghiệm người dùng.</p>
+              <p className="mt-2">We may also record limited technical and acquisition data, including browser or device information, access time, campaign parameters, advertising click identifiers, the landing page, and a referrer with its query string and fragment removed.</p>
             </>
           ),
         },
         {
-          title: 'Mục đích sử dụng thông tin',
+          title: 'How we use information',
           content: (
             <ul className="list-disc pl-4 space-y-1">
-              <li>Liên hệ tư vấn và hỗ trợ khách hàng</li>
-              <li>Xác nhận lịch tư vấn</li>
-              <li>Gửi báo giá, đề xuất dịch vụ hoặc tài liệu liên quan</li>
-              <li>Chăm sóc khách hàng và xử lý yêu cầu/khiếu nại</li>
-              <li>Cải thiện chất lượng website và dịch vụ</li>
-              <li>Thực hiện nghĩa vụ pháp lý nếu có yêu cầu từ cơ quan có thẩm quyền</li>
+              <li>Respond to consultation and support requests</li>
+              <li>Confirm and manage consultation bookings</li>
+              <li>Send quotations, service proposals, or relevant materials</li>
+              <li>Measure campaign effectiveness and improve the website and our services</li>
+              <li>Handle customer requests or complaints</li>
+              <li>Meet legal obligations or respond to a lawful request from a competent authority</li>
             </ul>
           ),
         },
         {
-          title: 'Lưu trữ và bảo mật thông tin',
+          title: 'Campaign attribution and analytics',
           content: (
             <>
-              <p>Chúng tôi lưu trữ thông tin trong thời gian cần thiết cho mục đích tư vấn, chăm sóc khách hàng, quản lý hợp đồng hoặc theo quy định pháp luật.</p>
-              <p className="mt-2">The One - GG99 áp dụng các biện pháp phù hợp để bảo vệ thông tin cá nhân. Tuy nhiên, việc truyền tải dữ liệu qua Internet không thể bảo đảm an toàn tuyệt đối trong mọi trường hợp.</p>
+              <p>The website keeps first-touch campaign attribution in browser session storage and may submit it with a consultation request. Booking lifecycle events can be placed in a privacy-safe data layer for analytics.</p>
+              <p className="mt-2">Contact form values and advertising click identifiers are not included in those lifecycle events. If an analytics or tag-management service is enabled, that provider may process limited technical data under its own terms and privacy policy.</p>
             </>
           ),
         },
         {
-          title: 'Chia sẻ thông tin',
+          title: 'Storage and security',
           content: (
             <>
-              <p>Chúng tôi không bán hoặc trao đổi thông tin cá nhân của người dùng cho bên thứ ba.</p>
-              <p className="mt-2">Thông tin có thể được chia sẻ trong phạm vi cần thiết với nhân sự nội bộ, đơn vị hỗ trợ kỹ thuật, công cụ đặt lịch, email, CRM hoặc đối tác liên quan để phục vụ tư vấn/cung cấp dịch vụ.</p>
+              <p>We retain information only for as long as reasonably necessary for consultation, customer care, contract management, security, or applicable legal requirements.</p>
+              <p className="mt-2">The One — GG99 applies reasonable safeguards to protect personal information. No method of transmitting or storing data over the Internet can be guaranteed to be completely secure.</p>
             </>
           ),
         },
         {
-          title: 'Quyền của người dùng',
+          title: 'How information is shared',
           content: (
             <>
-              <p>Người dùng có quyền yêu cầu kiểm tra, chỉnh sửa, cập nhật hoặc xóa thông tin cá nhân đã cung cấp, trừ trường hợp pháp luật yêu cầu tiếp tục lưu trữ.</p>
-              <p className="mt-2">Mọi yêu cầu vui lòng gửi về: <a href="mailto:smooth@gg99.vn" className="text-primary underline underline-offset-2">smooth@gg99.vn</a></p>
+              <p>We do not sell or trade your personal information.</p>
+              <p className="mt-2">Information may be shared only as needed with authorized team members and service providers supporting hosting, booking, email, CRM, analytics, or service delivery, or when disclosure is legally required.</p>
             </>
           ),
         },
         {
-          title: 'Cookie và liên kết bên thứ ba',
+          title: 'Your choices and rights',
           content: (
             <>
-              <p>Website có thể sử dụng cookie hoặc công cụ phân tích để cải thiện trải nghiệm người dùng và đo lường hiệu quả website.</p>
-              <p className="mt-2">Website cũng có thể chứa liên kết đến các nền tảng như Google Calendar, Zalo hoặc mạng xã hội. Người dùng nên tham khảo chính sách riêng của các nền tảng đó khi truy cập.</p>
+              <p>You may ask us to review, correct, update, or delete personal information you have provided, unless we must retain it for a lawful reason.</p>
+              <p className="mt-2">Send privacy requests to <a href="mailto:smooth@gg99.vn" className="text-primary underline underline-offset-2">smooth@gg99.vn</a>.</p>
             </>
           ),
         },
         {
-          title: 'Thay đổi chính sách',
+          title: 'Cookies, session storage, and third-party links',
           content: (
-            <p>Chúng tôi có thể cập nhật Chính sách bảo mật này khi cần thiết. Phiên bản mới sẽ được đăng tải trên website và có hiệu lực kể từ ngày cập nhật.</p>
+            <>
+              <p>The website may use session storage, cookies, or analytics tools to operate the site, remember campaign attribution during a session, and measure performance.</p>
+              <p className="mt-2">The website may link to services such as Google Calendar, Zalo, or social networks. Their own privacy policies apply when you visit those services.</p>
+            </>
+          ),
+        },
+        {
+          title: 'Policy updates',
+          content: (
+            <p>We may update this Privacy Policy when necessary. The revised version will be published on this website and will apply from its stated update date.</p>
           ),
         },
       ]}
@@ -204,87 +213,87 @@ export function TermsPage({ siteSettings }: { siteSettings?: CmsSiteSettings | n
   return (
     <LegalPage
       siteSettings={siteSettings}
-      title="Điều khoản sử dụng"
+      title="Terms of Use"
       sections={[
         {
-          title: 'Mục đích website',
+          title: 'Website purpose',
           content: (
             <>
-              <p>Website GG99.vn được sử dụng để giới thiệu thông tin về The One - GG99 và các dịch vụ:</p>
+              <p>This website introduces The One — GG99 and services including:</p>
               <ul className="list-disc pl-4 space-y-1 mt-2">
                 <li>Ecommerce Operation</li>
                 <li>Social Growth</li>
                 <li>Business Operation</li>
                 <li>Website & Digital System</li>
-                <li>Tư vấn, vận hành, marketing và các giải pháp hỗ trợ tăng trưởng doanh nghiệp</li>
+                <li>Consulting, operations, marketing, and other business growth solutions</li>
               </ul>
-              <p className="mt-2">Thông tin trên website chỉ mang tính giới thiệu và tham khảo. Nội dung dịch vụ chi tiết, phạm vi, chi phí và trách nhiệm các bên sẽ được xác lập trong hợp đồng hoặc thỏa thuận riêng.</p>
+              <p className="mt-2">Website information is for general introduction and reference. Detailed scope, fees, deliverables, and responsibilities are established only in a separate quotation, agreement, or contract.</p>
             </>
           ),
         },
         {
-          title: 'Đăng ký tư vấn',
+          title: 'Consultation requests',
           content: (
             <>
-              <p>Người dùng có thể gửi thông tin liên hệ hoặc đặt lịch tư vấn thông qua website.</p>
-              <p className="mt-2">Việc gửi form hoặc đặt lịch không đồng nghĩa với việc hai bên đã giao kết hợp đồng. Hợp đồng chỉ được xác lập khi có xác nhận, báo giá hoặc thỏa thuận riêng giữa The One - GG99 và khách hàng.</p>
+              <p>You may submit contact information or request a consultation through the website.</p>
+              <p className="mt-2">Submitting a form or choosing a time does not create a contract. A service relationship begins only after separate confirmation and an agreed quotation, agreement, or contract.</p>
             </>
           ),
         },
         {
-          title: 'Trách nhiệm của người dùng',
+          title: 'Your responsibilities',
           content: (
             <ul className="list-disc pl-4 space-y-1">
-              <li>Cung cấp thông tin chính xác khi liên hệ</li>
-              <li>Không sử dụng website cho mục đích gian lận, phá hoại, spam hoặc vi phạm pháp luật</li>
-              <li>Không sao chép, sử dụng trái phép nội dung, hình ảnh hoặc giao diện website</li>
-              <li>Không yêu cầu The One - GG99 thực hiện các công việc vi phạm pháp luật hoặc quyền lợi bên thứ ba</li>
+              <li>Provide accurate information when contacting us</li>
+              <li>Do not use the website for fraud, disruption, spam, or unlawful activity</li>
+              <li>Do not copy or misuse website content, images, or interface</li>
+              <li>Do not ask The One — GG99 to perform work that violates the law or third-party rights</li>
             </ul>
           ),
         },
         {
-          title: 'Giá dịch vụ và thanh toán',
+          title: 'Service fees and payment',
           content: (
-            <p>Mọi thông tin về giá trên website chỉ mang tính tham khảo. Giá thực tế phụ thuộc vào phạm vi công việc, thời gian và yêu cầu cụ thể. Phương thức thanh toán, tiến độ và các điều kiện tài chính sẽ được quy định trong báo giá hoặc hợp đồng riêng.</p>
+            <p>Any pricing shown on the website is indicative only. Final pricing depends on scope, timing, and specific requirements. Payment methods, milestones, and financial terms are defined in a separate quotation or contract.</p>
           ),
         },
         {
-          title: 'Hủy, hoàn phí và thay đổi dịch vụ',
+          title: 'Cancellation, refunds, and service changes',
           content: (
             <>
-              <p>Do đặc thù dịch vụ tư vấn, vận hành, thiết kế và marketing được triển khai theo yêu cầu riêng, chính sách hủy và hoàn phí sẽ áp dụng theo từng hợp đồng cụ thể.</p>
-              <p className="mt-2">Nếu phát sinh công việc ngoài phạm vi đã thống nhất, hai bên sẽ trao đổi và xác nhận phụ lục bổ sung trước khi thực hiện.</p>
+              <p>Because consulting, operations, design, and marketing services are tailored to each client, cancellation and refund terms are governed by the applicable quotation or contract.</p>
+              <p className="mt-2">Work outside the agreed scope requires written confirmation of the additional scope and terms before it begins.</p>
             </>
           ),
         },
         {
-          title: 'Sở hữu trí tuệ',
+          title: 'Intellectual property',
           content: (
             <>
-              <p>Nội dung trên website — văn bản, hình ảnh, logo, giao diện, thiết kế — thuộc quyền sở hữu hoặc quyền sử dụng hợp pháp của The One - GG99.</p>
-              <p className="mt-2">Người dùng không được sao chép, chỉnh sửa hoặc sử dụng lại các nội dung này cho mục đích thương mại khi chưa có sự đồng ý bằng văn bản.</p>
+              <p>Website text, images, logos, interface, and design are owned by or lawfully licensed to The One — GG99.</p>
+              <p className="mt-2">You may not copy, modify, or reuse this material for commercial purposes without prior written permission.</p>
             </>
           ),
         },
         {
-          title: 'Miễn trừ trách nhiệm',
+          title: 'Disclaimer and limitation',
           content: (
-            <p>The One - GG99 nỗ lực đảm bảo thông tin chính xác nhưng không cam kết đầy đủ trong mọi trường hợp. Chúng tôi không chịu trách nhiệm đối với thiệt hại từ việc sử dụng sai thông tin, lỗi kỹ thuật, gián đoạn hệ thống hoặc nội dung từ website bên thứ ba được liên kết.</p>
+            <p>The One — GG99 takes reasonable care to keep website information accurate, but does not guarantee that all content will always be complete, current, or error-free. To the extent permitted by applicable law, we are not responsible for losses caused by misuse of website information, technical faults, service interruption, or content on linked third-party websites.</p>
           ),
         },
         {
-          title: 'Khiếu nại và liên hệ',
+          title: 'Questions, complaints, and contact',
           content: (
             <>
-              <p>Mọi thắc mắc, yêu cầu hoặc khiếu nại vui lòng liên hệ: <a href="mailto:smooth@gg99.vn" className="text-primary underline underline-offset-2">smooth@gg99.vn</a></p>
-              <p className="mt-2">The One - GG99 sẽ tiếp nhận và phản hồi trong thời gian hợp lý. Hai bên ưu tiên giải quyết tranh chấp thông qua trao đổi thiện chí.</p>
+              <p>Send questions, requests, or complaints to <a href="mailto:smooth@gg99.vn" className="text-primary underline underline-offset-2">smooth@gg99.vn</a>.</p>
+              <p className="mt-2">The One — GG99 will review and respond within a reasonable time. Both parties should first try to resolve any dispute through good-faith discussion.</p>
             </>
           ),
         },
         {
-          title: 'Thay đổi điều khoản',
+          title: 'Changes to these terms',
           content: (
-            <p>The One - GG99 có thể cập nhật Điều khoản sử dụng này khi cần thiết. Phiên bản mới sẽ được đăng tải trên website và có hiệu lực kể từ ngày cập nhật.</p>
+            <p>We may update these Terms of Use when necessary. The revised version will be published on this website and will apply from its stated update date.</p>
           ),
         },
       ]}

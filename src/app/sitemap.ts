@@ -6,7 +6,6 @@ const staticPaths = [
   '/',
   '/gg99-vn-la-gi',
   '/the-one',
-  '/packages',
   '/services',
   '/contact',
   '/the-one-start',
@@ -19,7 +18,10 @@ const staticPaths = [
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const [pages, insights] = await Promise.all([listServerCmsPages(), listServerCmsInsights()])
-  const cmsPaths = pages.map((page) => localizedPath('en', page.meta.path)).filter(Boolean)
+  const cmsPaths = pages
+    .filter((page) => page.id !== 'packages')
+    .map((page) => localizedPath('en', page.meta.path))
+    .filter((path) => path !== '/packages')
   const insightPaths = insights.map((post) => `/insights/${post.slug}`)
   const paths = Array.from(new Set([...staticPaths, '/insights', ...cmsPaths, ...insightPaths]))
 
@@ -34,13 +36,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     const priority =
       path === '/'
         ? 1
-        : path === '/packages'
-          ? 0.9
-          : ['/about', servicesMeta.path, contactMeta.path].includes(path)
-            ? 0.7
-            : path.startsWith('/insights/')
-              ? 0.8
-              : 0.85
+        : ['/about', servicesMeta.path, contactMeta.path].includes(path)
+          ? 0.7
+          : path.startsWith('/insights/')
+            ? 0.8
+            : 0.85
 
     return {
       url: `${siteUrl}${path === '/' ? '/' : path}`,

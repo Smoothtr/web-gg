@@ -8,7 +8,7 @@ import AboutPage from './views/AboutPage'
 import AboutBrandPage from './views/AboutBrandPage'
 import TheOnePage from './views/TheOnePage'
 import { PackagePage } from './views/PackagePage'
-import { ContactPage, PackagesPage, ServicesPage } from './views/EntityUtilityPages'
+import { ContactPage, ServicesPage } from './views/EntityUtilityPages'
 import { InsightArticlePage, InsightsIndexPage } from './views/InsightsPage'
 import { InternalLinkRouter } from './components/InternalLinkRouter'
 
@@ -24,7 +24,7 @@ export default function App() {
           <Route path="/ko" element={<KoPage />} />
           <Route path="/vi" element={<V2Page />} />
           <Route path="/the-one" element={<TheOnePage lang="vi" />} />
-          <Route path="/packages" element={<PackagesPage lang="vi" />} />
+          <Route path="/packages" element={<Navigate to="/#packages" replace />} />
           <Route path="/insights" element={<InsightsIndexPage />} />
           <Route path="/insights/:slug" element={<InsightArticlePage />} />
           <Route path="/campaign/the-one" element={<Navigate to="/" replace />} />
@@ -37,7 +37,9 @@ export default function App() {
           <Route path="/the-one-agency" element={<Navigate to="/the-one-system" replace />} />
           <Route path="/the-one-partner" element={<Navigate to="/the-one-scale" replace />} />
           <Route path="/en/the-one" element={<TheOnePage lang="en" />} />
-          <Route path="/en/packages" element={<PackagesPage lang="en" />} />
+          <Route path="/en/packages" element={<Navigate to="/#packages" replace />} />
+          <Route path="/vi/packages" element={<Navigate to="/#packages" replace />} />
+          <Route path="/ko/packages" element={<Navigate to="/#packages" replace />} />
           <Route path="/en/campaign/the-one" element={<Navigate to="/en" replace />} />
           <Route path="/en/the-one-start" element={<PackagePage packageKey="consultant" lang="en" />} />
           <Route path="/en/the-one-system" element={<PackagePage packageKey="agency" lang="en" />} />

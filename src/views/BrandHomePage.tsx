@@ -1615,7 +1615,7 @@ export default function BrandHomePage({
       flushTop
       transparentBackground={flowWaveActive}
       floatingCtaRevealSelector="[data-floating-cta-threshold='hero']"
-      resolveNavHref={(href, label) => (href === '/packages' || label.toLowerCase().includes('packages') ? '#packages' : href)}
+      resolveNavHref={(href, label) => (href === '/#packages' || label.toLowerCase().includes('packages') ? '#packages' : href)}
     >
       <SeoHead meta={homeMeta} schema={homeSchemas} lang={lang} />
       {flowWaveActive && <FlowWaveBackground settings={homeBackground} />}

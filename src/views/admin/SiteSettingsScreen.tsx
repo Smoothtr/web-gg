@@ -350,42 +350,14 @@ export default function SiteSettingsScreen() {
           <Field label="Footer logo URL">
             <TextInput value={locale.footer.logoSrc} onChange={(value) => updateFooter('logoSrc', value)} placeholder="/logo-gg.png" />
           </Field>
-          <Field label="Footer logo alt">
-            <TextInput value={locale.footer.logoAlt} onChange={(value) => updateFooter('logoAlt', value)} />
-          </Field>
           <Field label="Footer brand name">
             <TextInput value={locale.footer.brandName} onChange={(value) => updateFooter('brandName', value)} />
           </Field>
-          <Field label="Footer tagline">
+          <Field label="Footer positioning line">
             <TextInput value={locale.footer.tagline} onChange={(value) => updateFooter('tagline', value)} />
           </Field>
-          <Field label="Footer CTA line" hint="Large serif line at the top of the footer. Blank = row hidden.">
-            <TextInput value={locale.footer.ctaHeading ?? ''} onChange={(value) => updateFooter('ctaHeading', value)} placeholder="See you on our first date?" />
-          </Field>
-          <Field label="Zalo QR caption">
-            <TextInput value={locale.footer.qrCaption ?? ''} onChange={(value) => updateFooter('qrCaption', value)} placeholder="Say hi on Zalo" />
-          </Field>
         </div>
-        <div className="mt-4">
-          <Field label="Footer description">
-            <TextArea value={locale.footer.description} onChange={(value) => updateFooter('description', value)} minHeight={86} />
-          </Field>
-        </div>
-        <div className="mt-5 rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
-          <h3 className="mb-3 text-sm font-extrabold text-on-surface">Social links</h3>
-          <p className="mb-3 text-xs font-semibold text-on-surface-variant">Icons only show when the link is filled in.</p>
-          <div className="grid gap-4 md:grid-cols-2">
-            {(['facebook', 'instagram', 'tiktok', 'threads', 'zalo'] as const).map((network) => (
-              <Field key={network} label={network.charAt(0).toUpperCase() + network.slice(1)}>
-                <TextInput
-                  value={locale.footer.socials?.[network] ?? ''}
-                  onChange={(value) => updateFooter('socials', { ...(locale.footer.socials ?? {}), [network]: value })}
-                  placeholder={`https://${network === 'zalo' ? 'zalo.me' : network + '.com'}/...`}
-                />
-              </Field>
-            ))}
-          </div>
-        </div>
+        <p className="mt-4 text-xs font-semibold text-on-surface-variant">The compact footer intentionally omits its former CTA, QR block, social row, address and duplicate contact fields.</p>
       </Card>
 
       <Card title="Footer links">
@@ -398,16 +370,32 @@ export default function SiteSettingsScreen() {
           </Field>
         </div>
         <div className="mt-5 grid gap-4 lg:grid-cols-2">
-          <LinkListEditor items={locale.footer.solutionLinks} onChange={(items) => updateFooter('solutionLinks', items)} label="Solution links" />
+          <div className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
+            <h3 className="text-sm font-extrabold text-on-surface">Solution links</h3>
+            <p className="mb-3 mt-1 text-xs font-semibold text-on-surface-variant">All three destinations are fixed to the Homepage Packages section.</p>
+            <div className="space-y-3">
+              {locale.footer.solutionLinks.slice(0, 3).map((item, index) => (
+                <div key={`footer-solution-${index}`} className="grid gap-2 rounded-xl border border-outline-variant/40 bg-surface p-3 md:grid-cols-[1fr_auto] md:items-center">
+                  <TextInput
+                    value={item.label}
+                    onChange={(value) => updateFooter('solutionLinks', setAt(
+                      locale.footer.solutionLinks.slice(0, 3),
+                      index,
+                      { ...item, label: value, href: '/#packages', visible: true },
+                    ))}
+                    placeholder="Package label"
+                  />
+                  <code className="rounded-lg bg-surface-container-low px-3 py-2 text-xs font-bold text-primary">/#packages</code>
+                </div>
+              ))}
+            </div>
+          </div>
           <LinkListEditor items={locale.footer.navigationLinks} onChange={(items) => updateFooter('navigationLinks', items)} label="Navigation links" />
         </div>
       </Card>
 
       <Card title="Contact / Legal">
         <div className="grid gap-4 md:grid-cols-2">
-          <Field label="Contact heading">
-            <TextInput value={locale.footer.contactHeading} onChange={(value) => updateFooter('contactHeading', value)} />
-          </Field>
           <Field label="Email">
             <TextInput value={locale.footer.email} onChange={(value) => updateFooter('email', value)} />
           </Field>
@@ -417,17 +405,11 @@ export default function SiteSettingsScreen() {
           <Field label="Chat label">
             <TextInput value={locale.footer.chatLabel} onChange={(value) => updateFooter('chatLabel', value)} />
           </Field>
-          <Field label="Address">
-            <TextInput value={locale.footer.address} onChange={(value) => updateFooter('address', value)} />
-          </Field>
           <Field label="Company name">
             <TextInput value={locale.footer.companyName} onChange={(value) => updateFooter('companyName', value)} />
           </Field>
           <Field label="Tax code">
             <TextInput value={locale.footer.taxCode} onChange={(value) => updateFooter('taxCode', value)} />
-          </Field>
-          <Field label="Company address">
-            <TextInput value={locale.footer.companyAddress} onChange={(value) => updateFooter('companyAddress', value)} />
           </Field>
           <Field label="Copyright">
             <TextInput value={locale.footer.copyright} onChange={(value) => updateFooter('copyright', value)} />

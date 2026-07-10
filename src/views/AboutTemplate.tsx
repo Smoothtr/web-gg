@@ -19,7 +19,7 @@ const content = {
       description: 'Tìm hiểu về The One - GG99 - GG99, đơn vị đồng hành cùng doanh nghiệp trong vận hành, tối ưu chi phí, ecommerce, marketing và quản trị dữ liệu.',
     },
     navLinks: [
-      { label: 'The One Packages', href: '/packages' },
+      { label: 'The One Packages', href: '/#packages' },
       { label: 'The One Story', href: '/about' },
       { label: 'The One Stories', href: '/the-one' },
     ],
@@ -99,7 +99,7 @@ const content = {
       description: 'Learn about The One - GG99 - GG99, your partner in business operations, cost optimization, ecommerce, marketing and data management.',
     },
     navLinks: [
-      { label: 'The One Packages', href: '/en/packages' },
+      { label: 'The One Packages', href: '/#packages' },
       { label: 'The One Story', href: '/en/about' },
       { label: 'The One Stories', href: '/en/the-one' },
     ],

@@ -129,7 +129,7 @@ function renderHome(lang) {
             ${c.hero.statement ? `<p>${escapeHtml(c.hero.statement).replace(/\n/g, '<br />')}</p>` : ''}
             <p>${escapeHtml(c.hero.description)}</p>
             <a href="${hrefFor(lang, '/the-one')}">${lang === 'vi' ? 'Tìm hiểu The One' : 'Explore The One'}</a>
-            <a href="${hrefFor(lang, '/packages')}">${lang === 'vi' ? 'Xem gói dịch vụ' : 'View Packages'}</a>
+            <a href="/#packages">${lang === 'vi' ? 'Xem gói dịch vụ' : 'View Packages'}</a>
           </section>
           <section>
             <h2>Clients</h2>
@@ -187,30 +187,6 @@ function renderTheOne(lang) {
             <nav>
               <a href="${hrefFor(lang, '/')}">${lang === 'vi' ? 'Trang chủ' : 'Homepage'}</a>
               <a href="${hrefFor(lang, '/about')}">${lang === 'vi' ? 'Giới thiệu' : 'About'}</a>
-            </nav>
-          </article>
-        </main>`)
-}
-
-function renderPackages(lang) {
-  const c = content.theOnePackagesByLang[lang]
-  return staticShell(`
-        <main>
-          <article>
-            <h1>${escapeHtml(c.h1)}</h1>
-            <p>${escapeHtml(c.subtitle)}</p>
-            <p>${escapeHtml(c.intro)}</p>
-            <section>
-              <h2>The One Packages</h2>
-              ${c.packages.map((item) => {
-                const id = item.name.toLowerCase().replace(/\s+/g, '-')
-                return `<article id="${id}"><h3>${escapeHtml(item.name)}</h3><p>${escapeHtml(item.title)}</p><p>${escapeHtml(item.text)}</p></article>`
-              }).join('\n')}
-            </section>
-            <nav>
-              <a href="${hrefFor(lang, '/')}">${lang === 'vi' ? 'Trang chủ' : 'Homepage'}</a>
-              <a href="${hrefFor(lang, '/the-one')}">The One</a>
-              <a href="${hrefFor(lang, '/contact')}">${lang === 'vi' ? 'Liên hệ' : 'Contact'}</a>
             </nav>
           </article>
         </main>`)
@@ -325,7 +301,7 @@ function renderInsightsIndex() {
             </section>
             <section>
               <h2>Explore The One Packages</h2>
-              <a href="/packages">Explore The One Packages</a>
+              <a href="/#packages">Explore The One Packages</a>
             </section>
           </article>
         </main>`)
@@ -407,13 +383,6 @@ const routes = [
     schemas: [content.organizationSchema, content.websiteSchema, content.theOneFaqSchemaByLang.en],
   },
   {
-    path: '/packages',
-    lang: 'vi',
-    meta: content.packagesMetaByLang.vi,
-    body: renderPackages('vi'),
-    schemas: [content.organizationSchema, content.websiteSchema],
-  },
-  {
     path: '/insights',
     lang: 'vi',
     meta: content.insightsIndexMeta,
@@ -432,13 +401,6 @@ const routes = [
       content.insightBreadcrumbSchemas[post.slug],
     ],
   })),
-  {
-    path: '/en/packages',
-    lang: 'en',
-    meta: content.packagesMetaByLang.en,
-    body: renderPackages('en'),
-    schemas: [content.organizationSchema, content.websiteSchema],
-  },
   ...packageKeys.flatMap((key) => [
     {
       path: `/the-one-${key}`,

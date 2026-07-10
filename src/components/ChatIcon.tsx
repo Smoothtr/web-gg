@@ -37,7 +37,7 @@ export function ChatIcon({ app, size = 20 }: { app: ChatApp; size?: number }) {
   return (
     <img
       src="/logo-zalo-arc.png"
-      alt="Zalo"
+      alt=""
       width={size}
       height={size}
       style={{ objectFit: 'contain', flexShrink: 0 }}

@@ -6,7 +6,6 @@ import {
   homeMetaByLang,
   homeWebPageSchema,
   organizationSchema,
-  packagesMetaByLang,
   serviceSchemas,
   servicesMeta,
   type BrandLang,
@@ -15,7 +14,7 @@ import {
 } from '../brandContent'
 import AboutBrandPage from '../views/AboutBrandPage'
 import BrandHomePage from '../views/BrandHomePage'
-import { ContactPage, PackagesPage, ServicesPage } from '../views/EntityUtilityPages'
+import { ContactPage, ServicesPage } from '../views/EntityUtilityPages'
 import { InsightArticlePage, InsightsIndexPage } from '../views/InsightsPage'
 import { PackagePage } from '../views/PackagePage'
 import TheOnePage from '../views/TheOnePage'
@@ -40,16 +39,6 @@ export async function TheOneView({ lang, pageId }: { lang: BrandLang; pageId: st
     <>
       <JsonLd items={[organizationSchema, websiteSchema]} />
       <TheOnePage lang={lang} cmsPage={page} siteSettings={siteSettings} />
-    </>
-  )
-}
-
-export async function PackagesView({ lang, pageId }: { lang: BrandLang; pageId: string }) {
-  const [page, siteSettings] = await Promise.all([getServerCmsPage(pageId), getServerCmsSiteSettings()])
-  return (
-    <>
-      <JsonLd items={[organizationSchema, websiteSchema]} />
-      <PackagesPage lang={lang} cmsPage={page} siteSettings={siteSettings} />
     </>
   )
 }
@@ -140,7 +129,6 @@ export async function InsightArticleView({ slug }: { slug: string }) {
 export const fallbackMeta = {
   home: homeMetaByLang,
   theOne: compactTheOneByLang,
-  packages: packagesMetaByLang,
   packageDetail: compactPackageByLang,
   about: aboutMetaByLang,
   services: servicesMeta,

@@ -26,7 +26,7 @@ const facts = {
       ['Liên hệ The One - GG99 ở đâu?', 'Email chính thức là smooth@gg99.vn. Website chính thức là https://www.gg99.vn.'],
     ],
     cta: 'Xem The One Packages',
-    ctaHref: '/packages',
+    ctaHref: '/#packages',
   },
   en: {
     h1: 'What is gg99.vn?',
@@ -48,7 +48,7 @@ const facts = {
       ['Where can I contact The One - GG99?', 'The official email is smooth@gg99.vn. The official website is https://www.gg99.vn.'],
     ],
     cta: 'Explore The One Packages',
-    ctaHref: '/en/packages',
+    ctaHref: '/#packages',
   },
 } satisfies Record<BrandLang, {
   h1: string

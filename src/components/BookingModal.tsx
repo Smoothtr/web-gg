@@ -2,6 +2,11 @@
 import { useRef } from 'react'
 import { type Lang } from '../i18n'
 import type { CmsLocalizedSiteSettings } from '../cms/types'
+import {
+  captureAcquisitionAttribution,
+  emitBookingAnalytics,
+  getAcquisitionAttribution,
+} from '../analytics/acquisition'
 
 /* ─── Types ─────────────────────────────────────────── */
 export type BookingModalCopy = Partial<CmsLocalizedSiteSettings['booking']>
@@ -338,15 +343,39 @@ export function BookingModal({ isOpen, onClose, lang = 'en', copy }: BookingModa
   const [submitError, setSubmitError] = useState('')
   const startedAtRef = useRef(Date.now())
   const dialogRef = useRef<HTMLDivElement>(null)
+  const bodyScrollRef = useRef<HTMLDivElement>(null)
   const closeButtonRef = useRef<HTMLButtonElement>(null)
   const nameInputRef = useRef<HTMLInputElement>(null)
   const successHeadingRef = useRef<HTMLHeadingElement>(null)
   const previousStepRef = useRef(step)
+  const previousOpenRef = useRef(false)
+  const bookingSourceRef = useRef<string | undefined>(undefined)
   const onCloseRef = useRef(onClose)
 
   useEffect(() => {
     onCloseRef.current = onClose
   }, [onClose])
+
+  useEffect(() => {
+    captureAcquisitionAttribution()
+    const rememberBookingSource = (event: Event) => {
+      const detail = (event as CustomEvent<{ source?: unknown }>).detail
+      bookingSourceRef.current = typeof detail?.source === 'string' ? detail.source : undefined
+    }
+    window.addEventListener('gg99:open-booking', rememberBookingSource)
+    return () => window.removeEventListener('gg99:open-booking', rememberBookingSource)
+  }, [])
+
+  useEffect(() => {
+    const wasOpen = previousOpenRef.current
+    previousOpenRef.current = isOpen
+    if (isOpen && !wasOpen) {
+      emitBookingAnalytics('booking_open', { source: bookingSourceRef.current })
+      emitBookingAnalytics('booking_step', { source: bookingSourceRef.current, step: 1 })
+    } else if (!isOpen && wasOpen) {
+      bookingSourceRef.current = undefined
+    }
+  }, [isOpen])
 
   useEffect(() => {
     if (!isOpen) return
@@ -448,10 +477,12 @@ export function BookingModal({ isOpen, onClose, lang = 'en', copy }: BookingModa
     if (!isOpen || previousStep === step) return
 
     const focusCurrentStep = () => {
-      if (step === 2) nameInputRef.current?.focus()
-      else if (step === 3) successHeadingRef.current?.focus()
-      else closeButtonRef.current?.focus()
+      if (bodyScrollRef.current) bodyScrollRef.current.scrollTop = 0
+      if (step === 2) nameInputRef.current?.focus({ preventScroll: true })
+      else if (step === 3) successHeadingRef.current?.focus({ preventScroll: true })
+      else closeButtonRef.current?.focus({ preventScroll: true })
     }
+    if (step === 2) emitBookingAnalytics('booking_step', { source: bookingSourceRef.current, step: 2 })
     focusCurrentStep()
     const focusStep = window.requestAnimationFrame(focusCurrentStep)
     return () => window.cancelAnimationFrame(focusStep)
@@ -472,6 +503,7 @@ export function BookingModal({ isOpen, onClose, lang = 'en', copy }: BookingModa
     if (!selectedDate || !selectedFrame || !frameObj) return
     setSubmitting(true)
     setSubmitError('')
+    emitBookingAnalytics('booking_submit', { source: bookingSourceRef.current, step: 2 })
     try {
       const res = await fetch('/api/book', {
         method: 'POST',
@@ -486,10 +518,12 @@ export function BookingModal({ isOpen, onClose, lang = 'en', copy }: BookingModa
           startedAt: startedAtRef.current,
           idempotencyKey,
           challengeToken: '',
+          attribution: getAcquisitionAttribution(),
         }),
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || t.errUnknown)
+      emitBookingAnalytics('booking_success', { source: bookingSourceRef.current })
       setStep(3)
     } catch (err: unknown) {
       setSubmitError(err instanceof Error ? err.message : t.errGeneric)
@@ -555,7 +589,12 @@ export function BookingModal({ isOpen, onClose, lang = 'en', copy }: BookingModa
         )}
 
         {/* Body */}
-        <div className="overflow-y-auto" style={{ maxHeight: 'calc(92dvh - 76px)' }}>
+        <div
+          ref={bodyScrollRef}
+          data-testid="booking-scroll-body"
+          className="overflow-y-auto"
+          style={{ maxHeight: 'calc(92dvh - 76px)' }}
+        >
 
           {/* ── Step 1: Date + Time frame ── */}
           {step === 1 && (

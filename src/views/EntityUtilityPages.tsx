@@ -4,16 +4,13 @@ import { BadgeCheck, Mail } from 'lucide-react'
 import {
   contactMeta,
   organizationSchema,
-  packagesMetaByLang,
   servicesMeta,
-  theOnePackagesByLang,
   websiteSchema,
   type BrandLang,
 } from '../brandContent'
 import { BrandLayout } from '../components/BrandLayout'
-import { PackageCards } from '../components/PackageCards'
 import { SeoHead } from '../components/SeoHead'
-import { getLocalizedCmsBlock, getLocalizedPageMeta, splitCmsParagraphs } from '../cms/contentBlocks'
+import { getLocalizedCmsBlock, getLocalizedPageMeta } from '../cms/contentBlocks'
 import { getLocalizedSiteSettings } from '../cms/siteSettings'
 import type { CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 
@@ -30,74 +27,6 @@ const defaultContactItems: CmsBlockItem[] = [
   { title: 'Chat', body: 'Zalo', href: 'https://zalo.me/smoothgg', icon: 'MessageCircle' },
   { title: 'Office', body: 'Hanoi, Vietnam', icon: 'Target' },
 ]
-
-export function PackagesPage({ lang = 'en', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
-
-  const c = theOnePackagesByLang[lang]
-  const meta = getLocalizedPageMeta(cmsPage, lang, packagesMetaByLang[lang])
-  const introBlock = getLocalizedCmsBlock(cmsPage, 'intro', lang)
-  const packageBlock = getLocalizedCmsBlock(cmsPage, 'packages', lang)
-  const introParagraphs = splitCmsParagraphs(introBlock?.body)
-  const packageItems: CmsBlockItem[] = packageBlock?.items?.length
-    ? packageBlock.items
-    : c.packages.map((item, index) => ({
-      title: item.name,
-      body: `${item.title}\n${item.text}`,
-      icon: ['Rocket', 'Workflow', 'Megaphone'][index],
-      href: item.href,
-    }))
-
-  return (
-    <BrandLayout lang={lang} siteSettings={siteSettings}>
-      <SeoHead meta={meta} schema={[organizationSchema, websiteSchema]} lang={lang} />
-
-      <article>
-        <section className="relative flex min-h-[30vh] items-center overflow-hidden bg-[linear-gradient(135deg,#fff5f7_0%,#ffe4ec_48%,#fff1c8_100%)] px-5 py-12 lg:px-10">
-          <div className="absolute inset-0 tech-grid opacity-55 pointer-events-none" aria-hidden="true" />
-          <div className="noise-overlay" aria-hidden="true" />
-          <div className="relative max-w-5xl mx-auto">
-            <h1 className="text-[40px] sm:text-[56px] md:text-[72px] font-extrabold text-on-surface leading-[1.06]">
-              {introBlock?.heading ?? c.h1}
-            </h1>
-            {introParagraphs.length ? (
-              <div className="mt-5 grid max-w-2xl gap-3 text-base leading-relaxed text-on-surface-variant md:text-lg">
-                {introParagraphs.map((paragraph, index) => (
-                  <p key={`${paragraph}-${index}`}>{paragraph}</p>
-                ))}
-              </div>
-            ) : (
-              <>
-                <p className="mt-5 text-xl md:text-2xl font-bold text-primary">{c.subtitle}</p>
-                <p className="mt-5 max-w-2xl text-base md:text-lg text-on-surface-variant leading-relaxed">{c.intro}</p>
-              </>
-            )}
-          </div>
-        </section>
-
-        <section className="px-5 pb-16 pt-10 md:pb-24 lg:px-10">
-          <div className="max-w-6xl mx-auto">
-            {packageBlock?.body && (
-              <div className="mb-6 max-w-3xl whitespace-pre-line text-sm leading-relaxed text-on-surface-variant">
-                {packageBlock.body}
-              </div>
-            )}
-            <PackageCards items={packageItems} lang={lang} layout={packageBlock?.layout === 'cards' ? 'cards' : 'horizontal'} />
-            {packageBlock?.pricingNote && (
-              <p className="mx-auto mt-6 max-w-3xl rounded-2xl border border-primary/15 bg-primary/5 px-4 py-3 text-center text-sm font-bold leading-relaxed text-on-surface-variant">
-                {packageBlock.pricingNote}
-              </p>
-            )}
-            {packageBlock?.disclaimer && (
-              <p className="mx-auto mt-6 max-w-[720px] whitespace-pre-line text-center text-[12px] italic leading-relaxed text-on-surface-variant/60 md:text-[13px]">
-                {packageBlock.disclaimer}
-              </p>
-            )}
-          </div>
-        </section>
-      </article>
-    </BrandLayout>
-  )
-}
 
 export function ServicesPage({ lang = 'en', cmsPage, siteSettings }: { lang?: BrandLang; cmsPage?: CmsPageContent | null; siteSettings?: CmsSiteSettings | null }) {
   const introBlock = getLocalizedCmsBlock(cmsPage, 'intro', lang)
