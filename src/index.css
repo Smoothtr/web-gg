@@ -5208,3 +5208,324 @@ header.is-dark-page #mobile-navigation a {
     display: none;
   }
 }
+
+/* ============================================================
+   Round 18 — cinematic conversation stage + Stories live mesh
+   ============================================================ */
+
+/* Sounds Familiar keeps the shared Homepage mesh, then adds two tiny
+   transform-only layers. This creates a video-like stage without another
+   canvas, media request, RAF loop or scroll listener. */
+.red-flags-stage {
+  position: relative;
+  isolation: isolate;
+  background:
+    linear-gradient(180deg, transparent 0%, rgba(104, 34, 67, 0.08) 20%, rgba(86, 24, 57, 0.12) 72%, transparent 100%);
+}
+
+.red-flags-stage-motion {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.red-flags-stage-aurora,
+.red-flags-stage-signal {
+  position: absolute;
+  display: block;
+  pointer-events: none;
+}
+
+.red-flags-stage-aurora {
+  inset: -18% -12%;
+  background:
+    radial-gradient(44% 42% at 14% 22%, rgba(209, 69, 117, 0.34), transparent 70%),
+    radial-gradient(42% 46% at 88% 74%, rgba(239, 139, 86, 0.20), transparent 72%),
+    radial-gradient(52% 58% at 50% 52%, rgba(90, 30, 59, 0.22), transparent 76%);
+  opacity: 0.9;
+  transform: translate3d(-1.5%, -1%, 0) scale(1.04);
+  animation: redFlagsAuroraDrift 20s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+.red-flags-stage-signal {
+  inset: -10% -8%;
+  background-image:
+    radial-gradient(circle, rgba(255, 245, 249, 0.34) 0 1px, transparent 1.6px),
+    linear-gradient(118deg, transparent 18%, rgba(255, 214, 229, 0.15) 18.4%, transparent 18.9%),
+    linear-gradient(142deg, transparent 66%, rgba(255, 204, 177, 0.12) 66.35%, transparent 66.9%);
+  background-size: 34px 34px, 100% 100%, 100% 100%;
+  opacity: 0.24;
+  transform: translate3d(-2%, 0, 0) rotate(-1.5deg) scale(1.04);
+  -webkit-mask-image: radial-gradient(ellipse at 50% 48%, #000 0%, rgba(0, 0, 0, 0.72) 56%, transparent 90%);
+  mask-image: radial-gradient(ellipse at 50% 48%, #000 0%, rgba(0, 0, 0, 0.72) 56%, transparent 90%);
+  animation: redFlagsSignalDrift 28s ease-in-out infinite alternate;
+  will-change: transform, opacity;
+}
+
+.red-flags-stage-signal::after {
+  position: absolute;
+  inset: -20% auto -20% -32%;
+  width: 28%;
+  background: linear-gradient(90deg, transparent, rgba(255, 235, 218, 0.16), transparent);
+  content: '';
+  transform: translate3d(0, 0, 0) skewX(-12deg);
+  animation: redFlagsSignalScan 13s ease-in-out infinite;
+}
+
+.red-flags-stage-content {
+  position: relative;
+  z-index: 1;
+  border: 1px solid rgba(255, 224, 236, 0.26);
+  border-radius: clamp(26px, 3vw, 38px);
+  background:
+    linear-gradient(132deg, rgba(58, 13, 40, 0.88) 0%, rgba(103, 31, 61, 0.72) 52%, rgba(153, 62, 80, 0.52) 100%);
+  padding: clamp(24px, 3.2vw, 44px);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.16),
+    0 28px 78px rgba(43, 13, 29, 0.24);
+}
+
+.red-flags-stage-content::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(54% 52% at 8% 18%, rgba(255, 92, 151, 0.18), transparent 72%),
+    radial-gradient(48% 50% at 94% 82%, rgba(255, 166, 92, 0.13), transparent 70%);
+  content: '';
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.red-flags-stage-content::after {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  width: 34%;
+  border-radius: inherit;
+  background: linear-gradient(100deg, transparent, rgba(255, 219, 232, 0.08), rgba(255, 202, 158, 0.13), transparent);
+  content: '';
+  pointer-events: none;
+  transform: translate3d(-140%, 0, 0) skewX(-12deg);
+  animation: redFlagsContentSweep 15s ease-in-out infinite;
+}
+
+.red-flags-stage-intro {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+}
+
+.red-flags-stage-intro > p:first-child {
+  color: rgba(255, 219, 233, 0.72) !important;
+}
+
+.red-flags-stage-intro > h2 {
+  color: #fff7fb !important;
+  text-shadow: 0 8px 32px rgba(20, 4, 15, 0.28);
+}
+
+/* A silent signal monitor fills the otherwise empty part of the sticky column
+   and makes the 40/60 layout feel intentional throughout the long thread. */
+.red-flags-stage-intro::after {
+  display: block;
+  width: min(100%, 360px);
+  height: clamp(132px, 14vw, 182px);
+  margin-top: clamp(34px, 5vw, 62px);
+  border: 1px solid rgba(255, 222, 235, 0.18);
+  border-radius: 24px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
+    radial-gradient(circle at 11% 64%, rgba(255, 204, 225, 0.88) 0 3px, transparent 4px),
+    radial-gradient(circle at 38% 45%, rgba(255, 197, 143, 0.82) 0 4px, transparent 5px),
+    radial-gradient(circle at 66% 54%, rgba(255, 132, 178, 0.90) 0 3px, transparent 4px),
+    radial-gradient(circle at 90% 28%, rgba(255, 223, 175, 0.88) 0 4px, transparent 5px),
+    linear-gradient(166deg, transparent 48%, rgba(255, 215, 230, 0.52) 49%, rgba(255, 215, 230, 0.52) 49.8%, transparent 50.8%),
+    repeating-linear-gradient(90deg, transparent 0 11%, rgba(255, 255, 255, 0.055) 11.2% 11.5%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 46px rgba(16, 3, 12, 0.16);
+  content: '';
+  opacity: 0.9;
+}
+
+.red-flags-feed {
+  --red-flags-feed-pad: 24px;
+  position: relative;
+  z-index: 1;
+  overflow: hidden;
+  border-color: rgba(255, 255, 255, 0.62) !important;
+  background:
+    linear-gradient(150deg, rgba(255, 253, 254, 0.94), rgba(255, 238, 244, 0.89)) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 22px 64px rgba(35, 8, 26, 0.24) !important;
+  -webkit-backdrop-filter: blur(15px) saturate(115%);
+  backdrop-filter: blur(15px) saturate(115%);
+}
+
+.red-flags-feed.quiet-zone::before {
+  display: none;
+}
+
+.red-flags-feed .thread-line {
+  left: calc(var(--red-flags-feed-pad) + 19px);
+  top: calc(var(--red-flags-feed-pad) + 44px);
+  bottom: 24px;
+  background: linear-gradient(180deg, rgba(179, 18, 75, 0.26), rgba(61, 18, 38, 0.10));
+}
+
+@keyframes redFlagsAuroraDrift {
+  0% { opacity: 0.72; transform: translate3d(-1.5%, -1%, 0) scale(1.04); }
+  100% { opacity: 1; transform: translate3d(2.4%, 2%, 0) scale(1.1); }
+}
+
+@keyframes redFlagsSignalDrift {
+  0% { opacity: 0.17; transform: translate3d(-2%, 0, 0) rotate(-1.5deg) scale(1.04); }
+  100% { opacity: 0.3; transform: translate3d(2.8%, -2%, 0) rotate(1deg) scale(1.08); }
+}
+
+@keyframes redFlagsSignalScan {
+  0%, 34% { opacity: 0; transform: translate3d(0, 0, 0) skewX(-12deg); }
+  46% { opacity: 0.8; }
+  68%, 100% { opacity: 0; transform: translate3d(520%, 0, 0) skewX(-12deg); }
+}
+
+@keyframes redFlagsContentSweep {
+  0%, 42% { opacity: 0; transform: translate3d(-140%, 0, 0) skewX(-12deg); }
+  50% { opacity: 0.86; }
+  72%, 100% { opacity: 0; transform: translate3d(410%, 0, 0) skewX(-12deg); }
+}
+
+/* Stories already owns the Homepage network mesh. The treatment below simply
+   exposes it and adds a static grid fallback for Save Data — no new media,
+   canvas, geometry or draw call. */
+.stories-dark-stage {
+  background:
+    linear-gradient(rgba(255, 227, 238, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 227, 238, 0.035) 1px, transparent 1px),
+    radial-gradient(72% 34% at 8% 12%, rgba(209, 69, 117, 0.09), transparent 72%),
+    radial-gradient(68% 30% at 92% 42%, rgba(196, 119, 74, 0.06), transparent 74%),
+    linear-gradient(180deg, rgba(26, 7, 20, 0.02), rgba(31, 8, 23, 0.16) 48%, rgba(19, 4, 15, 0.32) 100%);
+  background-size: 56px 56px, 56px 56px, auto, auto, auto;
+}
+
+.flow-wave-canvas--stories {
+  opacity: 0.9;
+}
+
+.stories-rail-card {
+  background: linear-gradient(145deg, rgba(74, 21, 51, 0.92), rgba(28, 7, 22, 0.94));
+}
+
+.stories-final-cta {
+  background: linear-gradient(145deg, rgba(78, 22, 54, 0.90), rgba(29, 7, 23, 0.94));
+}
+
+@media (min-width: 768px) and (max-width: 1023px) {
+  .red-flags-stage-content {
+    max-width: 720px;
+  }
+
+  .red-flags-stage-intro,
+  .red-flags-feed {
+    width: 100%;
+    max-width: 680px;
+    margin-inline: auto;
+  }
+}
+
+@media (max-width: 1023px) {
+  .red-flags-stage-intro::after {
+    display: none;
+  }
+
+  .red-flags-feed {
+    --red-flags-feed-pad: 20px;
+  }
+
+  .red-flags-feed .thread-line {
+    bottom: 132px;
+  }
+}
+
+@media (max-width: 767px) {
+  .red-flags-stage {
+    padding-inline: 12px !important;
+  }
+
+  .red-flags-stage-aurora {
+    inset: -10% -28%;
+    opacity: 0.72;
+  }
+
+  .red-flags-stage-signal {
+    display: none;
+  }
+
+  .red-flags-stage-content {
+    gap: 24px;
+    border-radius: 26px;
+    padding: 14px;
+  }
+
+  .red-flags-stage-intro {
+    padding: 8px 6px 0;
+  }
+
+  .red-flags-feed {
+    border-radius: 20px;
+    padding: 20px !important;
+  }
+
+  .stories-dark-stage {
+    background:
+      linear-gradient(rgba(255, 227, 238, 0.028) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255, 227, 238, 0.028) 1px, transparent 1px),
+      radial-gradient(95% 24% at 18% 8%, rgba(209, 69, 117, 0.09), transparent 72%),
+      linear-gradient(180deg, rgba(26, 7, 20, 0.02), rgba(19, 4, 15, 0.28));
+    background-size: 40px 40px, 40px 40px, auto, auto;
+  }
+
+  .flow-wave-canvas--stories {
+    opacity: 0.86;
+  }
+
+  .stories-post-stack {
+    gap: 24px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .red-flags-stage-aurora,
+  .red-flags-stage-signal,
+  .red-flags-stage-signal::after,
+  .red-flags-stage-content::after,
+  .thread-typing-dot {
+    animation: none !important;
+    transition: none !important;
+    will-change: auto;
+  }
+}
+
+@media (prefers-contrast: more), (forced-colors: active) {
+  .red-flags-stage-motion,
+  .red-flags-stage-intro::after {
+    display: none;
+  }
+
+  .red-flags-stage-content,
+  .red-flags-feed {
+    border: 1px solid CanvasText !important;
+    background: Canvas !important;
+    color: CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  .red-flags-stage-intro > p,
+  .red-flags-stage-intro > h2 {
+    color: CanvasText !important;
+    text-shadow: none;
+  }
+}

@@ -152,11 +152,11 @@ function settingsForVariant(settings: CmsHomepageBackground, variant: FlowWaveVa
   return {
     ...settings,
     atmoCount: Math.min(settings.atmoCount, 72),
-    opacity: clamp(settings.opacity * 0.75, 0.16, 0.22),
-    pointSize: clamp(settings.pointSize * 0.82, 2.4, 3),
+    opacity: clamp(settings.opacity * 0.92, 0.23, 0.28),
+    pointSize: clamp(settings.pointSize * 0.95, 2.8, 3.4),
     density: clamp(settings.density * 0.65, 0.4, 0.56),
-    flow: clamp(settings.flow * 0.55, 0.2, 0.34),
-    waveHeight: clamp(settings.waveHeight * 0.7, 1.4, 1.9),
+    flow: clamp(settings.flow * 0.75, 0.32, 0.48),
+    waveHeight: clamp(settings.waveHeight * 0.8, 1.8, 2.3),
     pointerStrength: 0,
   }
 }
@@ -294,9 +294,15 @@ export function FlowWaveBackground({
 
   useEffect(() => {
     const canvas = canvasRef.current
+    if (!canvas) return
+    const motionCanvas = canvas
+    motionCanvas.dataset.motion = 'deferred'
     // Data Saver explicitly opts out of WebGL. Low-power phones still receive
     // the network language through a deliberately small, frame-capped scene.
-    if (!canvas || prefersReducedData()) return
+    if (prefersReducedData()) {
+      motionCanvas.dataset.motion = 'static'
+      return
+    }
 
     let disposed = false
     let cleanupScene: (() => void) | undefined
@@ -310,9 +316,9 @@ export function FlowWaveBackground({
       }
       if (typeof window.requestIdleCallback === 'function') {
         idleHandle.usedIdle = true
-        idleHandle.id = window.requestIdleCallback(start, { timeout: 2500 })
+        idleHandle.id = window.requestIdleCallback(start, { timeout: storiesVariant ? 800 : 2500 })
       } else {
-        idleHandle.id = window.setTimeout(start, 250)
+        idleHandle.id = window.setTimeout(start, storiesVariant ? 80 : 250)
       }
     })
 
@@ -321,6 +327,7 @@ export function FlowWaveBackground({
       try {
         THREE = await import('three')
       } catch {
+        motionCanvas.dataset.motion = 'static'
         return
       }
       if (disposed || !canvas) return
@@ -336,6 +343,7 @@ export function FlowWaveBackground({
         renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowPower, alpha: true })
       } catch {
         // WebGL unavailable — the layered CSS atmosphere is the fallback.
+        motionCanvas.dataset.motion = 'static'
         return
       }
       renderer.setPixelRatio(renderDpr())
@@ -432,7 +440,7 @@ export function FlowWaveBackground({
       let toneCurrent = toneProgressRef.current
       atmoPts.onBeforeRender = () => {
         const speedScale = lerp(1, 0.6, toneCurrent)
-        const variantSpeedScale = storiesVariant ? 0.55 : 1
+        const variantSpeedScale = storiesVariant ? 0.78 : 1
         atmoMat.uniforms.uTime.value = reducedMotion
           ? 40
           : (performance.now() / 1000) * ATMO_SPEED * speedScale * variantSpeedScale * 8.0
@@ -494,9 +502,9 @@ export function FlowWaveBackground({
       function applyTone(tone: number, scroll: number) {
         const live = tunablesRef.current
         const lightTonePresence = 1 - smoothstep01(tone / 0.55)
-        const opacityScale = lerp(1, 0.67, tone) * (1 + lightTonePresence * 0.18)
-        const pointScale = lerp(1, 0.78, tone)
-        const motionScale = lerp(1, 0.6, tone)
+        const opacityScale = storiesVariant ? 0.94 : lerp(1, 0.67, tone) * (1 + lightTonePresence * 0.18)
+        const pointScale = storiesVariant ? 0.94 : lerp(1, 0.78, tone)
+        const motionScale = storiesVariant ? 0.82 : lerp(1, 0.6, tone)
         const earlyContrastMix = lightTonePresence * 0.24
 
         uniforms.uColLow.value.copy(hexToVec3(live.colorLow)).lerp(lightContrastLow, earlyContrastMix).lerp(darkColorLow, tone)
@@ -514,12 +522,17 @@ export function FlowWaveBackground({
         return motionScale
       }
 
-      function positionCamera(scroll: number, m: { x: number; y: number }) {
+      function positionCamera(scroll: number, m: { x: number; y: number }, time = 0) {
         if (storiesVariant) {
-          // A long-form feed needs a stable stage. The wave may stream, but the
-          // camera never dives toward it and never follows the pointer.
-          camera.position.set(0, 4.4, 11)
-          camera.lookAt(0, 0.15, -4)
+          // A slow multi-axis drift supplies the large-scale motion of
+          // cinematic footage without another canvas or a video request.
+          const phase = reducedMotion ? 0 : time
+          const driftScale = lowPower ? 0.55 : 1
+          const x = Math.sin(phase * 0.16) * (mobile ? 0.16 : 0.3) * driftScale
+          const y = (mobile ? 3.65 : 4.15) + Math.sin(phase * 0.11 + 1.1) * (mobile ? 0.1 : 0.16) * driftScale
+          const z = (mobile ? 9.8 : 10.6) + Math.cos(phase * 0.09) * (mobile ? 0.18 : 0.28) * driftScale
+          camera.position.set(x, y, z)
+          camera.lookAt(x * 0.2, 0.05, -4.8)
           return
         }
 
@@ -539,10 +552,16 @@ export function FlowWaveBackground({
         uniforms.uTime.value = t
         toneCurrent = lerp(toneCurrent, toneProgressRef.current, 0.055)
         const motionScale = applyTone(toneCurrent, scroll)
+        if (storiesVariant) {
+          // Uniform-only luminance breathing makes the network read as a living
+          // scene while geometry and draw-call count stay unchanged.
+          uniforms.uOpacity.value *= 0.94 + Math.sin(t * 0.32) * 0.06
+          atmoMat.uniforms.uOpacity.value *= 0.96 + Math.cos(t * 0.24) * 0.04
+        }
         const live = tunablesRef.current
         state.stream += dt * (live.flow * 2.0) * 4.0 * motionScale
         uniforms.uStream.value = state.stream
-        positionCamera(scroll, m)
+        positionCamera(scroll, m, t)
         updatePointerWorld()
         uniforms.uCursor.value.copy(pointer.world)
         uniforms.uActivity.value = mobile || lowPower || storiesVariant ? 0 : pointer.activity
@@ -553,7 +572,7 @@ export function FlowWaveBackground({
       let rafId = 0
       let running = false
       let lastRenderAt = 0
-      const minFrameInterval = lowPower ? 42 : mobile ? 32 : 0
+      const minFrameInterval = lowPower ? 42 : mobile ? 32 : storiesVariant ? 22 : 0
       function loop(timestamp: number) {
         if (!running) return
         rafId = requestAnimationFrame(loop)
@@ -572,6 +591,7 @@ export function FlowWaveBackground({
       function startLoop() {
         if (running) return
         running = true
+        motionCanvas.dataset.motion = 'animated'
         state.t0 = performance.now() / 1000
         rafId = requestAnimationFrame(loop)
       }
@@ -603,6 +623,7 @@ export function FlowWaveBackground({
         uniforms.uStream.value = 60
         positionCamera(scrollTarget, { x: 0, y: 0 })
         renderer.render(scene, camera)
+        motionCanvas.dataset.motion = 'static'
       }
 
       const onVisibility = () => {
@@ -628,6 +649,7 @@ export function FlowWaveBackground({
 
       cleanupScene = () => {
         stopLoop()
+        motionCanvas.dataset.motion = 'deferred'
         window.cancelAnimationFrame(staticFrameRaf)
         window.removeEventListener('resize', resize)
         window.removeEventListener('scroll', onScroll)
@@ -671,6 +693,7 @@ export function FlowWaveBackground({
       <canvas
         ref={canvasRef}
         aria-hidden="true"
+        data-motion="deferred"
         className={`flow-wave-canvas flow-wave-canvas--${variant} fixed inset-0 -z-10 h-full w-full`}
         style={{ pointerEvents: 'none' }}
       />

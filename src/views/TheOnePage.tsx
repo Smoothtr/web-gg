@@ -1264,8 +1264,8 @@ export default function TheOnePage({ lang = 'en', cmsPage, siteSettings }: { lan
           </p>
         )}
 
-        <section className="mx-auto mt-5 grid w-full max-w-[1040px] min-w-0 grid-cols-[minmax(0,1fr)] gap-6 px-3 sm:px-5 md:mt-7 xl:grid-cols-[minmax(0,660px)_280px] xl:gap-8">
-          <div className="mx-auto grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] gap-4 md:max-w-[640px] md:gap-6 lg:max-w-[660px] xl:max-w-[660px]">
+        <section className="stories-feed-layout mx-auto mt-5 grid w-full max-w-[1040px] min-w-0 grid-cols-[minmax(0,1fr)] gap-6 px-4 sm:px-5 md:mt-7 xl:grid-cols-[minmax(0,660px)_280px] xl:gap-8">
+          <div className="stories-post-stack mx-auto grid w-full min-w-0 max-w-full grid-cols-[minmax(0,1fr)] gap-4 md:max-w-[640px] md:gap-6 lg:max-w-[660px] xl:max-w-[660px]">
             {orderedCaseStudies.map((story, index) => (
               <InstagramPost
                 key={story.id}

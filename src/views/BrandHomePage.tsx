@@ -1127,9 +1127,18 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
   const headingRevealDelay = countStaggerWords(block.heading || 'Sounds familiar?') * 70 + 240
 
   return (
-    <section data-reveal-scene data-home-tone="rose" className="home-tone-zone home-section-pad px-5 lg:px-10">
-      <div className="mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start lg:gap-12">
-        <div className="lg:sticky lg:top-28">
+    <section
+      data-reveal-scene
+      data-home-tone="rose"
+      data-testid="red-flags-stage"
+      className="red-flags-stage home-tone-zone home-section-pad px-5 lg:px-10"
+    >
+      <div className="red-flags-stage-motion" aria-hidden="true">
+        <span className="red-flags-stage-aurora" />
+        <span className="red-flags-stage-signal" />
+      </div>
+      <div className="red-flags-stage-content mx-auto grid max-w-6xl gap-8 lg:grid-cols-[0.4fr_0.6fr] lg:items-start lg:gap-12">
+        <div className="red-flags-stage-intro lg:sticky lg:top-28">
           <p data-reveal="soft" data-reveal-phase="0" className="text-[11px] font-black uppercase tracking-[0.2em] text-[#3d1226]/[0.55]">Red flags</p>
           <h2 data-reveal="words" data-reveal-phase="0" className="mt-3 font-serif text-[38px] font-normal leading-[0.98] text-[#3d1226] md:text-[52px]">
             <RevealWords text={block.heading || 'Sounds familiar?'} />
@@ -1151,8 +1160,8 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
           </div>
         </div>
 
-        <div className="glass-panel quiet-zone relative w-full p-5 md:p-6">
-          <div className="thread-line" aria-hidden="true" style={{ left: 39, top: 64 }} />
+        <div className="red-flags-feed glass-panel quiet-zone relative w-full p-5 md:p-6">
+          <div className="thread-line" aria-hidden="true" />
 
           <article data-reveal="tile-in" data-reveal-phase="1" data-tile-direction="bottom" style={{ '--ri': 0, '--rd': `${headingRevealDelay}ms` } as CSSProperties} className="relative grid grid-cols-[40px_1fr] gap-3">
             <img src="/avatars/logo-gg.png" alt="" aria-hidden="true" className="relative z-10 h-10 w-10 rounded-full border border-white/80 bg-white object-contain p-1 shadow-sm" />
@@ -1181,42 +1190,46 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
             </span>
           </div>
 
-          {items.map((item, index) => (
-            <article
-              key={`${item.handle || item.title}-${index}`}
-              data-testid="red-flag-reply"
-              data-reveal="tile-in"
-              data-reveal-phase="2"
-              data-tile-direction="bottom"
-              style={{ '--ri': index + 2, '--rd': `${headingRevealDelay + 220}ms` } as CSSProperties}
-              className={`relative mt-5 grid-cols-[40px_1fr] gap-3 ${
-                index >= mobileVisibleCount && !showAllReplies ? 'hidden lg:grid' : 'grid'
-              }`}
-            >
-              <ThreadAvatar item={item} index={index} />
-              <div className="min-w-0">
-                <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[14px] font-extrabold text-[#3d1226]">{item.handle?.trim() || item.title}</span>
-                  {item.roleLabel?.trim() && <span className="text-xs font-semibold text-[#3d1226]/50">· {item.roleLabel}</span>}
-                  <span className="text-xs font-semibold text-[#3d1226]/[0.45]">{Math.max(1, 16 - index * 2)}h</span>
+          <div id="red-flags-replies" className="red-flags-replies">
+            {items.map((item, index) => (
+              <article
+                key={`${item.handle || item.title}-${index}`}
+                data-testid="red-flag-reply"
+                data-reveal="tile-in"
+                data-reveal-phase="2"
+                data-tile-direction="bottom"
+                style={{ '--ri': index + 2, '--rd': `${headingRevealDelay + 220}ms` } as CSSProperties}
+                className={`relative mt-5 grid-cols-[40px_1fr] gap-3 ${
+                  index >= mobileVisibleCount && !showAllReplies ? 'hidden lg:grid' : 'grid'
+                }`}
+              >
+                <ThreadAvatar item={item} index={index} />
+                <div className="min-w-0">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <span className="text-[14px] font-extrabold text-[#3d1226]">{item.handle?.trim() || item.title}</span>
+                    {item.roleLabel?.trim() && <span className="text-xs font-semibold text-[#3d1226]/50">· {item.roleLabel}</span>}
+                    <span className="text-xs font-semibold text-[#3d1226]/[0.45]">{Math.max(1, 16 - index * 2)}h</span>
+                  </div>
+                  <p className="mt-1.5 text-[15px] font-semibold leading-relaxed text-[#3d1226]/90">{item.body?.trim() || item.title}</p>
+                  {item.likes?.trim() && (
+                    <span className="mt-2 flex w-fit items-center gap-1.5 text-xs font-bold text-[#3d1226]/[0.55]" aria-hidden="true">
+                      <Heart size={15} strokeWidth={2.2} /> {item.likes}
+                    </span>
+                  )}
                 </div>
-                <p className="mt-1.5 text-[15px] font-semibold leading-relaxed text-[#3d1226]/90">{item.body?.trim() || item.title}</p>
-                {item.likes?.trim() && (
-                  <span className="mt-2 flex w-fit items-center gap-1.5 text-xs font-bold text-[#3d1226]/[0.55]" aria-hidden="true">
-                    <Heart size={15} strokeWidth={2.2} /> {item.likes}
-                  </span>
-                )}
-              </div>
-            </article>
-          ))}
+              </article>
+            ))}
+          </div>
 
-          {hasHiddenMobileReplies && !showAllReplies && (
+          {hasHiddenMobileReplies && (
             <button
               type="button"
-              onClick={() => setShowAllReplies(true)}
+              onClick={() => setShowAllReplies((current) => !current)}
+              aria-expanded={showAllReplies}
+              aria-controls="red-flags-replies"
               className="relative mt-4 ml-[52px] inline-flex items-center gap-1 text-xs font-extrabold text-primary transition-colors hover:text-primary/70 lg:hidden"
             >
-              Show {items.length - mobileVisibleCount} more replies ▾
+              {showAllReplies ? 'Show fewer replies' : `Show ${items.length - mobileVisibleCount} more replies`}
             </button>
           )}
 
