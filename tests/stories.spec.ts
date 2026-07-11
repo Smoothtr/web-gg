@@ -140,7 +140,10 @@ test.describe('The One Stories', () => {
     await expect(detail.getByRole('heading', { name: 'Result', exact: true })).toBeVisible()
     await expect(page.locator('#booking-modal-title')).toHaveCount(0)
 
-    await detail.getByRole('button', { name: 'Book a consultation' }).click()
+    const bookingCta = detail.getByRole('button', { name: 'Schedule Our Date' })
+    await expect(bookingCta).toHaveClass(/booking-cta-enhanced/)
+    await expect(bookingCta.locator('.booking-cta-note')).toHaveText('Free 30-min founder call · No commitment')
+    await bookingCta.click()
     await expect(detail).toHaveCount(0)
     await expect(page.locator('#booking-modal-title')).toBeVisible()
 

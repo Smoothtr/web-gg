@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, type ReactNode } from 'react'
 import { Menu, X } from 'lucide-react'
+import { BookingCtaContent } from './BookingCtaContent'
 import { BookingModal } from './BookingModal'
 import { BrandFooter } from './BrandFooter'
 import { useScrollReveal } from '../hooks/useScrollReveal'
@@ -18,14 +19,6 @@ type BrandLayoutProps = {
   mobileHeaderTitle?: string
   floatingCtaRevealSelector?: string
   resolveNavHref?: (href: string, label: string) => string
-}
-
-function resolveHeaderCtaLabel(label: string) {
-  const trimmed = label.trim()
-  const normalized = trimmed.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
-  return !trimmed || /book a (free )?consultation|dat lich tu van|call your shot/.test(normalized)
-    ? 'Schedule Our Date'
-    : trimmed
 }
 
 const FOCUSABLE_SELECTOR = [
@@ -89,7 +82,6 @@ export function BrandLayout({
   const header = localizedSettings.header
   const navItems = header.navLinks.filter((item) => item.visible !== false && item.label.trim() && item.href.trim())
   const homeHref = localizedPath(contentLang, '/')
-  const headerCtaLabel = resolveHeaderCtaLabel(header.ctaLabel)
   const showHeaderCopy = Boolean(header.brandName.trim() || header.tagline.trim())
   const showHeaderCta = !hideHeaderCta
 
@@ -231,9 +223,9 @@ export function BrandLayout({
       {showHeaderCta && (
         <button
           onClick={() => setBookingOpen(true)}
-          className={`header-floating-cta btn-shine cta-idle z-[60] hidden rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] transition hover:opacity-95 glow-orange lg:inline-flex ${showFloatingCta ? 'is-visible' : 'is-hidden'}`}
+          className={`header-floating-cta booking-cta-enhanced btn-shine cta-idle z-[60] hidden rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] transition hover:opacity-95 glow-orange lg:inline-flex ${showFloatingCta ? 'is-visible' : 'is-hidden'}`}
         >
-          {headerCtaLabel}
+          <BookingCtaContent />
         </button>
       )}
 
@@ -312,9 +304,9 @@ export function BrandLayout({
                   setMenuOpen(false)
                   setBookingOpen(true)
                 }}
-                className="btn-shine cta-idle mt-2 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.24)] glow-orange"
+                className="booking-cta-enhanced btn-shine cta-idle mt-2 inline-flex items-center justify-center rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-3 text-sm font-extrabold text-white shadow-[0_16px_36px_rgba(219,39,119,0.24)] glow-orange"
               >
-                {headerCtaLabel}
+                <BookingCtaContent />
               </button>
             )}
           </div>
@@ -322,7 +314,7 @@ export function BrandLayout({
         )}
       </header>
 
-      <main id="main-content" tabIndex={-1} className={`${flushTop ? '' : 'pt-24 '}${transparentBackground ? '' : 'mesh'} focus:outline-none`}>{children}</main>
+      <main id="main-content" tabIndex={-1} className={`${flushTop ? '' : 'pt-24 '}${transparentBackground ? 'flow-wave-host' : 'mesh'} focus:outline-none`}>{children}</main>
       <BrandFooter lang={contentLang} siteSettings={siteSettings} />
 
       <button

@@ -4801,3 +4801,410 @@ header.is-dark-page #mobile-navigation a {
     animation: none !important;
   }
 }
+
+/* ============================================================
+   Round 17 — proof-led hero, clearer booking CTA and soft close
+   ============================================================ */
+
+/* Keep fixed negative-z atmosphere layers above the document canvas on Safari
+   while every content zone remains naturally above them. */
+.flow-wave-host {
+  position: relative;
+  z-index: 0;
+  isolation: isolate;
+  background: transparent;
+}
+
+/* The primary conversion action explains itself without changing the approved
+   brand phrase. The travelling highlight is transform-only and intentionally
+   rests for most of its cycle. */
+.booking-cta-enhanced {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  background-size: 180% 100% !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.28),
+    0 16px 38px -12px rgba(179, 18, 75, 0.72),
+    0 8px 24px -15px rgba(255, 154, 61, 0.86) !important;
+}
+
+.booking-cta-enhanced.btn-shine::before {
+  top: -35%;
+  left: -62%;
+  z-index: 1;
+  width: 44%;
+  height: 170%;
+  background: linear-gradient(100deg, transparent 0%, rgba(255, 255, 255, 0.16) 28%, rgba(255, 255, 255, 0.78) 52%, rgba(255, 255, 255, 0.12) 74%, transparent 100%);
+  opacity: 0;
+  transform: translate3d(-30%, 0, 0) skewX(-18deg);
+  animation: bookingCtaSweep 5.6s cubic-bezier(0.22, 1, 0.36, 1) infinite;
+}
+
+.booking-cta-enhanced::after {
+  position: absolute;
+  inset: -80% auto auto -12%;
+  z-index: 0;
+  width: 118px;
+  height: 118px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 225, 174, 0.42), rgba(255, 151, 90, 0.16) 44%, transparent 70%);
+  content: '';
+  pointer-events: none;
+  animation: bookingCtaBubble 4.8s ease-in-out infinite;
+}
+
+.booking-cta-enhanced:hover,
+.booking-cta-enhanced:focus-visible {
+  filter: saturate(1.08) brightness(1.06);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.34),
+    0 20px 46px -12px rgba(179, 18, 75, 0.82),
+    0 10px 28px -13px rgba(255, 154, 61, 0.96) !important;
+}
+
+.booking-cta-enhanced:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: 3px;
+}
+
+.booking-cta-content {
+  position: relative;
+  z-index: 2;
+  display: inline-grid;
+  min-width: 0;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  line-height: 1.05;
+}
+
+.booking-cta-content--compact {
+  display: inline-block;
+  text-align: inherit;
+  line-height: inherit;
+}
+
+.booking-cta-icon {
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.22);
+}
+
+.booking-cta-icon svg,
+.booking-cta-arrow {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+}
+
+.booking-cta-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.booking-cta-label {
+  font-size: 1em;
+  font-weight: 850;
+  letter-spacing: -0.015em;
+  white-space: nowrap;
+}
+
+.booking-cta-note {
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 10px;
+  font-weight: 650;
+  letter-spacing: 0.015em;
+  white-space: nowrap;
+}
+
+.booking-cta-arrow {
+  opacity: 0.8;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+.booking-cta-enhanced:hover .booking-cta-arrow,
+.booking-cta-enhanced:focus-visible .booking-cta-arrow {
+  opacity: 1;
+  transform: translate3d(2px, -2px, 0);
+}
+
+@keyframes bookingCtaSweep {
+  0%, 68% { opacity: 0; transform: translate3d(-30%, 0, 0) skewX(-18deg); }
+  72% { opacity: 0.9; }
+  86% { opacity: 0; transform: translate3d(410%, 0, 0) skewX(-18deg); }
+  100% { opacity: 0; transform: translate3d(410%, 0, 0) skewX(-18deg); }
+}
+
+@keyframes bookingCtaBubble {
+  0%, 100% { opacity: 0.54; transform: translate3d(0, 0, 0) scale(0.92); }
+  50% { opacity: 0.86; transform: translate3d(18px, 12px, 0) scale(1.08); }
+}
+
+/* Three proof cards read as compact evidence rather than generic tags. Each
+   card keeps the live CMS number/label and uses a tiny decorative visual only. */
+.home-hero-proof-list {
+  display: grid;
+  width: min(100%, 720px);
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  padding: 0;
+  list-style: none;
+}
+
+.home-hero-proof-card {
+  --proof-accent: #ffd2e2;
+  --proof-accent-rgb: 255, 122, 168;
+  position: relative;
+  display: grid !important;
+  min-width: 0;
+  min-height: 90px;
+  grid-template-columns: 34px minmax(0, 1fr);
+  grid-template-areas:
+    'icon copy'
+    'visual visual';
+  align-content: center;
+  align-items: center;
+  gap: 7px 9px;
+  overflow: hidden;
+  border-radius: 18px;
+  padding: 10px 11px !important;
+  text-align: left;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24), 0 14px 32px rgba(17, 4, 13, 0.16);
+}
+
+.home-hero-proof-card[data-proof-kind='orders'] {
+  --proof-accent: #ffe09d;
+  --proof-accent-rgb: 255, 196, 86;
+}
+
+.home-hero-proof-card[data-proof-kind='partnership'] {
+  --proof-accent: #ffc6af;
+  --proof-accent-rgb: 255, 139, 94;
+}
+
+.home-hero-proof-card.is-on-dark {
+  border: 1px solid rgba(255, 255, 255, 0.34);
+  background:
+    linear-gradient(145deg, rgba(var(--proof-accent-rgb), 0.15), transparent 52%),
+    rgba(25, 7, 19, 0.52);
+  color: #fff;
+  -webkit-backdrop-filter: blur(13px) saturate(128%);
+  backdrop-filter: blur(13px) saturate(128%);
+}
+
+.home-hero-proof-card.is-on-light {
+  border: 1px solid rgba(61, 18, 38, 0.16);
+  background:
+    linear-gradient(145deg, rgba(var(--proof-accent-rgb), 0.18), transparent 54%),
+    rgba(255, 252, 253, 0.86);
+  color: #3d1226;
+  -webkit-backdrop-filter: blur(13px) saturate(122%);
+  backdrop-filter: blur(13px) saturate(122%);
+}
+
+.home-hero-proof-icon {
+  grid-area: icon;
+  display: inline-flex;
+  width: 32px;
+  height: 32px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(var(--proof-accent-rgb), 0.42);
+  border-radius: 11px;
+  background: rgba(var(--proof-accent-rgb), 0.16);
+  color: var(--proof-accent);
+}
+
+.home-hero-proof-card.is-on-light .home-hero-proof-icon {
+  color: rgb(var(--proof-accent-rgb));
+}
+
+.home-hero-proof-icon svg {
+  width: 18px;
+  height: 18px;
+}
+
+.home-hero-proof-copy {
+  grid-area: copy;
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.home-hero-proof-value {
+  color: var(--proof-accent);
+  font-size: clamp(16px, 1.8vw, 20px);
+  font-weight: 900;
+  letter-spacing: -0.035em;
+  line-height: 1;
+}
+
+.home-hero-proof-card.is-on-light .home-hero-proof-value {
+  color: #9f174c;
+}
+
+.home-hero-proof-label {
+  font-size: 10px;
+  font-weight: 720;
+  line-height: 1.16;
+  opacity: 0.86;
+}
+
+.home-hero-proof-visual {
+  grid-area: visual;
+  display: block;
+  width: 100%;
+  height: 18px;
+  color: var(--proof-accent);
+  opacity: 0.92;
+}
+
+.home-hero-proof-card.is-on-light .home-hero-proof-visual {
+  color: rgb(var(--proof-accent-rgb));
+}
+
+.home-hero-proof-visual svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+/* Darkening begins inside the FAQ zone, lands on the exact portal base colour,
+   then dissolves into the video instead of exposing a hard horizontal seam. */
+.closing-section {
+  position: relative;
+  overflow: hidden;
+}
+
+.closing-section::after {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  z-index: 0;
+  height: clamp(150px, 20vw, 250px);
+  background: linear-gradient(180deg, transparent 0%, rgba(43, 13, 29, 0.42) 52%, #2b0d1d 100%);
+  content: '';
+  pointer-events: none;
+}
+
+.closing-content {
+  z-index: 1;
+}
+
+.closing-portal-section {
+  margin-top: -1px;
+}
+
+.closing-portal-section::before {
+  height: clamp(190px, 24svh, 300px);
+  background: linear-gradient(180deg, #2b0d1d 0%, rgba(43, 13, 29, 0.88) 18%, rgba(43, 13, 29, 0.34) 62%, transparent 100%);
+}
+
+@media (max-width: 767px) {
+  .booking-cta-content {
+    gap: 8px;
+  }
+
+  .booking-cta-icon {
+    width: 30px;
+    height: 30px;
+  }
+
+  .booking-cta-note {
+    font-size: 9.5px;
+  }
+
+  .home-hero-proof-list {
+    width: min(100%, 360px);
+    max-width: 360px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px !important;
+  }
+
+  .home-hero-proof-card {
+    min-height: 96px;
+    grid-template-columns: 28px minmax(0, 1fr);
+    gap: 6px;
+    border-radius: 15px;
+    padding: 8px !important;
+  }
+
+  .home-hero-proof-icon {
+    width: 27px;
+    height: 27px;
+    border-radius: 9px;
+  }
+
+  .home-hero-proof-icon svg {
+    width: 15px;
+    height: 15px;
+  }
+
+  .home-hero-proof-value {
+    font-size: clamp(14px, 4vw, 17px);
+  }
+
+  .home-hero-proof-label {
+    font-size: 9px;
+    line-height: 1.12;
+  }
+
+  .home-hero-proof-visual {
+    height: 15px;
+  }
+
+  .closing-section::after {
+    height: clamp(120px, 30vw, 170px);
+  }
+
+  .closing-portal-section::before {
+    height: clamp(180px, 25svh, 250px);
+  }
+}
+
+@media (max-width: 350px) {
+  .home-hero-proof-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .home-hero-proof-card:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  .booking-cta-note {
+    white-space: normal;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .booking-cta-enhanced,
+  .booking-cta-enhanced.btn-shine::before,
+  .booking-cta-enhanced::after,
+  .booking-cta-arrow {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+@media (forced-colors: active) {
+  .booking-cta-enhanced,
+  .home-hero-proof-card {
+    border: 1px solid CanvasText;
+  }
+
+  .booking-cta-enhanced::before,
+  .booking-cta-enhanced::after,
+  .home-hero-proof-visual {
+    display: none;
+  }
+}

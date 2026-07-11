@@ -162,6 +162,7 @@ function settingsForVariant(settings: CmsHomepageBackground, variant: FlowWaveVa
 }
 
 const HOME_TONE_VALUES: Record<string, number> = {
+  hero: 0,
   light: 0,
   rose: 0.24,
   mid: 0.5,
@@ -207,11 +208,15 @@ function readHomepageToneProgress() {
   return markers[markers.length - 1].value
 }
 
-function isWeakDevice() {
-  const cores = navigator.hardwareConcurrency ?? 8
+function prefersReducedData() {
   const connection = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection
   const reducedData = window.matchMedia?.('(prefers-reduced-data: reduce)').matches ?? false
-  return Boolean(connection?.saveData || reducedData || (cores <= 4 && window.devicePixelRatio >= 3))
+  return Boolean(connection?.saveData || reducedData)
+}
+
+function isLowPowerDevice() {
+  const cores = navigator.hardwareConcurrency ?? 8
+  return cores <= 4 && window.devicePixelRatio >= 2.5
 }
 
 function isMobileViewport() {
@@ -289,7 +294,9 @@ export function FlowWaveBackground({
 
   useEffect(() => {
     const canvas = canvasRef.current
-    if (!canvas || isWeakDevice()) return
+    // Data Saver explicitly opts out of WebGL. Low-power phones still receive
+    // the network language through a deliberately small, frame-capped scene.
+    if (!canvas || prefersReducedData()) return
 
     let disposed = false
     let cleanupScene: (() => void) | undefined
@@ -319,17 +326,19 @@ export function FlowWaveBackground({
       if (disposed || !canvas) return
 
       const mobile = isMobileViewport()
-      const dprCap = storiesVariant ? (mobile ? 1 : 1.35) : (mobile ? 1.5 : 1.75)
+      const lowPower = isLowPowerDevice()
+      const dprCap = lowPower ? 1 : storiesVariant ? (mobile ? 1 : 1.35) : (mobile ? 1.25 : 1.75)
+      const renderDpr = () => Math.min(window.devicePixelRatio, dprCap)
       const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
       let renderer: import('three').WebGLRenderer
       try {
-        renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true })
+        renderer = new THREE.WebGLRenderer({ canvas, antialias: !lowPower, alpha: true })
       } catch {
         // WebGL unavailable — the layered CSS atmosphere is the fallback.
         return
       }
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap))
+      renderer.setPixelRatio(renderDpr())
       renderer.setClearColor(0x000000, 0)
 
       const hexToVec3 = (hex: string) => {
@@ -339,6 +348,8 @@ export function FlowWaveBackground({
       const darkColorLow = hexToVec3('#673047')
       const darkColorHigh = hexToVec3('#E8A35A')
       const darkAtmoColor = hexToVec3('#D74A7C')
+      const lightContrastLow = hexToVec3('#B83D68')
+      const lightContrastHigh = hexToVec3('#E8755B')
 
       const scene = new THREE.Scene()
       const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 400)
@@ -348,7 +359,8 @@ export function FlowWaveBackground({
       const cfg = tunablesRef.current
       const group = new THREE.Group()
       scene.add(group)
-      const geometryDensity = clamp(cfg.density || GEOMETRY_DENSITY, 0.35, 1)
+      const densityCap = lowPower ? 0.42 : mobile ? 0.68 : 1
+      const geometryDensity = clamp(Math.min(cfg.density || GEOMETRY_DENSITY, densityCap), 0.35, densityCap)
       const widthSegments = Math.max(72, Math.round((mobile ? 120 : 200) * geometryDensity))
       const heightSegments = Math.max(216, Math.round((mobile ? 360 : 600) * geometryDensity))
       const geo = new THREE.SphereGeometry(4.2, widthSegments, heightSegments)
@@ -380,9 +392,11 @@ export function FlowWaveBackground({
       pts.frustumCulled = false
       group.add(pts)
 
-      const atmoLimit = mobile
-        ? Math.min(storiesVariant ? 48 : 72, variantSettings.atmoCount)
-        : variantSettings.atmoCount
+      const atmoLimit = lowPower
+        ? Math.min(36, variantSettings.atmoCount)
+        : mobile
+          ? Math.min(storiesVariant ? 48 : 72, variantSettings.atmoCount)
+          : variantSettings.atmoCount
       const atmoN = Math.round(atmoLimit * geometryDensity)
       const atmoPositions = new Float32Array(atmoN * 3)
       const atmoSizes = new Float32Array(atmoN)
@@ -408,7 +422,7 @@ export function FlowWaveBackground({
           uColor: { value: hexToVec3(cfg.atmoColor) },
           uOpacity: { value: 1 },
           uSizeScale: { value: mobile ? 0.9 : 1 },
-          uRes: { value: new THREE.Vector2(window.innerWidth * window.devicePixelRatio, window.innerHeight * window.devicePixelRatio) },
+          uRes: { value: new THREE.Vector2(window.innerWidth * renderDpr(), window.innerHeight * renderDpr()) },
         },
         vertexShader: ATMO_VERTEX,
         fragmentShader: ATMO_FRAGMENT,
@@ -479,16 +493,18 @@ export function FlowWaveBackground({
       const state = { stream: 0, t0: performance.now() / 1000, appearStart: performance.now() }
       function applyTone(tone: number, scroll: number) {
         const live = tunablesRef.current
-        const opacityScale = lerp(1, 0.67, tone)
+        const lightTonePresence = 1 - smoothstep01(tone / 0.55)
+        const opacityScale = lerp(1, 0.67, tone) * (1 + lightTonePresence * 0.18)
         const pointScale = lerp(1, 0.78, tone)
         const motionScale = lerp(1, 0.6, tone)
+        const earlyContrastMix = lightTonePresence * 0.24
 
-        uniforms.uColLow.value.copy(hexToVec3(live.colorLow)).lerp(darkColorLow, tone)
-        uniforms.uColHigh.value.copy(hexToVec3(live.colorHigh)).lerp(darkColorHigh, tone)
+        uniforms.uColLow.value.copy(hexToVec3(live.colorLow)).lerp(lightContrastLow, earlyContrastMix).lerp(darkColorLow, tone)
+        uniforms.uColHigh.value.copy(hexToVec3(live.colorHigh)).lerp(lightContrastHigh, earlyContrastMix).lerp(darkColorHigh, tone)
         uniforms.uOpacity.value = live.opacity * opacityScale
         uniforms.uSize.value = (live.pointSize || POINT_SIZE) * (mobile ? 0.9 : 1) * pointScale
         uniforms.uFlow.value = live.flow * motionScale
-        uniforms.uRepelStrength.value = mobile ? 0 : live.pointerStrength * lerp(1, 0.5, tone)
+        uniforms.uRepelStrength.value = mobile || lowPower ? 0 : live.pointerStrength * lerp(1, 0.5, tone)
         uniforms.uWaveHeight.value = live.waveHeight * pointScale * (1 + scroll * (live.scrollRise ?? SCROLL_RISE))
 
         atmoMat.uniforms.uColor.value.copy(hexToVec3(live.atmoColor)).lerp(darkAtmoColor, tone)
@@ -496,6 +512,24 @@ export function FlowWaveBackground({
         atmoMat.uniforms.uSizeScale.value = (mobile ? 0.9 : 1) * pointScale
 
         return motionScale
+      }
+
+      function positionCamera(scroll: number, m: { x: number; y: number }) {
+        if (storiesVariant) {
+          // A long-form feed needs a stable stage. The wave may stream, but the
+          // camera never dives toward it and never follows the pointer.
+          camera.position.set(0, 4.4, 11)
+          camera.lookAt(0, 0.15, -4)
+          return
+        }
+
+        const ea = Math.min(scroll / 0.75, 1.0)
+        const scrollDive = ea * ea * (3 - 2 * ea)
+        // Start part-way into the dive so a restrained wave trace is already
+        // visible below the hero rather than only becoming legible near footer.
+        const e = lerp(0.18, 1, scrollDive)
+        camera.position.set(m.x * PARALLAX, lerp(CAM_START_Y, CAM_END_Y, e) + m.y * PARALLAX * 0.3, lerp(CAM_START_Z, CAM_END_Z, e))
+        camera.lookAt(m.x * PARALLAX * 0.5, lerp(0.0, 0.6, e), lerp(LOOK_START_Z, LOOK_END_Z, e))
       }
 
       function renderScene(scroll: number, m: { x: number; y: number }) {
@@ -508,20 +542,10 @@ export function FlowWaveBackground({
         const live = tunablesRef.current
         state.stream += dt * (live.flow * 2.0) * 4.0 * motionScale
         uniforms.uStream.value = state.stream
-        if (storiesVariant) {
-          // A long-form feed needs a stable stage. The wave may stream, but the
-          // camera never dives toward it and never follows the pointer.
-          camera.position.set(0, 4.4, 11)
-          camera.lookAt(0, 0.15, -4)
-        } else {
-          const ea = Math.min(scroll / 0.75, 1.0)
-          const e = ea * ea * (3 - 2 * ea)
-          camera.position.set(m.x * PARALLAX, lerp(CAM_START_Y, CAM_END_Y, e) + m.y * PARALLAX * 0.3, lerp(CAM_START_Z, CAM_END_Z, e))
-          camera.lookAt(m.x * PARALLAX * 0.5, lerp(0.0, 0.6, e), lerp(LOOK_START_Z, LOOK_END_Z, e))
-        }
+        positionCamera(scroll, m)
         updatePointerWorld()
         uniforms.uCursor.value.copy(pointer.world)
-        uniforms.uActivity.value = mobile || storiesVariant ? 0 : pointer.activity
+        uniforms.uActivity.value = mobile || lowPower || storiesVariant ? 0 : pointer.activity
         const elapsed = (performance.now() - state.appearStart) / 1000
         uniforms.uAppear.value = Math.max(0, Math.min(1, (elapsed - 0.2) / 1.4))
       }
@@ -529,11 +553,15 @@ export function FlowWaveBackground({
       let rafId = 0
       let running = false
       let lastRenderAt = 0
+      const minFrameInterval = lowPower ? 42 : mobile ? 32 : 0
       function loop(timestamp: number) {
         if (!running) return
         rafId = requestAnimationFrame(loop)
-        if (storiesVariant && mobile && timestamp - lastRenderAt < 32) return
-        lastRenderAt = timestamp
+        const elapsedSinceLastFrame = timestamp - lastRenderAt
+        if (minFrameInterval && elapsedSinceLastFrame < minFrameInterval) return
+        lastRenderAt = minFrameInterval
+          ? timestamp - (elapsedSinceLastFrame % minFrameInterval)
+          : timestamp
         scrollSmooth = lerp(scrollSmooth, scrollTarget, 0.1)
         scrollCurrent = lerp(scrollCurrent, scrollSmooth, 0.06)
         mouse.x = lerp(mouse.x, mouseTarget.x, 0.06)
@@ -555,30 +583,25 @@ export function FlowWaveBackground({
       function resize() {
         const w = window.innerWidth
         const h = window.innerHeight
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, dprCap))
+        renderer.setPixelRatio(renderDpr())
         renderer.setSize(w, h, false)
         camera.aspect = w / h
         camera.updateProjectionMatrix()
-        atmoMat.uniforms.uRes.value.set(w * window.devicePixelRatio, h * window.devicePixelRatio)
+        atmoMat.uniforms.uRes.value.set(w * renderDpr(), h * renderDpr())
         readScroll()
         if (reducedMotion) renderStaticFrame()
       }
 
       function renderStaticFrame() {
-        // prefers-reduced-motion: one fixed frame, no dive, no loop.
+        // prefers-reduced-motion: one fixed frame with the same tone/camera
+        // composition as motion mode, but no autonomous animation loop.
         toneProgressRef.current = storiesVariant ? 1 : smoothstep01(readHomepageToneProgress())
         toneCurrent = toneProgressRef.current
         applyTone(toneCurrent, scrollTarget)
         uniforms.uAppear.value = 1
         uniforms.uTime.value = 40
         uniforms.uStream.value = 60
-        if (storiesVariant) {
-          camera.position.set(0, 4.4, 11)
-          camera.lookAt(0, 0.15, -4)
-        } else {
-          camera.position.set(0, CAM_START_Y, CAM_START_Z)
-          camera.lookAt(0, 0, LOOK_START_Z)
-        }
+        positionCamera(scrollTarget, { x: 0, y: 0 })
         renderer.render(scene, camera)
       }
 
@@ -595,7 +618,7 @@ export function FlowWaveBackground({
       if (reducedMotion) {
         renderStaticFrame()
       } else {
-        if (!mobile && !storiesVariant) {
+        if (!mobile && !lowPower && !storiesVariant) {
           window.addEventListener('mousemove', onMouseMove, { passive: true })
           window.addEventListener('mouseout', onMouseOut)
         }

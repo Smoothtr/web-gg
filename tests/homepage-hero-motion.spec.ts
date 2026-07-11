@@ -9,6 +9,13 @@ async function expectHeroCentered(page: import('@playwright/test').Page, width: 
   const cta = copy.getByRole('button', { name: 'Schedule Our Date' })
   await expect(copy).toHaveCSS('text-align', 'center')
   await expect(cta).toBeVisible()
+  await expect(cta).toHaveClass(/booking-cta-enhanced/)
+  await expect(cta.locator('.booking-cta-note')).toHaveText('Free 30-min founder call · No commitment')
+
+  const proofCards = copy.locator('.home-hero-proof-card')
+  await expect(proofCards).toHaveCount(3)
+  await expect(proofCards.nth(0).locator('.home-hero-proof-icon')).toBeVisible()
+  await expect(proofCards.nth(0).locator('.home-hero-proof-visual')).toBeVisible()
 
   const [heroBox, headingBox, ctaBox] = await Promise.all([
     hero.boundingBox(),
@@ -36,6 +43,9 @@ test.describe('Homepage centered hero and control-free showcases', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
 
     await expect(page.getByRole('button', { name: /pause featured|play featured|pause people|play people/i })).toHaveCount(0)
+    // Under a fully parallel run, DOMContentLoaded can precede React hydration.
+    // The hero readiness marker guarantees the showcase hover handlers are live.
+    await expect(page.locator('.home-hero')).toHaveClass(/is-ready/)
 
     const caseSection = page.locator('#featured-cases')
     const secondCase = caseSection.locator('[data-story-id]').nth(1)
@@ -73,5 +83,23 @@ test.describe('Homepage centered hero and control-free showcases', () => {
     await expect(closing.locator('video source')).toHaveCount(2)
     const closingSources = await closing.locator('video source').evaluateAll((sources) => sources.map((source) => source.getAttribute('src') || ''))
     expect(closingSources.every((source) => source.includes('closing-portal-1440.'))).toBe(true)
+  })
+
+  test('keeps the wave in the page stack and removes CTA motion for reduced-motion users', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+
+    await expect(page.locator('#main-content')).toHaveClass(/flow-wave-host/)
+    const cta = page.locator('.home-hero').getByRole('button', { name: 'Schedule Our Date' })
+    const sheenAnimation = await cta.evaluate((element) => getComputedStyle(element, '::before').animationName)
+    expect(sheenAnimation).toBe('none')
+
+    const closing = page.locator('.closing-portal-section')
+    const bridge = await closing.evaluate((element) => ({
+      background: getComputedStyle(element, '::before').backgroundImage,
+      height: Number.parseFloat(getComputedStyle(element, '::before').height),
+    }))
+    expect(bridge.background).toContain('linear-gradient')
+    expect(bridge.height).toBeGreaterThanOrEqual(180)
   })
 })

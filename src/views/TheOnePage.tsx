@@ -18,6 +18,7 @@ import {
 } from 'lucide-react'
 import { compactTheOneByLang, organizationSchema, websiteSchema, type BrandLang } from '../brandContent'
 import { BrandLayout } from '../components/BrandLayout'
+import { BookingCtaContent } from '../components/BookingCtaContent'
 import { openBookingModal } from '../components/openBookingModal'
 import { SeoHead } from '../components/SeoHead'
 import { getLocalizedCmsBlock, getLocalizedPageMeta } from '../cms/contentBlocks'
@@ -853,13 +854,13 @@ function StoryMediaFrame({ story, index, swipeHint }: { story: CaseStudy; index:
 
             <button
               type="button"
-              className="story-detail-booking-cta mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white"
+              className="story-detail-booking-cta booking-cta-enhanced btn-shine cta-idle mt-6 inline-flex min-h-11 w-full items-center justify-center rounded-full bg-primary px-5 py-3 text-sm font-extrabold text-white"
               onClick={() => {
                 closeSummarySheet()
                 window.setTimeout(() => openBookingModal(`story-detail-${story.id}`), 0)
               }}
             >
-              Book a consultation
+              <BookingCtaContent showNote />
             </button>
           </div>
         </div>,

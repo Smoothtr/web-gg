@@ -14,6 +14,7 @@ import {
 } from 'lucide-react'
 import { compactHomeByLang, homeMetaByLang, homeWebPageSchema, localizedPath, organizationSchema, websiteSchema, type BrandLang } from '../brandContent'
 import { BrandLayout } from '../components/BrandLayout'
+import { BookingCtaContent } from '../components/BookingCtaContent'
 import { openBookingModal } from '../components/openBookingModal'
 import { PackageCards } from '../components/PackageCards'
 import { SeoHead } from '../components/SeoHead'
@@ -31,7 +32,6 @@ import { getOrderedCaseStudies } from '../data/caseStudyStories'
 import type { CaseStudy } from '../data/caseStudies'
 import { brandDisplayFontClass } from '../lib/brandNames'
 
-const primaryBookingCtaLabel = 'Schedule Our Date'
 const defaultHeroGradient = 'linear-gradient(180deg,#FF7AA8 0%,#FF4D7D 45%,#FFB199 100%)'
 const defaultClosingPortalSources: HeroVideoSources = {
   mp4: '/closing/closing-portal-1920.mp4',
@@ -105,11 +105,6 @@ function getAdaptiveHomepageVideoSources(sources: HeroVideoSources): HeroVideoSo
     posterSrcSet: cldResponsiveSrcSet(sources.poster, 'full', 'best'),
     mobilePosterSrcSet: cldResponsiveSrcSet(sources.mobilePoster || sources.poster, 'mobile', 'best'),
   }
-}
-
-function resolvePrimaryBookingCtaLabel(label?: string) {
-  const trimmed = label?.trim() ?? ''
-  return !trimmed || /book a (free )?consultation|call your shot/i.test(trimmed) ? primaryBookingCtaLabel : trimmed
 }
 
 const storyLogoById: Record<string, string> = {
@@ -296,6 +291,75 @@ function HeroWordTitle({
         ))}
       </span>
     </span>
+  )
+}
+
+type HeroProofKind = 'growth' | 'orders' | 'partnership'
+
+function resolveHeroProofKind(chip: { value: string; label: string; icon?: string }, index: number): HeroProofKind {
+  const hint = `${chip.icon ?? ''} ${chip.value} ${chip.label}`.toLowerCase()
+  if (/order|cart|shop|package|bag/.test(hint)) return 'orders'
+  if (/partner|year|yrs|relationship|heart|handshake/.test(hint)) return 'partnership'
+  if (/growth|peak|trend|revenue|increase/.test(hint)) return 'growth'
+  return (['growth', 'orders', 'partnership'] as const)[index % 3]
+}
+
+function HeroProofIcon({ kind }: { kind: HeroProofKind }) {
+  if (kind === 'orders') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M4 8h16l-1.35 11H5.35L4 8Z" />
+        <path d="M8.5 9V6.5a3.5 3.5 0 0 1 7 0V9M8.5 13h7" />
+      </svg>
+    )
+  }
+
+  if (kind === 'partnership') {
+    return (
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+        <path d="M20.8 5.8a5.1 5.1 0 0 0-7.2 0L12 7.4l-1.6-1.6a5.1 5.1 0 0 0-7.2 7.2L12 21l8.8-8a5.1 5.1 0 0 0 0-7.2Z" />
+        <path d="m8.5 12 2.1 2.1 4.9-5" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+      <path d="m4 17 5-5 4 3 7-8" />
+      <path d="M15 7h5v5" />
+    </svg>
+  )
+}
+
+function HeroProofMicrovisual({ kind }: { kind: HeroProofKind }) {
+  if (kind === 'orders') {
+    return (
+      <svg viewBox="0 0 72 24" preserveAspectRatio="none">
+        <rect x="3" y="14" width="8" height="7" rx="2" fill="currentColor" opacity="0.34" />
+        <rect x="17" y="10" width="8" height="11" rx="2" fill="currentColor" opacity="0.52" />
+        <rect x="31" y="5" width="8" height="16" rx="2" fill="currentColor" opacity="0.78" />
+        <path d="M45 16h20m-5-5 5 5-5 5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      </svg>
+    )
+  }
+
+  if (kind === 'partnership') {
+    return (
+      <svg viewBox="0 0 72 24" preserveAspectRatio="none">
+        <path d="M7 12h58" fill="none" stroke="currentColor" strokeWidth="1.5" strokeDasharray="3 4" opacity="0.44" />
+        <circle cx="8" cy="12" r="3" fill="currentColor" opacity="0.42" />
+        <circle cx="36" cy="12" r="4" fill="currentColor" opacity="0.64" />
+        <circle cx="64" cy="12" r="5" fill="currentColor" />
+      </svg>
+    )
+  }
+
+  return (
+    <svg viewBox="0 0 72 24" preserveAspectRatio="none">
+      <path d="M2 21 16 17 28 18 42 10 54 12 70 3" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="42" cy="10" r="2.5" fill="currentColor" opacity="0.68" />
+      <circle cx="70" cy="3" r="3" fill="currentColor" />
+    </svg>
   )
 }
 
@@ -1079,9 +1143,9 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
               <button
                 type="button"
                 onClick={openBookingModal}
-                className="btn-shine cta-idle mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] hover:opacity-95"
+                className="booking-cta-enhanced btn-shine cta-idle mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] hover:opacity-95"
               >
-                {block.ctaLabel?.trim() || 'Schedule Our Date'}
+                <BookingCtaContent />
               </button>
             </div>
           </div>
@@ -1170,9 +1234,9 @@ function RedFlagsSection({ block }: { block?: ReturnType<typeof getCmsBlock> }) 
               <button
                 type="button"
                 onClick={openBookingModal}
-                className="btn-shine cta-idle mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] hover:opacity-95"
+                className="booking-cta-enhanced btn-shine cta-idle mt-4 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-5 py-2.5 text-sm font-extrabold text-white shadow-[0_14px_30px_rgba(219,39,119,0.22)] hover:opacity-95"
               >
-                {block.ctaLabel?.trim() || 'Schedule Our Date'}
+                <BookingCtaContent />
               </button>
             </div>
           </article>
@@ -1525,8 +1589,6 @@ function ClosingBanner({
   const line1 = block.closingLine1?.trim() || 'We quit our 9-5 and started our own business.'
   const line2 = block.closingLine2?.trim() || "Isn't it your turn now?"
   const prefooterLine = block.ctaSubtext?.trim() || 'See you on our first date?'
-  const ctaLabel = resolvePrimaryBookingCtaLabel(block.ctaLabel)
-
   // Round 7 A5: no solid gradient background and no logo marquee — glass items float
   // directly on the shared aurora + wave background.
   return (
@@ -1615,9 +1677,9 @@ function ClosingBanner({
             <button
               type="button"
               onClick={() => openBookingModal('closing-video')}
-              className="btn-shine cta-idle inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-8 py-4 text-[16px] font-extrabold text-white shadow-[0_18px_44px_rgba(219,39,119,0.28)] hover:opacity-95 md:px-11 md:py-[18px] md:text-[18px]"
+              className="booking-cta-enhanced btn-shine cta-idle inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-8 py-4 text-[16px] font-extrabold text-white shadow-[0_18px_44px_rgba(219,39,119,0.28)] hover:opacity-95 md:px-11 md:py-[18px] md:text-[18px]"
             >
-              {ctaLabel}
+              <BookingCtaContent showNote />
             </button>
           </div>
         </section>
@@ -1814,33 +1876,44 @@ export default function BrandHomePage({
             data-reveal-phase="3"
             data-reveal-open
             style={{ '--hero-delay': `${heroDelays.cta}ms`, '--rd': `${heroDelays.cta}ms` } as CSSProperties}
-            className="home-hero-item btn-shine cta-idle mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-7 py-3.5 font-bold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] hover:opacity-95"
+            className="home-hero-item booking-cta-enhanced btn-shine cta-idle mt-9 inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-primary via-tertiary to-secondary px-7 py-3.5 font-bold text-white shadow-[0_16px_36px_rgba(219,39,119,0.28)] hover:opacity-95"
           >
-            {resolvePrimaryBookingCtaLabel(heroBlock?.ctaLabel)}
+            <BookingCtaContent showNote />
           </button>
           {/* Round 8 A1: ctaSubtext slot removed from the DOM entirely (field stays dormant in CMS). */}
           {showHeroStatChips && (
-            <div className="home-hero-stat-chips mt-5 flex flex-wrap justify-center gap-2">
-              {heroStatChips.map((chip, chipIndex) => (
-                <span
-                  key={`${chip.value}-${chip.label}`}
-                  data-reveal="soft"
-                  data-reveal-phase="4"
-                  data-reveal-open
-                  style={{
-                    '--hero-delay': `${heroDelays.cta + 230 + chipIndex * 90}ms`,
-                    '--rd': `${heroDelays.cta + 230 + chipIndex * 90}ms`,
-                  } as CSSProperties}
-                  className={`home-hero-item home-hero-stat-chip rounded-full px-3 py-1.5 text-xs font-semibold shadow-[0_10px_26px_rgba(0,0,0,0.1)] backdrop-blur-md ${
-                    heroTextMode === 'dark'
-                      ? 'border border-[#3d1226]/20 bg-white/75 text-[#3d1226]'
-                      : 'border border-white/40 bg-black/20 text-white'
-                  }`}
-                >
-                  {chip.value}{chip.label ? ` ${chip.label}` : ''}
-                </span>
-              ))}
-            </div>
+            <ul className="home-hero-stat-chips home-hero-proof-list mt-5" aria-label="Selected client outcomes">
+              {heroStatChips.map((chip, chipIndex) => {
+                const proofKind = resolveHeroProofKind(chip, chipIndex)
+                return (
+                  <li
+                    key={`${chip.value}-${chip.label}`}
+                    data-reveal="soft"
+                    data-reveal-phase="4"
+                    data-reveal-open
+                    data-proof-kind={proofKind}
+                    style={{
+                      '--hero-delay': `${heroDelays.cta + 230 + chipIndex * 90}ms`,
+                      '--rd': `${heroDelays.cta + 230 + chipIndex * 90}ms`,
+                    } as CSSProperties}
+                    className={`home-hero-item home-hero-stat-chip home-hero-proof-card ${
+                      heroTextMode === 'dark' ? 'is-on-light' : 'is-on-dark'
+                    }`}
+                  >
+                    <span className="home-hero-proof-icon" aria-hidden="true">
+                      <HeroProofIcon kind={proofKind} />
+                    </span>
+                    <span className="home-hero-proof-copy">
+                      <strong className="home-hero-proof-value">{chip.value}</strong>
+                      {chip.label && <span className="home-hero-proof-label">{chip.label}</span>}
+                    </span>
+                    <span className="home-hero-proof-visual" aria-hidden="true">
+                      <HeroProofMicrovisual kind={proofKind} />
+                    </span>
+                  </li>
+                )
+              })}
+            </ul>
           )}
         </div>
         <button
