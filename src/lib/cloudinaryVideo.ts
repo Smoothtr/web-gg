@@ -1,13 +1,12 @@
-const HOMEPAGE_VIDEO_WIDTHS = [1920, 2560, 3200, 3840] as const
 const CLOUDINARY_VIDEO_WIDTH = /\bw_\d+\b/
 
-export function getHomepageVideoDeliveryWidth(viewportWidth: number, devicePixelRatio: number, mobile: boolean) {
-  // The approved mobile rendition stays at 1440. Desktop is selected from the
-  // rendered width × DPR, so only genuinely large/high-density screens fetch
-  // the 4K rendition from a 4K master.
+export function getHomepageVideoDeliveryWidth(viewportWidth: number, _devicePixelRatio: number, mobile: boolean) {
+  // Mobile keeps the approved 1440 budget and tablet uses 2560. Desktop always
+  // asks for 4K so a future genuine 4K CMS master works without another code
+  // change. Cloudinary c_limit still preserves the native source ceiling.
   if (mobile) return 1440
-  const requiredWidth = Math.max(1920, Math.ceil(viewportWidth * Math.max(1, devicePixelRatio)))
-  return HOMEPAGE_VIDEO_WIDTHS.find((width) => width >= requiredWidth) ?? 3840
+  if (viewportWidth < 1024) return 2560
+  return 3840
 }
 
 export function retargetCloudinaryVideoWidth(url: string | undefined, width: number) {

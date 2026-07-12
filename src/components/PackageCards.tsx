@@ -89,7 +89,21 @@ function getPackageContent(item: CmsBlockItem) {
   }
 }
 
-type PackageFeatureRow = { text: string; group?: string; label?: string; featured?: boolean }
+export type PackageFeatureRow = { text: string; group?: string; label?: string; featured?: boolean }
+
+export type PackageTone = 'start' | 'system' | 'scale'
+
+type PackageFeatureTextParts = {
+  before: string
+  emphasis: string
+  after: string
+}
+
+export type PackageFeaturePresentation = {
+  group: string
+  emphasisSource: 'explicit' | 'leading' | 'none'
+  parts: PackageFeatureTextParts
+}
 
 function isContentMetricRow(row: PackageFeatureRow) {
   return /content units?/i.test(row.text)
@@ -100,6 +114,141 @@ function rowGroupName(row: PackageFeatureRow) {
   if (!source) return 'Deliverables'
   // Legacy labels are stored UPPERCASE; show them in title case.
   return source.toLowerCase().replace(/(^|\s)\S/g, (c) => c.toUpperCase())
+}
+
+export function resolvePackageTone(item: Pick<CmsBlockItem, 'title'>, packageId: string, index: number): PackageTone {
+  const stableKey = `${packageId} ${item.title}`.toLowerCase()
+  if (/\bscale\b/.test(stableKey)) return 'scale'
+  if (/\bsystem\b/.test(stableKey)) return 'system'
+  if (/\bstart(?:er)?\b/.test(stableKey)) return 'start'
+  return (['start', 'system', 'scale'] as const)[index] ?? 'start'
+}
+
+function splitExactPhrase(text: string, phrase: string): PackageFeatureTextParts | null {
+  const normalizedPhrase = phrase.trim()
+  if (!normalizedPhrase) return null
+  const index = text.toLocaleLowerCase().indexOf(normalizedPhrase.toLocaleLowerCase())
+  if (index < 0) return null
+  return {
+    before: text.slice(0, index),
+    emphasis: text.slice(index, index + normalizedPhrase.length),
+    after: text.slice(index + normalizedPhrase.length),
+  }
+}
+
+function splitLeadingMeaningfulClause(text: string): PackageFeatureTextParts | null {
+  const start = text.search(/\S/)
+  if (start < 0) return null
+  const content = text.slice(start)
+  const boundary = /(?:,|;|:|\s+[—–]\s+|\s+\()/.exec(content)
+  const end = start + (boundary?.index ?? content.length)
+  const emphasis = text.slice(start, end).trimEnd()
+  if (!emphasis) return null
+  return {
+    before: text.slice(0, start),
+    emphasis,
+    after: text.slice(start + emphasis.length),
+  }
+}
+
+export function getPackageFeaturePresentation(
+  row: PackageFeatureRow,
+  important = row.featured === true,
+): PackageFeaturePresentation {
+  // `label` is a legacy group fallback when no explicit `group` exists. It only
+  // becomes an inline emphasis instruction when both fields are present, so old
+  // CMS rows keep their original meaning.
+  const explicitPhrase = row.group?.trim() ? row.label?.trim() ?? '' : ''
+  const explicitParts = explicitPhrase ? splitExactPhrase(row.text, explicitPhrase) : null
+  if (explicitParts) {
+    return { group: rowGroupName(row), emphasisSource: 'explicit', parts: explicitParts }
+  }
+
+  const leadingParts = important ? splitLeadingMeaningfulClause(row.text) : null
+  if (leadingParts) {
+    return { group: rowGroupName(row), emphasisSource: 'leading', parts: leadingParts }
+  }
+
+  return {
+    group: rowGroupName(row),
+    emphasisSource: 'none',
+    parts: { before: '', emphasis: '', after: row.text },
+  }
+}
+
+function packageToken(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/&/g, 'and')
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-|-$/g, '') || 'deliverables'
+}
+
+function PackageFeatureRowView({
+  as = 'li',
+  row,
+  important = row.featured === true,
+  showGroup = true,
+  variant,
+  style,
+}: {
+  as?: 'li' | 'div'
+  row: PackageFeatureRow
+  important?: boolean
+  showGroup?: boolean
+  variant: 'compact' | 'expanded' | 'card'
+  style?: CSSProperties
+}) {
+  const presentation = getPackageFeaturePresentation(row, important)
+  const Element = as
+  const showCheck = variant !== 'card'
+  const classes = variant === 'compact'
+    ? 'pkg-rv package-feature-row flex items-start gap-2 text-[13px] font-semibold leading-snug text-[#3d1226]'
+    : variant === 'expanded'
+      ? 'pkg-acc-row package-feature-row flex items-start gap-2 text-[12px] font-semibold leading-relaxed text-[#7a5566]'
+      : 'pkg-rv package-feature-row group/task rounded-2xl border border-outline-variant/45 bg-white/60 p-3 transition hover:border-primary/30 hover:bg-primary/5'
+
+  return (
+    <Element
+      className={classes}
+      style={style}
+      data-testid="package-feature-row"
+      data-feature-group={presentation.group}
+      data-featured={important ? 'true' : 'false'}
+    >
+      {showCheck && (
+        <Check
+          size={variant === 'expanded' ? 13 : 15}
+          strokeWidth={3}
+          className={`mt-0.5 shrink-0 ${variant === 'expanded' ? 'text-primary/70' : 'text-primary'}`}
+          aria-hidden="true"
+        />
+      )}
+      <span className="package-feature-copy block min-w-0 flex-1 [overflow-wrap:anywhere]">
+        {showGroup && (
+          <span className="package-feature-group mb-1 block text-[9px] font-black uppercase tracking-[0.12em] text-primary/80">
+            {presentation.group}
+          </span>
+        )}
+        <span className={`package-feature-text block ${variant === 'card' ? 'text-[12px] font-semibold leading-relaxed text-on-surface-variant' : ''}`}>
+          {presentation.parts.emphasis ? (
+            <>
+              {presentation.parts.before}
+              <strong
+                data-testid="package-feature-emphasis"
+                data-emphasis-source={presentation.emphasisSource}
+                className="package-feature-emphasis font-black text-[#3d1226]"
+              >
+                {presentation.parts.emphasis}
+              </strong>
+              {presentation.parts.after}
+            </>
+          ) : row.text}
+        </span>
+      </span>
+    </Element>
+  )
 }
 
 function normalizePackageCtaLabel(value: string | undefined, fallback: string) {
@@ -230,6 +379,7 @@ export function PackageCards({
           const { metricRow, compactRows, groups, totalRows } = organizePackageFeatures(features)
           const system = isSystemPackage(item, index)
           const id = cardIds[index]
+          const tone = resolvePackageTone(item, id, index)
           const highlight = highlightedId === id
           const expanded = Boolean(expandedIds[id])
           const Icon = packageIcons[index] ?? Rocket
@@ -248,6 +398,7 @@ export function PackageCards({
               data-reveal-phase="2"
               data-testid="package-card"
               data-package-id={id}
+              data-package-tone={tone}
               data-selected={selected ? 'true' : 'false'}
               data-system-package={system ? 'true' : 'false'}
               style={{ '--ri': index } as CSSProperties}
@@ -274,7 +425,7 @@ export function PackageCards({
                 {/* Round 12 A3.3: internal cascade — each block carries --pi; CSS turns
                     that into a 60ms/step transition-delay after the card reveals. */}
                 <div className="pkg-rv flex items-center gap-3" style={{ '--pi': 0 } as CSSProperties}>
-                  <span className="flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                  <span className="package-tone-icon flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
                     {item.imageUrl ? (
                       <img src={item.imageUrl} alt={item.imageAlt || item.title} className="h-7 w-7 object-contain" />
                     ) : (
@@ -293,17 +444,20 @@ export function PackageCards({
                 />
                 {metricRow && (
                   // Round 8 A4.2: solid chip — same style on all three cards, no gradient text.
-                  <span className="pkg-rv mt-4 w-fit rounded-full border border-[#F9C1D6] bg-[#FFF1F5] px-3 py-1.5 text-xs font-extrabold text-[#B3124B]" style={{ '--pi': 2 } as CSSProperties}>
+                  <span className="package-metric-chip pkg-rv mt-4 w-fit rounded-full border border-[#F9C1D6] bg-[#FFF1F5] px-3 py-1.5 text-xs font-extrabold text-[#B3124B]" style={{ '--pi': 2 } as CSSProperties}>
                     {metricRow.text}
                   </span>
                 )}
                 {compactRows.length > 0 && (
                   <ul className="package-card-features mt-4 grid gap-2">
                     {compactRows.map((row, rowIndex) => (
-                      <li key={`${item.title}-featured-${rowIndex}`} className="pkg-rv flex items-start gap-2 text-[13px] font-semibold leading-snug text-[#3d1226]" style={{ '--pi': 3 + rowIndex } as CSSProperties}>
-                        <Check size={15} strokeWidth={3} className="mt-0.5 shrink-0 text-primary" aria-hidden="true" />
-                        <span>{row.text}</span>
-                      </li>
+                      <PackageFeatureRowView
+                        key={`${item.title}-featured-${rowIndex}`}
+                        row={row}
+                        important
+                        variant="compact"
+                        style={{ '--pi': 3 + rowIndex } as CSSProperties}
+                      />
                     ))}
                   </ul>
                 )}
@@ -324,19 +478,26 @@ export function PackageCards({
                     <div className="mt-3 grid gap-3 rounded-2xl border border-white/70 bg-white/55 p-3.5">
                       {(() => {
                         let accRow = 0
-                        return groups.map((group) => (
-                          <div key={`${item.title}-group-${group.name}`}>
-                            <p className="pkg-acc-row text-[10px] font-black uppercase tracking-[0.14em] text-primary/80" style={{ '--pi': accRow++ } as CSSProperties}>{group.name}</p>
+                        return groups.map((group, groupIndex) => {
+                          const headingId = `${id}-group-${packageToken(group.name)}-${groupIndex}`
+                          return (
+                          <section key={`${item.title}-group-${group.name}`} aria-labelledby={headingId}>
+                            <h4 id={headingId} className="pkg-acc-row text-[10px] font-black uppercase tracking-[0.14em] text-primary/80" style={{ '--pi': accRow++ } as CSSProperties}>{group.name}</h4>
                             <ul className="mt-1.5 grid gap-1.5">
                               {group.rows.map((row, rowIndex) => (
-                                <li key={`${item.title}-${group.name}-${rowIndex}`} className="pkg-acc-row flex items-start gap-2 text-[12px] font-semibold leading-relaxed text-[#7a5566]" style={{ '--pi': accRow++ } as CSSProperties}>
-                                  <Check size={13} strokeWidth={3} className="mt-0.5 shrink-0 text-primary/70" aria-hidden="true" />
-                                  {row.text}
-                                </li>
+                                <PackageFeatureRowView
+                                  key={`${item.title}-${group.name}-${rowIndex}`}
+                                  row={row}
+                                  important={compactRows.includes(row)}
+                                  showGroup={false}
+                                  variant="expanded"
+                                  style={{ '--pi': accRow++ } as CSSProperties}
+                                />
                               ))}
                             </ul>
-                          </div>
-                        ))
+                          </section>
+                          )
+                        })
                       })()}
                     </div>
                   </div>
@@ -379,9 +540,11 @@ export function PackageCards({
     <div role="radiogroup" aria-label="Choose a package" className={`grid gap-5 md:grid-cols-3 ${className}`}>
       {items.map((item, index) => {
         const { subtitle, features, priceLabel, priceValue } = getPackageContent(item)
+        const { compactRows } = organizePackageFeatures(features)
         const selected = selectedIndex === index
         const system = isSystemPackage(item, index)
         const id = cardIds[index]
+        const tone = resolvePackageTone(item, id, index)
         const highlight = highlightedId === id
         const Icon = packageIcons[index] ?? Rocket
         const caseStudyLink = localizedPath(lang, '/the-one')
@@ -393,6 +556,7 @@ export function PackageCards({
             data-reveal-phase="2"
             data-testid="package-card"
             data-package-id={id}
+            data-package-tone={tone}
             data-selected={selected ? 'true' : 'false'}
             data-system-package={system ? 'true' : 'false'}
             style={{ '--ri': index } as CSSProperties}
@@ -412,7 +576,7 @@ export function PackageCards({
                 {item.label || 'Most Popular'}
               </span>
             )}
-            <span className="pkg-rv icon-chip mb-5 h-12 w-12" style={{ '--pi': 0 } as CSSProperties}>
+            <span className="package-tone-icon pkg-rv icon-chip mb-5 h-12 w-12" style={{ '--pi': 0 } as CSSProperties}>
               {item.imageUrl ? (
                 <img src={item.imageUrl} alt={item.imageAlt || item.title} className="h-7 w-7 object-contain" />
               ) : (
@@ -431,15 +595,19 @@ export function PackageCards({
             {features.length > 0 && (
               <div className="mt-4 grid gap-2">
                 {features.map((feature, featureIndex) => (
-                  <div key={`${item.title}-feature-${featureIndex}-${feature.label}`} className="pkg-rv group/task rounded-2xl border border-outline-variant/45 bg-white/60 p-3 transition hover:border-primary/30 hover:bg-primary/5" style={{ '--pi': 3 + featureIndex } as CSSProperties}>
-                    <p className="text-[11px] font-black uppercase tracking-[0.14em] text-primary">{feature.label}</p>
-                    <p className="mt-1 text-[12px] font-semibold leading-relaxed text-on-surface-variant">{feature.text}</p>
-                  </div>
+                  <PackageFeatureRowView
+                    key={`${item.title}-feature-${featureIndex}-${feature.label}`}
+                    as="div"
+                    row={feature}
+                    important={compactRows.includes(feature)}
+                    variant="card"
+                    style={{ '--pi': 3 + featureIndex } as CSSProperties}
+                  />
                 ))}
               </div>
             )}
             {priceValue && (
-              <div className="pkg-rv mt-5 rounded-2xl border border-primary/20 bg-gradient-to-r from-white via-primary/5 to-secondary/10 p-3" style={{ '--pi': 4 + features.length } as CSSProperties}>
+              <div className="package-card-price pkg-rv mt-5 rounded-2xl border border-primary/20 bg-gradient-to-r from-white via-primary/5 to-secondary/10 p-3" style={{ '--pi': 4 + features.length } as CSSProperties}>
                 <p className="text-[10px] font-black uppercase tracking-[0.16em] text-on-surface-variant">{priceLabel}</p>
                 <p className="home-price-shimmer mt-1 text-lg font-black text-primary">
                   {priceValue}

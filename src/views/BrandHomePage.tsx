@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   ArrowUpRight,
   ChevronDown,
@@ -33,6 +33,9 @@ import type { CaseStudy } from '../data/caseStudies'
 import { brandDisplayFontClass } from '../lib/brandNames'
 
 const defaultHeroGradient = 'linear-gradient(180deg,#FF7AA8 0%,#FF4D7D 45%,#FFB199 100%)'
+// Checked-in closing media is an honest 1920px desktop / 1440px mobile
+// fallback ceiling. A CMS Cloudinary override with genuine 4K and portrait
+// masters is required for true Retina/4K closing delivery; never upscale it.
 const defaultClosingPortalSources: HeroVideoSources = {
   mp4: '/closing/closing-portal-1920.mp4',
   webm: '/closing/closing-portal-1920.webm',
@@ -58,6 +61,29 @@ const heroFirstWordDelayMs = 420
 const heroWordStepMs = 90
 const heroWordDurationMs = 430
 
+const packageTermsHighlights = [
+  'Transparent pricing',
+  'No hidden fees',
+  'Quarterly commitment',
+  'does not guarantee revenue',
+  "90% of results depend on the product, the founder and the company's internal strength",
+  'is not a representative of Meta, TikTok, Google or Shopee',
+] as const
+
+function escapeRegExp(value: string) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+function highlightPackageTerms(text: string): ReactNode[] {
+  const matcher = new RegExp(`(${packageTermsHighlights.map(escapeRegExp).join('|')})`, 'gi')
+  return text.split(matcher).filter(Boolean).map((part, index) => {
+    const isHighlight = packageTermsHighlights.some((phrase) => phrase.toLocaleLowerCase('en') === part.toLocaleLowerCase('en'))
+    return isHighlight
+      ? <strong key={`${part}-${index}`} className="package-terms-emphasis">{part}</strong>
+      : part
+  })
+}
+
 function isCloudinaryVideo(url: string | undefined) {
   return Boolean(url?.includes('res.cloudinary.com/') && url.includes(cloudinaryVideoUploadMarker))
 }
@@ -66,12 +92,12 @@ function cloudinaryVideoVariant(url: string | undefined, width: number) {
   const value = url?.trim()
   if (!value || !isCloudinaryVideo(value)) return value || undefined
 
-  // Never fake detail: c_limit preserves the native source ceiling. A future
-  // 4K CMS master will automatically use the full desktop target, while
-  // q_auto:best + vc_auto keeps each rendition efficient for its codec.
+  // Never fake detail: c_limit preserves the native source ceiling. q_90 keeps
+  // fine motion detail that q_auto removed from the current flower footage;
+  // modest sharpening restores edge separation without manufacturing pixels.
   return value.replace(
     cloudinaryVideoUploadMarker,
-    `${cloudinaryVideoUploadMarker}c_limit,w_${width},q_auto:best,vc_auto/`,
+    `${cloudinaryVideoUploadMarker}c_limit,w_${width},q_90,e_sharpen:60,vc_auto/`,
   )
 }
 
@@ -885,8 +911,7 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
       {/* Round 7 A2.1: warm bridge from the video's bottom tone into the shared wave background */}
       <div
         aria-hidden="true"
-        className="pointer-events-none absolute inset-x-0 top-0 h-[180px]"
-        style={{ background: 'linear-gradient(to bottom, rgba(255,182,170,0.55), transparent)' }}
+        className="featured-top-bridge pointer-events-none absolute inset-x-0 top-0 h-[180px]"
       />
       <div className="relative mx-auto max-w-6xl">
         {/* Round 12 A2.2: the banner + thumbnail strip join the hero opening cascade —
@@ -1840,7 +1865,9 @@ export default function BrandHomePage({
           <>
             <div className="absolute inset-0 tech-grid opacity-35 pointer-events-none" aria-hidden="true" />
             <div className="noise-overlay" aria-hidden="true" />
-            <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-surface-container" aria-hidden="true" />
+            {!heroHasVideo && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-20 bg-gradient-to-b from-transparent to-surface-container" aria-hidden="true" />
+            )}
           </>
         )}
         <div
@@ -1954,20 +1981,29 @@ export default function BrandHomePage({
             <PackageCards items={packageItems} lang={lang} layout={packagesBlock?.layout === 'cards' ? 'cards' : 'horizontal'} />
           </div>
           {(packagesBlock?.packagesNote?.trim() || packagesBlock?.pricingNote?.trim() || packagesBlock?.disclaimer?.trim()) && (
-            // Round 12 A4.2: the single merged note (Round 8 rule) moves onto a dense glass
-            // card so it stays legible over the drifting wave blobs.
-            <div
+            <aside
+              role="note"
+              aria-labelledby="package-terms-title"
               data-reveal="soft"
               data-reveal-phase="3"
               style={{ '--rd': `${packagesHeaderDelay + 540}ms` } as CSSProperties}
-              className="quiet-zone mx-auto mt-8 flex max-w-[760px] items-start gap-2.5 rounded-[14px] border border-primary/[0.12] bg-white/[0.85] px-6 py-[18px] shadow-[0_12px_34px_rgba(219,39,119,0.08)] backdrop-blur-[12px]"
+              className="package-terms-note quiet-zone mx-auto mt-8 flex max-w-[820px] items-start gap-3.5 rounded-[18px] px-5 py-5 md:px-6"
             >
-              <Info size={15} strokeWidth={2.5} className="mt-0.5 shrink-0 text-[#B3124B]" aria-hidden="true" />
-              <p className="whitespace-pre-line text-left text-[13px] italic leading-[1.6] text-[#6b4a58]">
-                {packagesBlock.packagesNote?.trim() ||
-                  [packagesBlock.pricingNote?.trim(), packagesBlock.disclaimer?.trim()].filter(Boolean).join('\n')}
-              </p>
-            </div>
+              <span className="package-terms-icon" aria-hidden="true">
+                <Info size={17} strokeWidth={2.5} />
+              </span>
+              <div className="min-w-0 text-left">
+                <h3 id="package-terms-title" className="package-terms-title">Important package terms</h3>
+                <div className="package-terms-copy mt-2 grid gap-2">
+                  {splitCmsParagraphs(
+                    packagesBlock.packagesNote?.trim() ||
+                    [packagesBlock.pricingNote?.trim(), packagesBlock.disclaimer?.trim()].filter(Boolean).join('\n'),
+                  ).map((paragraph, index) => (
+                    <p key={`${paragraph}-${index}`}>{highlightPackageTerms(paragraph)}</p>
+                  ))}
+                </div>
+              </div>
+            </aside>
           )}
         </div>
       </section>

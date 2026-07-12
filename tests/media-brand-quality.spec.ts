@@ -96,17 +96,20 @@ test('deduplicates width candidates and returns reusable responsive image props'
   })
 })
 
-test('selects adaptive video widths and keeps 4K for genuinely large desktop displays', () => {
+test('selects the approved 1440 mobile, 2560 tablet and 4K desktop video tiers', () => {
   expect(getHomepageVideoDeliveryWidth(390, 3, true)).toBe(1440)
-  expect(getHomepageVideoDeliveryWidth(1440, 1, false)).toBe(1920)
-  expect(getHomepageVideoDeliveryWidth(1440, 2, false)).toBe(3200)
+  expect(getHomepageVideoDeliveryWidth(768, 2, false)).toBe(2560)
+  expect(getHomepageVideoDeliveryWidth(1023, 1, false)).toBe(2560)
+  expect(getHomepageVideoDeliveryWidth(1024, 1, false)).toBe(3840)
+  expect(getHomepageVideoDeliveryWidth(1440, 1, false)).toBe(3840)
+  expect(getHomepageVideoDeliveryWidth(1440, 2, false)).toBe(3840)
   expect(getHomepageVideoDeliveryWidth(1920, 2, false)).toBe(3840)
-  expect(
-    retargetCloudinaryVideoWidth(
-      'https://res.cloudinary.com/demo/video/upload/c_limit,w_3840,q_auto:best/hero.mp4',
-      1920,
-    ),
-  ).toContain('w_1920')
+  const transformed = retargetCloudinaryVideoWidth(
+    'https://res.cloudinary.com/demo/video/upload/c_limit,w_3840,q_90,e_sharpen:60,vc_auto/hero.mp4',
+    2560,
+  ) ?? ''
+  expect(transformed).toContain('c_limit,w_2560,q_90,e_sharpen:60,vc_auto')
+  expect(retargetCloudinaryVideoWidth('/closing/closing-portal-1920.webm', 3840)).toBe('/closing/closing-portal-1920.webm')
 })
 
 test('shares the same 1080/4K upload requirements between browser and server validation', () => {

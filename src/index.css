@@ -5216,6 +5216,10 @@ header.is-dark-page #mobile-navigation a {
 /* Sounds Familiar keeps the shared Homepage mesh, then adds two tiny
    transform-only layers. This creates a video-like stage without another
    canvas, media request, RAF loop or scroll listener. */
+.featured-top-bridge {
+  background: linear-gradient(180deg, transparent 0%, rgba(232, 160, 147, 0.12) 28%, rgba(225, 121, 151, 0.07) 58%, transparent 100%);
+}
+
 .red-flags-stage {
   position: relative;
   isolation: isolate;
@@ -5229,6 +5233,8 @@ header.is-dark-page #mobile-navigation a {
   z-index: 0;
   overflow: hidden;
   pointer-events: none;
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 12%, #000 88%, transparent 100%);
 }
 
 .red-flags-stage-aurora,
@@ -5241,76 +5247,68 @@ header.is-dark-page #mobile-navigation a {
 .red-flags-stage-aurora {
   inset: -18% -12%;
   background:
-    radial-gradient(44% 42% at 14% 22%, rgba(209, 69, 117, 0.34), transparent 70%),
-    radial-gradient(42% 46% at 88% 74%, rgba(239, 139, 86, 0.20), transparent 72%),
-    radial-gradient(52% 58% at 50% 52%, rgba(90, 30, 59, 0.22), transparent 76%);
-  opacity: 0.9;
+    radial-gradient(44% 42% at 14% 22%, rgba(209, 69, 117, 0.30), transparent 72%),
+    radial-gradient(42% 46% at 88% 74%, rgba(239, 139, 86, 0.18), transparent 74%),
+    radial-gradient(52% 58% at 50% 52%, rgba(90, 30, 59, 0.20), transparent 78%);
+  opacity: 0.86;
   transform: translate3d(-1.5%, -1%, 0) scale(1.04);
-  animation: redFlagsAuroraDrift 20s ease-in-out infinite alternate;
-  will-change: transform, opacity;
+  animation: redFlagsAuroraDrift 26s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 .red-flags-stage-signal {
-  inset: -10% -8%;
+  inset: -18% -14%;
   background-image:
-    radial-gradient(circle, rgba(255, 245, 249, 0.34) 0 1px, transparent 1.6px),
-    linear-gradient(118deg, transparent 18%, rgba(255, 214, 229, 0.15) 18.4%, transparent 18.9%),
-    linear-gradient(142deg, transparent 66%, rgba(255, 204, 177, 0.12) 66.35%, transparent 66.9%);
-  background-size: 34px 34px, 100% 100%, 100% 100%;
-  opacity: 0.24;
-  transform: translate3d(-2%, 0, 0) rotate(-1.5deg) scale(1.04);
+    radial-gradient(circle at 15% 55%, rgba(255, 224, 237, 0.84) 0 2px, transparent 3px),
+    radial-gradient(circle at 38% 35%, rgba(255, 194, 143, 0.70) 0 2.5px, transparent 3.5px),
+    radial-gradient(circle at 68% 62%, rgba(255, 132, 178, 0.78) 0 2px, transparent 3px),
+    radial-gradient(circle at 88% 29%, rgba(255, 223, 175, 0.72) 0 2.5px, transparent 3.5px),
+    radial-gradient(ellipse at 50% 50%, transparent 0 57.8%, rgba(255, 218, 232, 0.28) 58.15%, rgba(255, 190, 145, 0.16) 58.45%, transparent 58.85%),
+    radial-gradient(circle, rgba(255, 245, 249, 0.34) 0 0.8px, transparent 1.45px),
+    radial-gradient(circle, rgba(255, 202, 222, 0.24) 0 0.7px, transparent 1.35px),
+    radial-gradient(circle, rgba(255, 217, 175, 0.18) 0 0.65px, transparent 1.25px);
+  background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 100% 100%, 43px 47px, 79px 73px, 113px 107px;
+  opacity: 0.18;
+  transform: translate3d(-1.5%, 0, 0) rotate(-2deg) scale(1.06);
   -webkit-mask-image: radial-gradient(ellipse at 50% 48%, #000 0%, rgba(0, 0, 0, 0.72) 56%, transparent 90%);
   mask-image: radial-gradient(ellipse at 50% 48%, #000 0%, rgba(0, 0, 0, 0.72) 56%, transparent 90%);
-  animation: redFlagsSignalDrift 28s ease-in-out infinite alternate;
-  will-change: transform, opacity;
+  animation: redFlagsOrbitDust 38s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 .red-flags-stage-signal::after {
-  position: absolute;
-  inset: -20% auto -20% -32%;
-  width: 28%;
-  background: linear-gradient(90deg, transparent, rgba(255, 235, 218, 0.16), transparent);
-  content: '';
-  transform: translate3d(0, 0, 0) skewX(-12deg);
-  animation: redFlagsSignalScan 13s ease-in-out infinite;
+  content: none;
 }
 
 .red-flags-stage-content {
   position: relative;
   z-index: 1;
-  border: 1px solid rgba(255, 224, 236, 0.26);
+  border: 1px solid rgba(255, 224, 236, 0.13);
   border-radius: clamp(26px, 3vw, 38px);
   background:
-    linear-gradient(132deg, rgba(58, 13, 40, 0.88) 0%, rgba(103, 31, 61, 0.72) 52%, rgba(153, 62, 80, 0.52) 100%);
+    radial-gradient(70% 90% at 7% 18%, rgba(209, 69, 117, 0.12), transparent 72%),
+    linear-gradient(132deg, rgba(58, 13, 40, 0.68) 0%, rgba(103, 31, 61, 0.48) 52%, rgba(153, 62, 80, 0.30) 100%);
   padding: clamp(24px, 3.2vw, 44px);
   box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.16),
-    0 28px 78px rgba(43, 13, 29, 0.24);
+    inset 0 1px 0 rgba(255, 255, 255, 0.12),
+    0 32px 96px rgba(43, 13, 29, 0.18);
 }
 
 .red-flags-stage-content::before {
   position: absolute;
-  inset: 0;
+  inset: -42px -32px;
   z-index: -1;
   background:
-    radial-gradient(54% 52% at 8% 18%, rgba(255, 92, 151, 0.18), transparent 72%),
-    radial-gradient(48% 50% at 94% 82%, rgba(255, 166, 92, 0.13), transparent 70%);
+    radial-gradient(56% 60% at 8% 24%, rgba(209, 69, 117, 0.24), transparent 74%),
+    radial-gradient(52% 58% at 94% 78%, rgba(239, 139, 86, 0.17), transparent 76%),
+    radial-gradient(72% 86% at 52% 54%, rgba(90, 30, 59, 0.12), transparent 78%);
   content: '';
-  border-radius: inherit;
+  border-radius: clamp(48px, 5vw, 72px);
   pointer-events: none;
 }
 
 .red-flags-stage-content::after {
-  position: absolute;
-  inset: 0;
-  z-index: 0;
-  width: 34%;
-  border-radius: inherit;
-  background: linear-gradient(100deg, transparent, rgba(255, 219, 232, 0.08), rgba(255, 202, 158, 0.13), transparent);
-  content: '';
-  pointer-events: none;
-  transform: translate3d(-140%, 0, 0) skewX(-12deg);
-  animation: redFlagsContentSweep 15s ease-in-out infinite;
+  content: none;
 }
 
 .red-flags-stage-intro {
@@ -5335,19 +5333,19 @@ header.is-dark-page #mobile-navigation a {
   width: min(100%, 360px);
   height: clamp(132px, 14vw, 182px);
   margin-top: clamp(34px, 5vw, 62px);
-  border: 1px solid rgba(255, 222, 235, 0.18);
-  border-radius: 24px;
+  border: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.025)),
     radial-gradient(circle at 11% 64%, rgba(255, 204, 225, 0.88) 0 3px, transparent 4px),
     radial-gradient(circle at 38% 45%, rgba(255, 197, 143, 0.82) 0 4px, transparent 5px),
     radial-gradient(circle at 66% 54%, rgba(255, 132, 178, 0.90) 0 3px, transparent 4px),
     radial-gradient(circle at 90% 28%, rgba(255, 223, 175, 0.88) 0 4px, transparent 5px),
-    linear-gradient(166deg, transparent 48%, rgba(255, 215, 230, 0.52) 49%, rgba(255, 215, 230, 0.52) 49.8%, transparent 50.8%),
-    repeating-linear-gradient(90deg, transparent 0 11%, rgba(255, 255, 255, 0.055) 11.2% 11.5%);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 18px 46px rgba(16, 3, 12, 0.16);
+    radial-gradient(ellipse at 50% 50%, transparent 0 52%, rgba(255, 215, 230, 0.42) 52.5%, rgba(255, 193, 148, 0.20) 53%, transparent 53.7%),
+    radial-gradient(ellipse at 50% 50%, rgba(255, 153, 196, 0.10), transparent 68%);
+  box-shadow: none;
   content: '';
-  opacity: 0.9;
+  opacity: 0.82;
+  -webkit-mask-image: radial-gradient(ellipse at 50% 50%, #000 0 62%, transparent 88%);
+  mask-image: radial-gradient(ellipse at 50% 50%, #000 0 62%, transparent 88%);
 }
 
 .red-flags-feed {
@@ -5377,25 +5375,57 @@ header.is-dark-page #mobile-navigation a {
 }
 
 @keyframes redFlagsAuroraDrift {
-  0% { opacity: 0.72; transform: translate3d(-1.5%, -1%, 0) scale(1.04); }
-  100% { opacity: 1; transform: translate3d(2.4%, 2%, 0) scale(1.1); }
+  0% { transform: translate3d(-1.5%, -1%, 0) scale(1.04); }
+  100% { transform: translate3d(2.4%, 2%, 0) scale(1.09); }
 }
 
-@keyframes redFlagsSignalDrift {
-  0% { opacity: 0.17; transform: translate3d(-2%, 0, 0) rotate(-1.5deg) scale(1.04); }
-  100% { opacity: 0.3; transform: translate3d(2.8%, -2%, 0) rotate(1deg) scale(1.08); }
+@keyframes redFlagsOrbitDust {
+  0% { transform: translate3d(-1.5%, 0, 0) rotate(-2deg) scale(1.06); }
+  100% { transform: translate3d(2.5%, -1.8%, 0) rotate(3deg) scale(1.1); }
 }
 
-@keyframes redFlagsSignalScan {
-  0%, 34% { opacity: 0; transform: translate3d(0, 0, 0) skewX(-12deg); }
-  46% { opacity: 0.8; }
-  68%, 100% { opacity: 0; transform: translate3d(520%, 0, 0) skewX(-12deg); }
+/* Let the fixed FlowWave mix Packages into the darker People zone. The haze
+   remains behind the package cards, but no longer ends on a rectangular row. */
+#packages .quiet-zone--strong::before {
+  -webkit-mask-image: linear-gradient(180deg, transparent 0%, #000 15%, #000 82%, transparent 100%);
+  mask-image: linear-gradient(180deg, transparent 0%, #000 15%, #000 82%, transparent 100%);
 }
 
-@keyframes redFlagsContentSweep {
-  0%, 42% { opacity: 0; transform: translate3d(-140%, 0, 0) skewX(-12deg); }
-  50% { opacity: 0.86; }
-  72%, 100% { opacity: 0; transform: translate3d(410%, 0, 0) skewX(-12deg); }
+/* The terminal video lands on the exact Footer ink instead of a decorative
+   ruler. Footer and video overlap by one pixel to avoid subpixel seams. */
+.closing-portal-section::after {
+  bottom: -1px;
+  height: clamp(132px, 18vw, 210px);
+  background: linear-gradient(180deg, transparent 0%, rgba(21, 6, 19, 0.52) 58%, #150613 100%);
+  opacity: 1;
+}
+
+.brand-footer-v2 {
+  margin-top: -1px;
+  border-top: 0;
+}
+
+.brand-footer-v2::before {
+  position: absolute;
+  inset: 0 0 auto;
+  z-index: 0;
+  height: clamp(120px, 14vw, 190px);
+  background: linear-gradient(180deg, #150613 0%, rgba(21, 6, 19, 0.82) 42%, transparent 100%);
+  content: '';
+  pointer-events: none;
+}
+
+.brand-footer-legal {
+  border-top: 0;
+}
+
+.brand-footer-legal::before {
+  position: absolute;
+  inset: 0 0 auto;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 212, 230, 0.16) 18%, rgba(255, 212, 230, 0.16) 82%, transparent);
+  content: '';
+  pointer-events: none;
 }
 
 /* Stories already owns the Homepage network mesh. The treatment below simply
@@ -5434,6 +5464,11 @@ header.is-dark-page #mobile-navigation a {
     max-width: 680px;
     margin-inline: auto;
   }
+
+  .red-flags-stage-signal {
+    inset: -14% -22%;
+    opacity: 0.11;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -5466,8 +5501,13 @@ header.is-dark-page #mobile-navigation a {
 
   .red-flags-stage-content {
     gap: 24px;
+    border-color: rgba(255, 224, 236, 0.08);
     border-radius: 26px;
+    background:
+      radial-gradient(72% 24% at 24% 3%, rgba(58, 13, 40, 0.76), rgba(103, 31, 61, 0.42) 56%, transparent 100%),
+      linear-gradient(180deg, rgba(103, 31, 61, 0.24), rgba(153, 62, 80, 0.08) 46%, transparent 82%);
     padding: 14px;
+    box-shadow: 0 24px 72px rgba(43, 13, 29, 0.12);
   }
 
   .red-flags-stage-intro {
@@ -5509,6 +5549,27 @@ header.is-dark-page #mobile-navigation a {
   }
 }
 
+@media (prefers-reduced-transparency: reduce) {
+  .red-flags-stage-signal,
+  .red-flags-stage-intro::after {
+    display: none;
+  }
+
+  .red-flags-stage-aurora {
+    opacity: 0.48;
+  }
+
+  .red-flags-stage-content {
+    background: #5a1e3b;
+  }
+
+  .red-flags-feed {
+    background: #fff8fb !important;
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+}
+
 @media (prefers-contrast: more), (forced-colors: active) {
   .red-flags-stage-motion,
   .red-flags-stage-intro::after {
@@ -5527,5 +5588,202 @@ header.is-dark-page #mobile-navigation a {
   .red-flags-stage-intro > h2 {
     color: CanvasText !important;
     text-shadow: none;
+  }
+}
+
+/* ============================================================
+   Round 19 — semantic package colour + decision-safe terms
+   ============================================================ */
+
+[data-testid='package-card'][data-package-tone='start'] {
+  --package-accent: #9f174c;
+  --package-soft: #fff1f6;
+  --package-border: rgba(159, 23, 76, 0.24);
+  --package-glow: rgba(159, 23, 76, 0.18);
+}
+
+[data-testid='package-card'][data-package-tone='system'] {
+  --package-accent: #6f2a62;
+  --package-soft: #f7edf8;
+  --package-border: rgba(111, 42, 98, 0.25);
+  --package-glow: rgba(111, 42, 98, 0.19);
+}
+
+[data-testid='package-card'][data-package-tone='scale'] {
+  --package-accent: #9a4d00;
+  --package-soft: #fff3e7;
+  --package-border: rgba(154, 77, 0, 0.26);
+  --package-glow: rgba(196, 102, 18, 0.18);
+}
+
+[data-testid='package-card'][data-selected='true'] {
+  background: linear-gradient(135deg, var(--package-accent), #d14575 58%, #e78635) !important;
+  box-shadow: 0 22px 52px -28px var(--package-glow);
+}
+
+[data-testid='package-card'] .package-tone-icon {
+  border: 1px solid var(--package-border);
+  background: var(--package-soft) !important;
+  color: var(--package-accent) !important;
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.82), 0 9px 24px -18px var(--package-glow);
+}
+
+[data-testid='package-card'] .package-card-features {
+  gap: 0.55rem;
+}
+
+[data-testid='package-card'] .package-feature-row {
+  min-width: 0;
+}
+
+[data-testid='package-card'] .package-card-features .package-feature-row {
+  border: 1px solid var(--package-border);
+  border-radius: 14px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.68), var(--package-soft));
+  padding: 0.65rem 0.7rem;
+}
+
+[data-testid='package-card'] .package-feature-row > svg {
+  color: var(--package-accent) !important;
+}
+
+[data-testid='package-card'] .package-feature-group {
+  display: inline-flex !important;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  border: 1px solid var(--package-border);
+  border-radius: 999px;
+  background: var(--package-soft);
+  color: var(--package-accent) !important;
+  padding: 0.18rem 0.48rem;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+[data-testid='package-card'] .package-feature-emphasis {
+  color: var(--package-accent) !important;
+  font-weight: 900;
+  text-decoration: underline;
+  text-decoration-color: var(--package-border);
+  text-decoration-thickness: 0.18em;
+  text-underline-offset: 0.14em;
+}
+
+[data-testid='package-card'] .package-feature-row[data-featured='true'] .package-feature-text {
+  color: #3d1226;
+  font-weight: 680;
+}
+
+[data-testid='package-card'] .package-metric-chip,
+[data-testid='package-card'] .package-card-price {
+  border-color: var(--package-border) !important;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.82), var(--package-soft)) !important;
+  color: var(--package-accent) !important;
+}
+
+[data-testid='package-card'] .package-card-price p:last-child {
+  color: var(--package-accent) !important;
+}
+
+.package-terms-note {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid rgba(111, 42, 98, 0.20);
+  background:
+    radial-gradient(72% 150% at 0% 0%, rgba(209, 69, 117, 0.13), transparent 64%),
+    radial-gradient(64% 140% at 100% 100%, rgba(231, 134, 53, 0.11), transparent 68%),
+    rgba(255, 250, 252, 0.88);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 18px 48px -28px rgba(70, 19, 49, 0.34);
+  -webkit-backdrop-filter: blur(14px) saturate(112%);
+  backdrop-filter: blur(14px) saturate(112%);
+}
+
+.package-terms-note.quiet-zone::before {
+  display: none;
+}
+
+.package-terms-note::after {
+  position: absolute;
+  inset: 0 12% auto;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, #9f174c, #6f2a62, #c46612, transparent);
+  content: '';
+  opacity: 0.72;
+  pointer-events: none;
+}
+
+.package-terms-icon {
+  display: inline-flex;
+  width: 36px;
+  height: 36px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(111, 42, 98, 0.22);
+  border-radius: 12px;
+  background: linear-gradient(135deg, #fff1f6, #fff3e7);
+  color: #7b2459;
+}
+
+.package-terms-title {
+  color: #4f1838;
+  font-size: 0.82rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  line-height: 1.3;
+  text-transform: uppercase;
+}
+
+.package-terms-copy {
+  color: #654052;
+  font-size: 0.875rem;
+  font-weight: 540;
+  line-height: 1.68;
+}
+
+.package-terms-emphasis {
+  color: #831843;
+  font-weight: 900;
+  background: linear-gradient(180deg, transparent 58%, rgba(225, 112, 153, 0.20) 58%);
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
+}
+
+@media (max-width: 640px) {
+  .package-terms-note {
+    gap: 0.7rem;
+    padding: 1rem !important;
+  }
+
+  .package-terms-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 10px;
+  }
+
+  .package-terms-copy {
+    font-size: 0.8125rem;
+    line-height: 1.62;
+  }
+}
+
+@media (prefers-contrast: more), (forced-colors: active) {
+  [data-testid='package-card'] .package-feature-group,
+  [data-testid='package-card'] .package-feature-row,
+  .package-terms-note,
+  .package-terms-icon {
+    border: 1px solid CanvasText !important;
+    background: Canvas !important;
+    color: CanvasText !important;
+    box-shadow: none !important;
+  }
+
+  [data-testid='package-card'] .package-feature-emphasis,
+  .package-terms-emphasis,
+  .package-terms-title,
+  .package-terms-copy {
+    color: CanvasText !important;
+    background: none !important;
   }
 }

@@ -67,7 +67,7 @@ test.describe('Homepage centered hero and control-free showcases', () => {
     await page.goto('/', { waitUntil: 'domcontentloaded' })
     await expect(page.locator('.home-hero video source')).toHaveCount(2)
     const desktopSources = await page.locator('.home-hero video source').evaluateAll((sources) => sources.map((source) => source.getAttribute('src') || ''))
-    expect(desktopSources.some((source) => source.includes('w_1920'))).toBe(true)
+    expect(desktopSources.every((source) => source.includes('c_limit,w_3840,q_90,e_sharpen:60,vc_auto'))).toBe(true)
     const desktopPosterSrcSet = await page.locator('.home-hero picture img').getAttribute('srcset')
     expect(desktopPosterSrcSet).toContain(' 3840w')
 
@@ -75,7 +75,7 @@ test.describe('Homepage centered hero and control-free showcases', () => {
     await page.reload({ waitUntil: 'domcontentloaded' })
     await expect(page.locator('.home-hero video source')).toHaveCount(2)
     const mobileSources = await page.locator('.home-hero video source').evaluateAll((sources) => sources.map((source) => source.getAttribute('src') || ''))
-    expect(mobileSources.some((source) => source.includes('w_1440'))).toBe(true)
+    expect(mobileSources.every((source) => source.includes('c_limit,w_1440,q_90,e_sharpen:60,vc_auto'))).toBe(true)
 
     const closing = page.locator('.closing-portal-section')
     await expect(closing.locator('video')).toHaveCount(0)
