@@ -185,11 +185,14 @@ async function destroyCloudinaryResource(publicId: string, kind: UploadKind, clo
 function validateCloudinaryResource(resource: CloudinaryResource, intent: UploadIntent) {
   const allowedFormats = intent.kind === 'image' ? new Set(IMAGE_TYPES.values()) : new Set(VIDEO_TYPES.values())
   const maxBytes = intent.kind === 'image' ? MAX_IMAGE_BYTES : MAX_VIDEO_BYTES
+  // Fixed folder mode returns "<folder>/<id>"; dynamic folder mode keeps public_id as "<id>".
+  const expectedPublicIds = new Set([intent.publicId, intent.publicId.split('/').pop() ?? intent.publicId])
   if (
     resource.status !== 'active' ||
     resource.type !== 'upload' ||
     resource.resource_type !== intent.kind ||
-    resource.public_id !== intent.publicId ||
+    !resource.public_id ||
+    !expectedPublicIds.has(resource.public_id) ||
     !resource.secure_url?.startsWith('https://res.cloudinary.com/') ||
     !resource.format ||
     !allowedFormats.has(resource.format) ||
@@ -282,13 +285,27 @@ export async function POST(request: NextRequest) {
     const intent = readIntent(body.intent, apiSecret)
     const assetId = typeof body.assetId === 'string' ? body.assetId : ''
     if (!intent || intent.uid !== authentication.actor.uid || !/^[a-zA-Z0-9_-]{16,128}$/.test(assetId)) {
+      console.error(JSON.stringify({ event: 'upload_complete_invalid_intent', hasIntent: Boolean(intent), assetIdValid: /^[a-zA-Z0-9_-]{16,128}$/.test(assetId) }))
       return responseError(400, 'The upload confirmation is invalid or expired.')
     }
     const resource = await getCloudinaryResource(assetId, cloudName, apiKey, apiSecret)
-    if (!resource) return responseError(502, 'Cloudinary could not verify the uploaded asset.')
+    if (!resource) {
+      console.error(JSON.stringify({ event: 'upload_verify_fetch_failed', assetId, folder: intent.folder }))
+      return responseError(502, 'Cloudinary could not verify the uploaded asset.')
+    }
     const validationError = validateCloudinaryResource(resource, intent)
     if (validationError) {
-      await destroyCloudinaryResource(intent.publicId, intent.kind, cloudName, apiKey, apiSecret)
+      console.error(JSON.stringify({
+        event: 'upload_verification_rejected',
+        error: validationError,
+        expectedPublicId: intent.publicId,
+        actualPublicId: resource.public_id,
+        format: resource.format,
+        width: resource.width,
+        height: resource.height,
+        bytes: resource.bytes,
+      }))
+      await destroyCloudinaryResource(resource.public_id || intent.publicId, intent.kind, cloudName, apiKey, apiSecret)
       return responseError(400, validationError)
     }
 

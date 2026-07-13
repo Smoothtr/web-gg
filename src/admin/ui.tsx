@@ -188,35 +188,43 @@ export function MediaUploadButton({
   accept?: string
 }) {
   const [uploading, setUploading] = useState(false)
+  const [localError, setLocalError] = useState('')
 
   async function handleFile(file: File | undefined) {
     if (!file) return
     setUploading(true)
+    setLocalError('')
+    onError('')
     try {
       const url = await uploadCmsAsset(file, folder, kind)
       onUploaded(url)
     } catch (uploadError) {
-      onError(uploadError instanceof Error ? uploadError.message : 'Không upload được ảnh.')
+      const message = uploadError instanceof Error ? uploadError.message : 'Không upload được ảnh.'
+      setLocalError(message)
+      onError(message)
     } finally {
       setUploading(false)
     }
   }
 
   return (
-    <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-outline-variant px-3 text-xs font-extrabold text-primary transition-colors hover:bg-primary/10">
-      <UploadCloud size={15} />
-      {uploading ? 'Đang upload...' : label}
-      <input
-        type="file"
-        accept={accept || (kind === 'video' ? 'video/mp4,video/webm,video/ogg' : 'image/*')}
-        disabled={uploading}
-        className="sr-only"
-        onChange={(event) => {
-          void handleFile(event.target.files?.[0])
-          event.currentTarget.value = ''
-        }}
-      />
-    </label>
+    <div className="grid justify-items-start gap-1">
+      <label className="inline-flex h-10 cursor-pointer items-center justify-center gap-2 rounded-xl border border-outline-variant px-3 text-xs font-extrabold text-primary transition-colors hover:bg-primary/10">
+        <UploadCloud size={15} />
+        {uploading ? 'Đang upload...' : label}
+        <input
+          type="file"
+          accept={accept || (kind === 'video' ? 'video/mp4,video/webm,video/ogg' : 'image/*')}
+          disabled={uploading}
+          className="sr-only"
+          onChange={(event) => {
+            void handleFile(event.target.files?.[0])
+            event.currentTarget.value = ''
+          }}
+        />
+      </label>
+      {localError && <p className="text-xs font-bold text-red-700">{localError}</p>}
+    </div>
   )
 }
 

@@ -193,20 +193,26 @@ function BackgroundCarouselUploader({
   aspectClassName?: string
 }) {
   const [uploading, setUploading] = useState(false)
+  const [localError, setLocalError] = useState('')
   const [dragIndex, setDragIndex] = useState<number | null>(null)
   const remainingSlots = Math.max(0, max - urls.length)
+
+  function reportError(message: string) {
+    setLocalError(message)
+    onUploadError(message)
+  }
 
   async function uploadFiles(files: FileList | null) {
     const selected = Array.from(files ?? []).filter((file) => file.type.startsWith('image/'))
     if (!selected.length) return
     if (!remainingSlots) {
-      onUploadError(`Carousel chi toi da ${max} anh.`)
+      reportError(`Carousel chi toi da ${max} anh.`)
       return
     }
 
     const limited = selected.slice(0, remainingSlots)
-    if (limited.length < selected.length) onUploadError(`Chi upload them duoc ${remainingSlots} anh de giu toi da ${max} anh.`)
-    else onUploadError('')
+    if (limited.length < selected.length) reportError(`Chi upload them duoc ${remainingSlots} anh de giu toi da ${max} anh.`)
+    else reportError('')
 
     setUploading(true)
     try {
@@ -216,7 +222,7 @@ function BackgroundCarouselUploader({
       }
       onChange([...urls, ...uploaded].slice(0, max))
     } catch (uploadError) {
-      onUploadError(uploadError instanceof Error ? uploadError.message : 'Khong upload duoc anh carousel.')
+      reportError(uploadError instanceof Error ? uploadError.message : 'Khong upload duoc anh carousel.')
     } finally {
       setUploading(false)
     }
@@ -303,6 +309,7 @@ function BackgroundCarouselUploader({
         </label>
         <p className="text-xs font-semibold text-on-surface-variant">{hint || `Drag thumbnails to reorder. Recommended 1080x1350, max ${max} images.`}</p>
       </div>
+      {localError && <p className="text-xs font-bold text-red-700">{localError}</p>}
     </div>
   )
 }
