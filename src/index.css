@@ -3862,6 +3862,24 @@ header.is-on-hero .site-nav-pill .text-on-surface-variant {
   object-position: var(--featured-banner-position, 50% 50%);
 }
 
+/* Banner slideshow: the visible slide drifts with a slow Ken Burns zoom so the
+   image carousel reads like an ambient video. Reduced motion keeps stills. */
+@media (prefers-reduced-motion: no-preference) {
+  .banner-slide-active.featured-banner-role-image,
+  .banner-slide-active.people-banner-image {
+    animation: banner-slide-kenburns 5.5s ease-out forwards;
+  }
+}
+
+@keyframes banner-slide-kenburns {
+  from {
+    transform: scale(1);
+  }
+  to {
+    transform: scale(1.06);
+  }
+}
+
 .people-typographic-card span {
   font-family: inherit;
   font-size: clamp(30px, 5vw, 52px);

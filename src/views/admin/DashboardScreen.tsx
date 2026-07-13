@@ -27,13 +27,6 @@ function buildContentDebtItems(pages: CmsPageContent[], insights: CmsInsightCont
 
   ;(storiesBlock?.items ?? []).forEach((story, index) => {
     const label = story.title || story.displayName || story.id || `Story ${index + 1}`
-    if (!(story.videoUrl?.trim() || story.embedUrl?.trim())) {
-      items.push({
-        label: `${label}: preview video`,
-        detail: 'Missing MP4/WebM/OGG preview video for homepage hover/tap.',
-        href: '/admin/pages/the-one/sections/stories',
-      })
-    }
     if (!(story.backgroundImages ?? []).some((url) => url.trim())) {
       items.push({
         label: `${label}: background carousel`,

@@ -602,6 +602,12 @@ function cyclicDistance(index: number, activeIndex: number, length: number) {
   return Math.min(direct, Math.max(0, length - direct))
 }
 
+function getFeaturedBannerSlides(story: CaseStudy) {
+  const media = getHomepageBannerMedia(story)
+  const slides = uniqueImageUrls([media.desktop, ...(story.homepageGalleryImages ?? [])]).slice(0, 4)
+  return slides.length ? slides : [media.desktop]
+}
+
 function getCaseStudyGallery(story: CaseStudy) {
   return uniqueImageUrls([
     getCaseStudyThumbnail(story),
@@ -798,6 +804,7 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
   const railRef = useRef<HTMLDivElement | null>(null)
   const showcaseStories = useMemo(() => getHomepageCaseStudies(stories), [stories])
   const [bannerIndex, setBannerIndex] = useState(0)
+  const [bannerSlide, setBannerSlide] = useState(0)
   const [previewStory, setPreviewStory] = useState<StoryPreviewState | null>(null)
   const [canHover, setCanHover] = useState(false)
   const [interacting, setInteracting] = useState(false)
@@ -819,14 +826,31 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
     return () => document.removeEventListener('visibilitychange', sync)
   }, [])
 
+  const activeSlideCount = showcaseStories.length
+    ? getFeaturedBannerSlides(showcaseStories[bannerIndex % showcaseStories.length]).length
+    : 0
+
+  // One ticker drives the banner "video": each tick shows the active story's
+  // next slide; overflowing the slide set hands the banner to the next story.
   useEffect(() => {
-    if (showcaseStories.length < 2 || reducedMotion || interacting || !pageVisible) return
+    setBannerSlide(0)
+  }, [bannerIndex])
+
+  useEffect(() => {
+    if (!showcaseStories.length || reducedMotion || interacting || !pageVisible) return
+    if (showcaseStories.length < 2 && activeSlideCount < 2) return
     const interval = window.setInterval(() => {
       if (Date.now() < pauseUntilRef.current) return
-      setBannerIndex((index) => (index + 1) % showcaseStories.length)
-    }, 8000)
+      setBannerSlide((slide) => slide + 1)
+    }, 4000)
     return () => window.clearInterval(interval)
-  }, [interacting, pageVisible, reducedMotion, showcaseStories.length])
+  }, [activeSlideCount, interacting, pageVisible, reducedMotion, showcaseStories.length])
+
+  useEffect(() => {
+    if (!showcaseStories.length || bannerSlide < activeSlideCount) return
+    setBannerSlide(0)
+    setBannerIndex((index) => (index + 1) % showcaseStories.length)
+  }, [activeSlideCount, bannerSlide, showcaseStories.length])
 
   useEffect(() => {
     const rail = railRef.current
@@ -946,31 +970,41 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
             {showcaseStories.map((story, index) => {
               if (cyclicDistance(index, activeBannerIndex, showcaseStories.length) > 1) return null
               const media = getHomepageBannerMedia(story)
-              return (
-                <picture key={`${story.id}-banner-${index}`}>
-                  <source
-                    media="(max-width: 767px)"
-                    srcSet={cldResponsiveSrcSet(media.mobile, 'mobile', 'best')}
-                    sizes="100vw"
-                  />
-                  <img
-                    src={cldWidth(media.desktop, 1920, 'best')}
-                    srcSet={cldResponsiveSrcSet(media.desktop, 'full', 'best')}
-                    sizes="(min-width: 1280px) 1152px, 96vw"
-                    alt={index === activeBannerIndex ? `${story.brandName} case study` : ''}
-                    aria-hidden={index === activeBannerIndex ? undefined : true}
-                    loading="lazy"
-                    decoding="async"
-                    className={`featured-banner-role-image absolute inset-0 h-full w-full transition duration-700 group-hover:scale-[1.025] ${
-                      isLogoLikeImage(media.desktop) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-12 md:p-20' : 'object-cover'
-                    } ${index === activeBannerIndex ? 'opacity-100' : 'opacity-0'}`}
-                    style={{
-                      '--featured-banner-position': media.desktopPosition,
-                      '--featured-banner-position-mobile': media.mobilePosition,
-                    } as CSSProperties}
-                  />
-                </picture>
-              )
+              const storyActive = index === activeBannerIndex
+              // Inactive stories keep only their opening slide mounted for the crossfade hand-off.
+              const slides = storyActive ? getFeaturedBannerSlides(story) : getFeaturedBannerSlides(story).slice(0, 1)
+              const safeSlide = bannerSlide < slides.length ? bannerSlide : 0
+              return slides.map((slideUrl, slideIndex) => {
+                const isMainSlide = slideUrl === media.desktop
+                const visible = storyActive && slideIndex === safeSlide
+                return (
+                  <picture key={`${story.id}-banner-${index}-${slideIndex}`}>
+                    {isMainSlide && (
+                      <source
+                        media="(max-width: 767px)"
+                        srcSet={cldResponsiveSrcSet(media.mobile, 'mobile', 'best')}
+                        sizes="100vw"
+                      />
+                    )}
+                    <img
+                      src={cldWidth(slideUrl, 1920, 'best')}
+                      srcSet={cldResponsiveSrcSet(slideUrl, 'full', 'best')}
+                      sizes="(min-width: 1280px) 1152px, 96vw"
+                      alt={visible ? `${story.brandName} case study` : ''}
+                      aria-hidden={visible ? undefined : true}
+                      loading="lazy"
+                      decoding="async"
+                      className={`featured-banner-role-image absolute inset-0 h-full w-full transition duration-700 group-hover:scale-[1.025] ${
+                        isLogoLikeImage(slideUrl) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-12 md:p-20' : 'object-cover'
+                      } ${visible ? 'banner-slide-active opacity-100' : 'opacity-0'}`}
+                      style={{
+                        '--featured-banner-position': isMainSlide ? media.desktopPosition : 'center',
+                        '--featured-banner-position-mobile': isMainSlide ? media.mobilePosition : 'center',
+                      } as CSSProperties}
+                    />
+                  </picture>
+                )
+              })
             })}
             <div className="featured-banner-scrim absolute inset-0" aria-hidden="true" />
           </div>
@@ -1295,6 +1329,10 @@ function getPeopleAvatarImages(member: CmsBlockItem) {
   return (legacyImages.length ? legacyImages : ['/logo-gg.png']).slice(0, 4)
 }
 
+function getPeopleBannerSlides(member: CmsBlockItem) {
+  return uniqueImageUrls([member.bannerImageUrl, ...getPeopleAvatarImages(member)]).slice(0, 5)
+}
+
 function formatPeopleQuote(value?: string) {
   const trimmed = value?.trim()
   if (!trimmed) return ''
@@ -1321,6 +1359,7 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
   const members = useMemo(() => (block?.items ?? []).filter((item) => item.published !== false).slice(0, 6), [block?.items])
   const railRef = useRef<HTMLDivElement | null>(null)
   const [activeIndex, setActiveIndex] = useState(0)
+  const [bannerSlide, setBannerSlide] = useState(0)
   const [previewMember, setPreviewMember] = useState<{ member: CmsBlockItem; style: CSSProperties } | null>(null)
   const [canHover, setCanHover] = useState(false)
   const [interacting, setInteracting] = useState(false)
@@ -1344,14 +1383,29 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
     return () => document.removeEventListener('visibilitychange', sync)
   }, [])
 
+  const activeSlideCount = hasPeople ? getPeopleBannerSlides(members[activeIndex % members.length] ?? members[0]).length : 0
+  // Slides split the member's autoSlideSeconds window, but never flip faster than 3.5s.
+  const slideDurationMs = Math.max(3500, (autoSlideSeconds * 1000) / Math.max(1, activeSlideCount))
+
   useEffect(() => {
-    if (!hasPeople || members.length < 2 || reducedMotion || interacting || !pageVisible) return
+    setBannerSlide(0)
+  }, [activeIndex])
+
+  useEffect(() => {
+    if (!hasPeople || reducedMotion || interacting || !pageVisible) return
+    if (members.length < 2 && activeSlideCount < 2) return
     const interval = window.setInterval(() => {
       if (Date.now() < pauseUntilRef.current) return
-      setActiveIndex((index) => (index + 1) % members.length)
-    }, autoSlideSeconds * 1000)
+      setBannerSlide((slide) => slide + 1)
+    }, slideDurationMs)
     return () => window.clearInterval(interval)
-  }, [autoSlideSeconds, hasPeople, interacting, members.length, pageVisible, reducedMotion])
+  }, [activeSlideCount, hasPeople, interacting, members.length, pageVisible, reducedMotion, slideDurationMs])
+
+  useEffect(() => {
+    if (!hasPeople || bannerSlide < activeSlideCount) return
+    setBannerSlide(0)
+    setActiveIndex((index) => (index + 1) % members.length)
+  }, [activeSlideCount, bannerSlide, hasPeople, members.length])
 
   useEffect(() => {
     const rail = railRef.current
@@ -1448,21 +1502,32 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
                 <span>{getPersonInitials(activeMember.title)}</span>
               </div>
             ) : (
-              <picture>
-                <source media="(max-width: 767px)" srcSet={cldResponsiveSrcSet(activeMobileBanner, 'mobile', 'best')} sizes="100vw" />
-                <img
-                  src={cldWidth(activeBanner, 1920, 'best')}
-                  srcSet={cldResponsiveSrcSet(activeBanner, 'full', 'best')}
-                  sizes="(min-width: 1280px) 1152px, 96vw"
-                  decoding="async"
-                  alt={`${activeMember.title} banner`}
-                  className="people-banner-image absolute inset-0 h-full w-full object-cover transition duration-700"
-                  style={{
-                    '--people-banner-position': normalizeObjectPosition(activeMember.bannerImagePosition),
-                    '--people-banner-position-mobile': normalizeObjectPosition(activeMember.bannerImageMobilePosition, normalizeObjectPosition(activeMember.bannerImagePosition)),
-                  } as CSSProperties}
-                />
-              </picture>
+              getPeopleBannerSlides(activeMember).map((slideUrl, slideIndex, slides) => {
+                const isMainSlide = slideUrl === activeBanner
+                const visible = slideIndex === (bannerSlide < slides.length ? bannerSlide : 0)
+                return (
+                  <picture key={`${activeMember.title}-banner-slide-${slideIndex}`}>
+                    {isMainSlide && (
+                      <source media="(max-width: 767px)" srcSet={cldResponsiveSrcSet(activeMobileBanner, 'mobile', 'best')} sizes="100vw" />
+                    )}
+                    <img
+                      src={cldWidth(slideUrl, 1920, 'best')}
+                      srcSet={cldResponsiveSrcSet(slideUrl, 'full', 'best')}
+                      sizes="(min-width: 1280px) 1152px, 96vw"
+                      decoding="async"
+                      alt={visible ? `${activeMember.title} banner` : ''}
+                      aria-hidden={visible ? undefined : true}
+                      className={`people-banner-image absolute inset-0 h-full w-full object-cover transition duration-700 ${visible ? 'banner-slide-active opacity-100' : 'opacity-0'}`}
+                      style={{
+                        '--people-banner-position': isMainSlide ? normalizeObjectPosition(activeMember.bannerImagePosition) : 'center',
+                        '--people-banner-position-mobile': isMainSlide
+                          ? normalizeObjectPosition(activeMember.bannerImageMobilePosition, normalizeObjectPosition(activeMember.bannerImagePosition))
+                          : 'center',
+                      } as CSSProperties}
+                    />
+                  </picture>
+                )
+              })
             )}
           </div>
           <div className="absolute inset-0 bg-gradient-to-t from-black/[0.72] via-black/20 to-transparent" aria-hidden="true" />
