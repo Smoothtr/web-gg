@@ -367,8 +367,8 @@ function PeopleItemEditor({
           max={4}
           uploadLabel="Upload avatar"
           emptyLabel="Chua co avatar"
-          hint="Keo thumbnail de doi thu tu. Anh 1 la fallback/preview chinh, toi da 4 anh."
-          aspectClassName="aspect-square"
+          hint="Anh ngang 16:9 (toi thieu 640x360). Keo thumbnail de doi thu tu. Anh 1 la fallback/preview chinh, toi da 4 anh."
+          aspectClassName="aspect-[16/9]"
         />
       </section>
 

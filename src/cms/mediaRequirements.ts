@@ -12,7 +12,7 @@ export function getImageRequirements(folder: string): MediaDimensionRequirements
   if (value.includes('homepage-banner-desktop')) return { label: 'Homepage desktop banner', minWidth: 3840, minHeight: 1370, minRatio: 2, maxRatio: 2.8 }
   if (value.includes('homepage-banner-mobile') || value.includes('banner-mobile')) return { label: 'Mobile banner', minWidth: 1080, minHeight: 810, minRatio: 1.1, maxRatio: 1.6 }
   if (value.includes('homepage-thumbnails')) return { label: 'Homepage thumbnail', minWidth: 1080, minHeight: 608, minRatio: 1.55, maxRatio: 1.95 }
-  if (value.includes('/avatars')) return { label: 'Avatar', minWidth: 176, minHeight: 176, minRatio: 0.8, maxRatio: 1.25 }
+  if (value.includes('/avatars')) return { label: 'Avatar card image', minWidth: 640, minHeight: 360, minRatio: 1.4, maxRatio: 1.9 }
   if (value.includes('background-mobile') || value.includes('video-mobile')) return { label: 'Mobile hero/poster', minWidth: 1080, minHeight: 1440, minRatio: 0.5, maxRatio: 1.05 }
   if (/\/hero\/background$/.test(value)) return { label: 'Desktop hero background', minWidth: 3840, minHeight: 2160, minRatio: 1.5, maxRatio: 2.1 }
   if (/\/people\/[^/]+\/banner$/.test(value)) return { label: 'People desktop banner', minWidth: 3840, minHeight: 1200, minRatio: 1.8, maxRatio: 3.2 }
