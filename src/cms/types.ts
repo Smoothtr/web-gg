@@ -96,12 +96,14 @@ export type CmsBlockItem = {
   imageUrl?: string
   imageAlt?: string
   avatarImages?: string[]
+  avatarImagesMobile?: string[]
   thumbnailUrl?: string
   homepageBannerImageUrl?: string
   homepageBannerMobileUrl?: string
   homepageBannerPosition?: string
   homepageBannerMobilePosition?: string
   homepageGalleryImages?: string[]
+  homepageGalleryImagesMobile?: string[]
   videoUrl?: string
   videoPoster?: string
   embedUrl?: string

@@ -351,6 +351,10 @@ function PeopleItemEditor({
     })
   }
 
+  function updateAvatarImagesMobile(urls: string[]) {
+    updateBlockItem(pageId, blockId, index, { avatarImagesMobile: uniqueUrls(urls).slice(0, 4) })
+  }
+
   return (
     <div className="grid gap-4">
       <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
@@ -371,6 +375,23 @@ function PeopleItemEditor({
           hint="Anh ngang 16:9 (toi thieu 640x360). Keo thumbnail de doi thu tu. Anh 1 la fallback/preview chinh, toi da 4 anh."
           aspectClassName="aspect-[16/9]"
         />
+        <div className="mt-4 border-t border-outline-variant/45 pt-4">
+          <p className="mb-2 text-xs font-extrabold uppercase tracking-widest text-on-surface-variant">Avatar carousel - mobile (4:3)</p>
+          <p className="mb-3 text-xs leading-relaxed text-on-surface-variant/75">
+            Optional. Anh crop 4:3 rieng de banner mobile hien full khung, khong bi vien mo. Neu de trong se dung lai anh 16:9 o tren.
+          </p>
+          <BackgroundCarouselUploader
+            urls={item.avatarImagesMobile ?? []}
+            onChange={updateAvatarImagesMobile}
+            folder={`cms/pages/${pageId}/${blockId}/people/${index + 1}/avatars-mobile`}
+            onUploadError={onUploadError}
+            max={4}
+            uploadLabel="Upload avatar mobile"
+            emptyLabel="Chua co avatar mobile"
+            hint="Anh 4:3 rieng cho mobile. Thu tu khop voi avatar carousel 16:9 o tren."
+            aspectClassName="aspect-[4/3]"
+          />
+        </div>
       </section>
 
       <section className="rounded-xl border border-outline-variant/45 bg-surface-container-low p-4">
@@ -947,6 +968,12 @@ function StoryItemEditor({
     })
   }
 
+  function updateHomepageGalleryImagesMobile(urls: string[]) {
+    updateBlockItem(pageId, blockId, index, {
+      homepageGalleryImagesMobile: urls.map((url) => url.trim()).filter(Boolean).slice(0, 3),
+    })
+  }
+
   return (
     <div className="grid gap-4">
       <div className="grid gap-4 md:grid-cols-2">
@@ -1345,6 +1372,21 @@ function StoryItemEditor({
                 emptyLabel="Chua co anh gallery"
                 hint="Keo thumbnail de doi thu tu. Toi da 3 anh bo sung; thumbnail chinh nam o field Homepage thumbnail URL."
                 aspectClassName="aspect-[16/9]"
+              />
+            </Field>
+          </div>
+          <div className="md:col-span-2">
+            <Field label="Homepage hover gallery - mobile (4:3)" hint="Optional. Upload up to 3 images cropped 4:3 so the mobile banner slideshow fills edge-to-edge. Falls back to the 16:9 gallery above if left empty.">
+              <BackgroundCarouselUploader
+                urls={item.homepageGalleryImagesMobile ?? []}
+                onChange={updateHomepageGalleryImagesMobile}
+                folder={`cms/pages/${pageId}/${blockId}/homepage-gallery-mobile`}
+                onUploadError={onUploadError}
+                max={3}
+                uploadLabel="Upload gallery mobile"
+                emptyLabel="Chua co anh gallery mobile"
+                hint="Anh 4:3 rieng cho mobile. Toi da 3 anh, thu tu khop voi gallery 16:9."
+                aspectClassName="aspect-[4/3]"
               />
             </Field>
           </div>

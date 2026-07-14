@@ -602,10 +602,24 @@ function cyclicDistance(index: number, activeIndex: number, length: number) {
   return Math.min(direct, Math.max(0, length - direct))
 }
 
-function getFeaturedBannerSlides(story: CaseStudy) {
+type BannerSlide = { desktop: string; mobile?: string }
+
+// Mobile crops are matched to the desktop gallery by array position, so slot 0
+// of homepageGalleryImagesMobile pairs with slot 0 of homepageGalleryImages.
+// Slides missing a mobile crop simply render their desktop image everywhere.
+function getFeaturedBannerSlides(story: CaseStudy): BannerSlide[] {
   const media = getHomepageBannerMedia(story)
-  const slides = uniqueImageUrls([media.desktop, ...(story.homepageGalleryImages ?? [])]).slice(0, 4)
-  return slides.length ? slides : [media.desktop]
+  const seen = new Set<string>()
+  const slides: BannerSlide[] = []
+  function push(desktop: string | undefined, mobile?: string) {
+    const url = desktop?.trim()
+    if (!url || seen.has(url)) return
+    seen.add(url)
+    slides.push({ desktop: url, mobile: mobile?.trim() || undefined })
+  }
+  push(media.desktop)
+  ;(story.homepageGalleryImages ?? []).forEach((url, i) => push(url, story.homepageGalleryImagesMobile?.[i]))
+  return (slides.length ? slides : [{ desktop: media.desktop }]).slice(0, 4)
 }
 
 function getCaseStudyGallery(story: CaseStudy) {
@@ -974,8 +988,8 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
               // Inactive stories keep only their opening slide mounted for the crossfade hand-off.
               const slides = storyActive ? getFeaturedBannerSlides(story) : getFeaturedBannerSlides(story).slice(0, 1)
               const safeSlide = bannerSlide < slides.length ? bannerSlide : 0
-              return slides.map((slideUrl, slideIndex) => {
-                const isMainSlide = slideUrl === media.desktop
+              return slides.map((slide, slideIndex) => {
+                const isMainSlide = slide.desktop === media.desktop
                 const visible = storyActive && slideIndex === safeSlide
                 if (isMainSlide) {
                   return (
@@ -986,15 +1000,15 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
                         sizes="100vw"
                       />
                       <img
-                        src={cldWidth(slideUrl, 1920, 'best')}
-                        srcSet={cldResponsiveSrcSet(slideUrl, 'full', 'best')}
+                        src={cldWidth(slide.desktop, 1920, 'best')}
+                        srcSet={cldResponsiveSrcSet(slide.desktop, 'full', 'best')}
                         sizes="(min-width: 1280px) 1152px, 96vw"
                         alt={visible ? `${story.brandName} case study` : ''}
                         aria-hidden={visible ? undefined : true}
                         loading="lazy"
                         decoding="async"
                         className={`featured-banner-role-image absolute inset-0 h-full w-full transition duration-700 group-hover:scale-[1.025] ${
-                          isLogoLikeImage(slideUrl) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-12 md:p-20' : 'object-cover'
+                          isLogoLikeImage(slide.desktop) ? 'bg-[linear-gradient(135deg,#fff7fb,#ffd8e8)] object-contain p-12 md:p-20' : 'object-cover'
                         } ${visible ? 'banner-slide-active opacity-100' : 'opacity-0'}`}
                         style={{
                           '--featured-banner-position': media.desktopPosition,
@@ -1004,8 +1018,10 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
                     </picture>
                   )
                 }
-                // Gallery slides keep the whole 16:9 upload visible: the image is
-                // letterboxed with object-contain while a blurred copy fills the strip.
+                // Gallery slides keep the whole upload visible: object-contain
+                // letterboxes over a blurred copy. A dedicated 4:3 mobile crop
+                // (when uploaded) swaps in below 768px and fills edge-to-edge
+                // since it already matches the mobile banner's aspect ratio.
                 return (
                   <div
                     key={`${story.id}-banner-${index}-${slideIndex}`}
@@ -1013,22 +1029,27 @@ function CaseStudyShowcase({ stories, lang, block, openingBaseMs = 0 }: { storie
                     className={`absolute inset-0 transition duration-700 ${visible ? 'opacity-100' : 'opacity-0'}`}
                   >
                     <img
-                      src={cldWidth(slideUrl, 480)}
+                      src={cldWidth(slide.desktop, 480)}
                       alt=""
                       aria-hidden="true"
                       loading="lazy"
                       decoding="async"
                       className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl saturate-[1.15]"
                     />
-                    <img
-                      src={cldWidth(slideUrl, 1920, 'best')}
-                      srcSet={cldResponsiveSrcSet(slideUrl, 'full', 'best')}
-                      sizes="(min-width: 1280px) 1152px, 96vw"
-                      alt={visible ? `${story.brandName} case study` : ''}
-                      loading="lazy"
-                      decoding="async"
-                      className={`relative h-full w-full object-contain ${visible ? 'banner-slide-active' : ''}`}
-                    />
+                    <picture>
+                      {slide.mobile && (
+                        <source media="(max-width: 767px)" srcSet={cldResponsiveSrcSet(slide.mobile, 'mobile', 'best')} sizes="100vw" />
+                      )}
+                      <img
+                        src={cldWidth(slide.desktop, 1920, 'best')}
+                        srcSet={cldResponsiveSrcSet(slide.desktop, 'full', 'best')}
+                        sizes="(min-width: 1280px) 1152px, 96vw"
+                        alt={visible ? `${story.brandName} case study` : ''}
+                        loading="lazy"
+                        decoding="async"
+                        className={`relative h-full w-full object-contain ${visible ? 'banner-slide-active' : ''}`}
+                      />
+                    </picture>
                   </div>
                 )
               })
@@ -1362,8 +1383,22 @@ function getPeopleAvatarImages(member: CmsBlockItem) {
   return (legacyImages.length ? legacyImages : ['/logo-gg.png']).slice(0, 4)
 }
 
-function getPeopleBannerSlides(member: CmsBlockItem) {
-  return uniqueImageUrls([member.bannerImageUrl, ...getPeopleAvatarImages(member)]).slice(0, 5)
+// Mobile avatar crops are matched to the avatar carousel by array position,
+// same convention as getFeaturedBannerSlides.
+function getPeopleBannerSlides(member: CmsBlockItem): BannerSlide[] {
+  const avatars = getPeopleAvatarImages(member)
+  const avatarsMobile = member.avatarImagesMobile ?? []
+  const seen = new Set<string>()
+  const slides: BannerSlide[] = []
+  function push(desktop: string | undefined, mobile?: string) {
+    const url = desktop?.trim()
+    if (!url || seen.has(url)) return
+    seen.add(url)
+    slides.push({ desktop: url, mobile: mobile?.trim() || undefined })
+  }
+  push(member.bannerImageUrl)
+  avatars.forEach((url, i) => push(url, avatarsMobile[i]))
+  return slides.slice(0, 5)
 }
 
 function formatPeopleQuote(value?: string) {
@@ -1534,16 +1569,16 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
                 <span>{getPersonInitials(activeMember.title)}</span>
               </div>
             ) : (
-              getPeopleBannerSlides(activeMember).map((slideUrl, slideIndex, slides) => {
-                const isMainSlide = slideUrl === activeBanner
+              getPeopleBannerSlides(activeMember).map((slide, slideIndex, slides) => {
+                const isMainSlide = slide.desktop === activeBanner
                 const visible = slideIndex === (bannerSlide < slides.length ? bannerSlide : 0)
                 if (isMainSlide) {
                   return (
                     <picture key={`${activeMember.title}-banner-slide-${slideIndex}`}>
                       <source media="(max-width: 767px)" srcSet={cldResponsiveSrcSet(activeMobileBanner, 'mobile', 'best')} sizes="100vw" />
                       <img
-                        src={cldWidth(slideUrl, 1920, 'best')}
-                        srcSet={cldResponsiveSrcSet(slideUrl, 'full', 'best')}
+                        src={cldWidth(slide.desktop, 1920, 'best')}
+                        srcSet={cldResponsiveSrcSet(slide.desktop, 'full', 'best')}
                         sizes="(min-width: 1280px) 1152px, 96vw"
                         decoding="async"
                         alt={visible ? `${activeMember.title} banner` : ''}
@@ -1557,7 +1592,9 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
                     </picture>
                   )
                 }
-                // Avatar slides show the full uploaded frame, letterboxed over a blurred fill.
+                // Avatar slides show the full uploaded frame, letterboxed over a
+                // blurred fill. A dedicated 4:3 mobile crop (when uploaded) swaps
+                // in below 768px and fills edge-to-edge with no letterbox.
                 return (
                   <div
                     key={`${activeMember.title}-banner-slide-${slideIndex}`}
@@ -1565,21 +1602,26 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
                     className={`absolute inset-0 transition duration-700 ${visible ? 'opacity-100' : 'opacity-0'}`}
                   >
                     <img
-                      src={cldWidth(slideUrl, 480)}
+                      src={cldWidth(slide.desktop, 480)}
                       alt=""
                       aria-hidden="true"
                       loading="lazy"
                       decoding="async"
                       className="absolute inset-0 h-full w-full scale-110 object-cover blur-2xl saturate-[1.15]"
                     />
-                    <img
-                      src={cldWidth(slideUrl, 1920, 'best')}
-                      srcSet={cldResponsiveSrcSet(slideUrl, 'full', 'best')}
-                      sizes="(min-width: 1280px) 1152px, 96vw"
-                      decoding="async"
-                      alt={visible ? `${activeMember.title} banner` : ''}
-                      className={`relative h-full w-full object-contain ${visible ? 'banner-slide-active' : ''}`}
-                    />
+                    <picture>
+                      {slide.mobile && (
+                        <source media="(max-width: 767px)" srcSet={cldResponsiveSrcSet(slide.mobile, 'mobile', 'best')} sizes="100vw" />
+                      )}
+                      <img
+                        src={cldWidth(slide.desktop, 1920, 'best')}
+                        srcSet={cldResponsiveSrcSet(slide.desktop, 'full', 'best')}
+                        sizes="(min-width: 1280px) 1152px, 96vw"
+                        decoding="async"
+                        alt={visible ? `${activeMember.title} banner` : ''}
+                        className={`relative h-full w-full object-contain ${visible ? 'banner-slide-active' : ''}`}
+                      />
+                    </picture>
                   </div>
                 )
               })

@@ -46,6 +46,7 @@ export type CaseStudy = {
   homepageBannerPosition?: string
   homepageBannerMobilePosition?: string
   homepageGalleryImages?: string[]
+  homepageGalleryImagesMobile?: string[]
   backgroundImageUrl?: string
   backgroundImages?: string[]
   screenBackground?: {

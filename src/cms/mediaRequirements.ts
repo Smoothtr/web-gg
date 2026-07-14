@@ -12,6 +12,7 @@ export function getImageRequirements(folder: string): MediaDimensionRequirements
   if (value.includes('homepage-banner-desktop')) return { label: 'Homepage desktop banner', minWidth: 2560, minHeight: 1440, minRatio: 1.6, maxRatio: 1.95 }
   if (value.includes('homepage-banner-mobile') || value.includes('banner-mobile')) return { label: 'Mobile banner', minWidth: 1080, minHeight: 810, minRatio: 1.1, maxRatio: 1.6 }
   if (value.includes('homepage-thumbnails')) return { label: 'Homepage thumbnail', minWidth: 1080, minHeight: 608, minRatio: 1.55, maxRatio: 1.95 }
+  if (value.includes('homepage-gallery-mobile') || value.includes('avatars-mobile')) return { label: 'Mobile gallery image (4:3)', minWidth: 960, minHeight: 720, minRatio: 1.2, maxRatio: 1.5 }
   if (value.includes('/avatars')) return { label: 'Avatar card image', minWidth: 640, minHeight: 360, minRatio: 1.4, maxRatio: 1.9 }
   if (value.includes('background-mobile') || value.includes('video-mobile')) return { label: 'Mobile hero/poster', minWidth: 1080, minHeight: 1440, minRatio: 0.5, maxRatio: 1.05 }
   if (/\/hero\/background$/.test(value)) return { label: 'Desktop hero background', minWidth: 3840, minHeight: 2160, minRatio: 1.5, maxRatio: 2.1 }

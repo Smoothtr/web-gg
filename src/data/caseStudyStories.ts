@@ -75,6 +75,7 @@ export function storyFromCmsItem(item: CmsBlockItem) {
         homepageBannerPosition: item.homepageBannerPosition || fallback.homepageBannerPosition,
         homepageBannerMobilePosition: item.homepageBannerMobilePosition || fallback.homepageBannerMobilePosition,
         homepageGalleryImages: (item.homepageGalleryImages?.length ? item.homepageGalleryImages : fallback.homepageGalleryImages) ?? [],
+        homepageGalleryImagesMobile: (item.homepageGalleryImagesMobile?.length ? item.homepageGalleryImagesMobile : fallback.homepageGalleryImagesMobile) ?? [],
         backgroundImageUrl: item.backgroundImageUrl || item.imageUrl || fallback.backgroundImageUrl,
         backgroundImages: (item.backgroundImages?.length ? item.backgroundImages : fallback.backgroundImages) ?? [],
         screenBackground: {
