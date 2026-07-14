@@ -185,16 +185,20 @@
   animation: intro-fade-up 700ms ease-out 650ms forwards;
 }
 
-.intro-loader__brand {
-  font-size: 20px;
-  font-weight: 800;
-  letter-spacing: 1.6px;
-  background: linear-gradient(90deg, #6e2431 0%, #b23a52 50%, #6e2431 100%);
-  background-size: 200% 100%;
+/* "The One is here" — Instrument Serif italic + gradient hồng đậm,
+   cùng phong cách dòng "Isn't it your turn now?" trên homepage. */
+.intro-loader__line {
+  font-family: 'Instrument Serif', 'Fraunces', Georgia, 'Times New Roman', serif;
+  font-style: italic;
+  font-weight: 400;
+  font-size: 34px;
+  letter-spacing: 0.4px;
+  line-height: 1.1;
+  background: linear-gradient(92deg, #a61c53 0%, #db2777 42%, #ff5c95 78%, #ff9dbd 100%);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
-  animation: intro-shine 3s linear infinite;
+  backface-visibility: hidden;
 }
 
 .intro-loader__tagline {
@@ -205,35 +209,20 @@
   color: var(--intro-muted);
 }
 
-/* Loading line */
-.intro-loader__bar {
+/* Netflix-style spinner — vòng cung mảnh xoay vô tận (thay progress bar). */
+.intro-loader__spinner {
   position: relative;
   z-index: 1;
-  width: 240px;
-  height: 2px;
-  background: rgba(110, 36, 49, 0.16);
-  border-radius: 2px;
-  overflow: hidden;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 3px solid rgba(214, 39, 119, 0.14);
+  border-top-color: #db2777;
+  border-right-color: #ff5c95;
   opacity: 0;
-  animation: intro-fade-up 600ms ease-out 750ms forwards;
-}
-
-.intro-loader__bar::after {
-  content: '';
-  position: absolute;
-  inset: 0;
-  width: 0%;
-  background: linear-gradient(
-    90deg,
-    transparent 0%,
-    #b23a52 30%,
-    #df7285 60%,
-    #fff1f4 100%
-  );
-  border-radius: 2px;
-  box-shadow: 0 0 10px rgba(178, 58, 82, 0.45);
-  animation: intro-bar-fill var(--intro-sweep) cubic-bezier(0.45, 0, 0.55, 1)
-    400ms forwards;
+  animation:
+    intro-fade-up 600ms ease-out 750ms forwards,
+    intro-spin 850ms linear infinite;
 }
 
 /* ============ Trạng thái thoát: zoom HẾT CỠ vào SỐ 9 -> lộ web ============ */
@@ -262,7 +251,7 @@
 /* Ẩn chữ + line + nền tech ngay khi bắt đầu zoom.
    animation:none để tắt animation entrance (forwards) đang giữ opacity. */
 .intro-loader[data-state='done'] .intro-loader__wordmark,
-.intro-loader[data-state='done'] .intro-loader__bar,
+.intro-loader[data-state='done'] .intro-loader__spinner,
 .intro-loader[data-state='done'] .intro-loader__glow,
 .intro-loader[data-state='done'] .intro-loader__grid,
 .intro-loader[data-state='done'] .intro-loader__sweep {
@@ -297,14 +286,9 @@
   100% { opacity: 1; transform: translateY(0); }
 }
 
-@keyframes intro-bar-fill {
-  0%   { width: 0%; }
-  100% { width: 100%; }
-}
-
-@keyframes intro-shine {
-  0%   { background-position: 0% 50%; }
-  100% { background-position: 200% 50%; }
+@keyframes intro-spin {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
 }
 
 @keyframes intro-grid-in {
@@ -346,9 +330,8 @@
 @media (max-width: 640px) {
   .intro-loader__glow      { width: 260px; height: 260px; }
   .intro-loader__logo-wrap { width: 168px; height: 168px; }
-  .intro-loader__brand     { font-size: 17px; letter-spacing: 1.1px; }
-  .intro-loader__tagline   { font-size: 10px; letter-spacing: 3px; }
-  .intro-loader__bar       { width: 190px; }
+  .intro-loader__line      { font-size: 27px; }
+  .intro-loader__spinner   { width: 30px; height: 30px; }
 }
 
 /* ===================== Reduced motion ===================== */
@@ -365,12 +348,12 @@
   }
   .intro-loader__logo-wrap,
   .intro-loader__wordmark,
-  .intro-loader__bar {
+  .intro-loader__spinner {
     opacity: 1;
     transform: none;
   }
   .intro-loader__ring { opacity: 0; }
-  .intro-loader__bar::after { width: 100%; }
+  .intro-loader__spinner { animation: none !important; }
   /* Không zoom / không tách khi reduced motion — chỉ fade nền lộ web */
   .intro-loader[data-state='done'] .intro-loader__logo-wrap,
   .intro-loader[data-state='done'] .intro-loader__logo--left,

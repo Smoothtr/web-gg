@@ -88,7 +88,7 @@ export default function IntroLoader({
   duration = 5700,
   fadeOut = 2200,
   sweep = 3000,
-  logoSrc = '/logo-gg.png',
+  logoSrc = '/logo-gg-icon.png',
   oncePerSession = false,
   storageKey = SESSION_KEY_DEFAULT,
   skipPathPrefixes = SKIP_PATH_PREFIXES_DEFAULT,
@@ -235,7 +235,7 @@ export default function IntroLoader({
           <img
             className="intro-loader__logo intro-loader__logo--left"
             src={logoSrc}
-            alt="The One - GG99"
+            alt="The One"
             draggable={false}
           />
           <img
@@ -278,10 +278,14 @@ export default function IntroLoader({
         </div>
 
         <div className="intro-loader__wordmark">
-          <span className="intro-loader__brand">The One - GG99</span>
+          {/* Gradient clip lives on this static span (wrapper carries the entrance
+              animation) — clipping an animated element paints stray background
+              stripes on Windows at DPR 1. */}
+          <span className="intro-loader__line">The One is here</span>
         </div>
 
-        <div className="intro-loader__bar" />
+        {/* Netflix-style endless spinner (replaces the old progress bar). */}
+        <div className="intro-loader__spinner" aria-hidden="true" />
       </div>
     </div>
   )
