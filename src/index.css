@@ -1599,10 +1599,9 @@
   font-weight: 400;
   letter-spacing: 0;
   line-height: 0.98;
-  background: linear-gradient(92deg, #fff4fb 0%, #ffd8b5 42%, #ff8cae 78%, #fff2cf 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  /* No background-clip here: clipping the animated block paints a stray
+     gradient stripe across the text on Windows at 100% zoom (DPR 1).
+     Each .rw-word below carries its own clipped gradient instead. */
   text-wrap: balance;
 }
 
@@ -1612,6 +1611,7 @@
   background-clip: text;
   color: transparent;
   text-shadow: none;
+  backface-visibility: hidden;
 }
 
 [data-reveal='closing-portal'].is-visible .closing-portal-line-two .rw-word,

@@ -1711,8 +1711,12 @@ function PeopleSection({ block, showClosingLines = true }: { block?: ReturnType<
         {showClosingLines && (
           <div className="mx-auto mt-10 max-w-3xl text-center">
             <p data-reveal="soft" data-reveal-phase="3" style={{ '--rd': `${peopleBannerDelay + 620}ms` } as CSSProperties} className="home-people-closing-one text-[24px] italic leading-tight text-white/[0.85] md:text-[28px]">{closingLine1}</p>
-            <p data-reveal="soft" data-reveal-phase="3" style={{ '--ri': 1, '--rd': `${peopleBannerDelay + 720}ms` } as CSSProperties} className="home-people-closing-two mt-3 bg-gradient-to-r from-[#ffd6e6] via-[#ff9dbd] to-[#ffbd78] bg-clip-text text-[28px] font-semibold leading-tight text-transparent md:text-[44px]">
-              {closingLine2}
+            {/* Gradient text lives on a static inner span: clipping it on the reveal-animated
+                block leaves a stray background stripe on Windows at 100% zoom (DPR 1). */}
+            <p data-reveal="soft" data-reveal-phase="3" style={{ '--ri': 1, '--rd': `${peopleBannerDelay + 720}ms` } as CSSProperties} className="home-people-closing-two mt-3 text-[28px] font-semibold leading-tight md:text-[44px]">
+              <span className="bg-gradient-to-r from-[#ffd6e6] via-[#ff9dbd] to-[#ffbd78] bg-clip-text text-transparent [backface-visibility:hidden] [transform:translateZ(0)]">
+                {closingLine2}
+              </span>
             </p>
           </div>
         )}
