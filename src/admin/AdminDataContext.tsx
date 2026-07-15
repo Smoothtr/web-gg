@@ -156,11 +156,11 @@ function validateHomepageGalleryImages(page: CmsPageContent) {
   const storiesBlock = page.blocks.find((block) => block.id === 'stories')
   const invalidStories = (storiesBlock?.items ?? []).flatMap((item) => {
     const count = item.homepageGalleryImages?.filter((url) => url.trim()).length ?? 0
-    return count > 3 ? `${item.title || item.id || 'Story'} (${count}/3 images)` : []
+    return count > 4 ? `${item.title || item.id || 'Story'} (${count}/4 images)` : []
   })
 
   return invalidStories.length
-    ? `Khong the luu homepage gallery qua 3 anh: ${invalidStories.join('; ')}.`
+    ? `Khong the luu homepage gallery qua 4 anh: ${invalidStories.join('; ')}.`
     : ''
 }
 
