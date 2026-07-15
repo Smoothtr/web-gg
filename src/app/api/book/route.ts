@@ -1,32 +1,40 @@
 import { createHash } from 'node:crypto'
-import { FieldValue } from 'firebase-admin/firestore'
+import { FieldValue, type Firestore } from 'firebase-admin/firestore'
 import { google } from 'googleapis'
-import { NextResponse, type NextRequest } from 'next/server'
+import { after, NextResponse, type NextRequest } from 'next/server'
 import { getFirebaseAdminDb } from '../../../cms/firebaseAdmin'
 import { checkRateLimit, rateLimitResponse } from '../../../security/serverRateLimit'
+import {
+  BOOKING_TIME_ZONE,
+  buildWeekBusyState,
+  dayOfWeek,
+  getTimeFrameByLabel,
+  getWeekDates,
+  isDateWithinBookingWindow,
+  isRecurringBusy,
+  isSlotUnavailable,
+  type TimeFrameLabel,
+} from '../../../booking/schedulePolicy'
 import {
   normalizeAcquisitionAttribution,
   type AcquisitionAttribution,
 } from '../../../analytics/acquisition'
+import {
+  BOOKING_NOTIFICATION_COLLECTION,
+  createBookingNotificationOutboxRecord,
+  dispatchBookingNotification,
+} from '../../../booking/notifications/service'
+import { notificationErrorCode } from '../../../booking/notifications/errors'
+import type { BookingLocale } from '../../../booking/notifications/types'
 
 export const runtime = 'nodejs'
+export const maxDuration = 60
 
 const MAX_BODY_BYTES = 16_384
-const BOOKING_TIME_ZONE = 'Asia/Ho_Chi_Minh'
-const TIME_MAP = {
-  '8-10': { startH: '08:00', endH: '10:00' },
-  '10-12': { startH: '10:00', endH: '12:00' },
-  '14-16': { startH: '14:00', endH: '16:00' },
-  '16-18': { startH: '16:00', endH: '18:00' },
-  '20-22': { startH: '20:00', endH: '22:00' },
-  '22-24': { startH: '22:00', endH: '23:59' },
-} as const
-
-type TimeFrame = keyof typeof TIME_MAP
 
 type BookingPayload = {
   date: string
-  timeFrame: TimeFrame
+  timeFrame: TimeFrameLabel
   timeRange: string
   name: string
   phone: string
@@ -40,6 +48,7 @@ type BookingPayload = {
   idempotencyKey: string
   challengeToken: string
   attribution: AcquisitionAttribution
+  locale: BookingLocale
 }
 
 function jsonError(status: number, error: string) {
@@ -51,34 +60,11 @@ function cleanText(value: unknown, maxLength: number) {
   return value.normalize('NFKC').replace(/[\u0000-\u001f\u007f]/g, ' ').trim().slice(0, maxLength + 1)
 }
 
-function dateInTimeZone(date = new Date()) {
-  return new Intl.DateTimeFormat('en-CA', {
-    timeZone: BOOKING_TIME_ZONE,
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-  }).format(date)
-}
-
-function addDays(dateString: string, days: number) {
-  const [year, month, day] = dateString.split('-').map(Number)
-  const date = new Date(Date.UTC(year, month - 1, day))
-  date.setUTCDate(date.getUTCDate() + days)
-  return date.toISOString().slice(0, 10)
-}
-
-function isRealDate(value: string) {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false
-  const [year, month, day] = value.split('-').map(Number)
-  const date = new Date(Date.UTC(year, month - 1, day))
-  return date.toISOString().slice(0, 10) === value
-}
-
 function validatePayload(value: unknown): { ok: true; value: BookingPayload } | { ok: false; error: string } {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { ok: false, error: 'Invalid booking request.' }
   const body = value as Record<string, unknown>
   const date = cleanText(body.date, 10)
-  const timeFrame = cleanText(body.timeFrame, 8) as TimeFrame
+  const timeFrame = cleanText(body.timeFrame, 8) as TimeFrameLabel
   const name = cleanText(body.name, 80)
   const phone = cleanText(body.phone, 30)
   const email = cleanText(body.email, 254).toLowerCase()
@@ -91,17 +77,17 @@ function validatePayload(value: unknown): { ok: true; value: BookingPayload } | 
   const startedAt = Number(body.startedAt)
   const consent = body.consent === true
   const attribution = normalizeAcquisitionAttribution(body.attribution)
-  const today = dateInTimeZone()
+  const requestedLocale = cleanText(body.locale, 2)
+  const locale: BookingLocale = requestedLocale === 'vi' || requestedLocale === 'ko' ? requestedLocale : 'en'
 
   if (website) return { ok: false, error: 'Invalid booking request.' }
   if (!Number.isFinite(startedAt) || Date.now() - startedAt < 1_500 || Date.now() - startedAt > 24 * 60 * 60 * 1000) {
     return { ok: false, error: 'Please reopen the booking form and try again.' }
   }
   if (!consent) return { ok: false, error: 'Please accept the privacy notice before submitting.' }
-  if (!isRealDate(date) || date < today || date > addDays(today, 90)) return { ok: false, error: 'The selected date is invalid.' }
-  const [year, month, day] = date.split('-').map(Number)
-  if (new Date(Date.UTC(year, month - 1, day)).getUTCDay() === 0) return { ok: false, error: 'Sundays are not available.' }
-  if (!(timeFrame in TIME_MAP)) return { ok: false, error: 'The selected time slot is invalid.' }
+  if (!isDateWithinBookingWindow(date)) return { ok: false, error: 'Bookings must be scheduled from tomorrow onward.' }
+  if (dayOfWeek(date) === 0) return { ok: false, error: 'Sundays are not available.' }
+  if (!getTimeFrameByLabel(timeFrame)) return { ok: false, error: 'The selected time slot is invalid.' }
   if (name.length < 2 || name.length > 80) return { ok: false, error: 'Please enter a valid name.' }
   if (!/^\+?[0-9]{8,15}$/.test(phone.replace(/[\s().-]/g, ''))) return { ok: false, error: 'Please enter a valid phone number.' }
   if (!/^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(email) || email.length > 254) return { ok: false, error: 'Please enter a valid email address.' }
@@ -126,6 +112,7 @@ function validatePayload(value: unknown): { ok: true; value: BookingPayload } | 
       idempotencyKey,
       challengeToken,
       attribution,
+      locale,
     },
   }
 }
@@ -184,6 +171,28 @@ function calendarAuth() {
   })
 }
 
+function scheduleNotificationRetry(db: Firestore, outboxId: string) {
+  try {
+    after(async () => {
+      try {
+        await dispatchBookingNotification(db, outboxId, { allowFallback: true })
+      } catch (error) {
+        console.error(JSON.stringify({
+          event: 'booking_notification_retry_deferred_failed',
+          requestId: outboxId.slice(0, 12),
+          errorCode: notificationErrorCode(error),
+        }))
+      }
+    })
+  } catch {
+    console.error(JSON.stringify({
+      event: 'booking_notification_retry_schedule_failed',
+      requestId: outboxId.slice(0, 12),
+      errorCode: 'notification_after_schedule_failed',
+    }))
+  }
+}
+
 export async function POST(request: NextRequest) {
   if (!isAllowedOrigin(request)) return jsonError(403, 'Origin is not allowed.')
   if (!(request.headers.get('content-type') ?? '').includes('application/json')) return jsonError(415, 'Content-Type must be application/json.')
@@ -204,6 +213,11 @@ export async function POST(request: NextRequest) {
   const parsed = validatePayload(requestBody)
   if (!parsed.ok) return jsonError(400, parsed.error)
   const payload = parsed.value
+  const requestedFrame = getTimeFrameByLabel(payload.timeFrame)
+  if (!requestedFrame) return jsonError(400, 'The selected time slot is invalid.')
+  if (isRecurringBusy(payload.date, requestedFrame.id)) {
+    return jsonError(409, 'This time slot is reserved and cannot be booked.')
+  }
 
   if (!(await verifyChallenge(request, payload.challengeToken))) return jsonError(403, 'Bot verification failed. Please try again.')
 
@@ -257,17 +271,31 @@ export async function POST(request: NextRequest) {
   })
 
   if (reservationResult === 'duplicate') {
+    scheduleNotificationRetry(db, idempotencyHash)
     return NextResponse.json({ ok: true, duplicate: true }, { headers: { 'Cache-Control': 'no-store' } })
   }
   if (reservationResult === 'processing') return jsonError(409, 'This booking request is already being processed.')
   if (reservationResult === 'conflict') return jsonError(409, 'This time slot is no longer available. Please choose another slot.')
 
-  const times = TIME_MAP[payload.timeFrame]
-  const startDateTime = `${payload.date}T${times.startH}:00+07:00`
-  const endDateTime = `${payload.date}T${times.endH}:00+07:00`
+  const startDateTime = `${payload.date}T${requestedFrame.startH}:00+07:00`
+  const endDateTime = `${payload.date}T${requestedFrame.endH}:00+07:00`
+  const canonicalTimeRange = `${requestedFrame.startH} – ${requestedFrame.endH === '23:59' ? '24:00' : requestedFrame.endH}`
 
   try {
     const calendar = google.calendar({ version: 'v3', auth })
+    const weekDates = getWeekDates(payload.date)
+    const weeklyEvents = await calendar.events.list({
+      calendarId,
+      timeMin: `${weekDates[0]}T00:00:00+07:00`,
+      timeMax: `${weekDates[weekDates.length - 1]}T23:59:59+07:00`,
+      singleEvents: true,
+    })
+    const weekBusyState = buildWeekBusyState(payload.date, weeklyEvents.data.items ?? [])
+    if (isSlotUnavailable(payload.date, requestedFrame.id, weekBusyState)) {
+      await Promise.all([requestRef.delete(), reservationRef.delete()])
+      return jsonError(409, 'This time slot is no longer available. Please choose another slot.')
+    }
+
     const existing = await calendar.events.list({
       calendarId,
       timeMin: startDateTime,
@@ -292,7 +320,7 @@ export async function POST(request: NextRequest) {
           payload.company ? `Company: ${payload.company}` : null,
           payload.need ? `Need: ${payload.need}` : null,
           payload.note ? `Note: ${payload.note}` : null,
-          `Preferred slot: ${payload.timeFrame} (${payload.timeRange})`,
+          `Preferred slot: ${payload.timeFrame} (${canonicalTimeRange})`,
         ].filter(Boolean).join('\n'),
         start: { dateTime: startDateTime, timeZone: BOOKING_TIME_ZONE },
         end: { dateTime: endDateTime, timeZone: BOOKING_TIME_ZONE },
@@ -300,6 +328,34 @@ export async function POST(request: NextRequest) {
         reminders: { useDefault: false, overrides: [{ method: 'popup', minutes: 60 }] },
       },
     })
+
+    let notificationOutboxRecord: ReturnType<typeof createBookingNotificationOutboxRecord> | null = null
+    try {
+      notificationOutboxRecord = createBookingNotificationOutboxRecord({
+        requestId: idempotencyHash,
+        reservationId,
+        name: payload.name,
+        phone: payload.phone,
+        email: payload.email,
+        company: payload.company,
+        need: payload.need,
+        note: payload.note,
+        date: payload.date,
+        timeFrame: payload.timeFrame,
+        timeRange: canonicalTimeRange,
+        locale: payload.locale,
+        calendarEventId: event.data.id ?? '',
+        calendarUrl: event.data.htmlLink ?? '',
+        attribution: payload.attribution,
+      })
+    } catch (error) {
+      console.error(JSON.stringify({
+        event: 'booking_notification_enqueue_failed',
+        reservationId,
+        requestId: idempotencyHash.slice(0, 12),
+        errorCode: notificationErrorCode(error),
+      }))
+    }
 
     const confirmed = {
       status: 'confirmed',
@@ -310,8 +366,29 @@ export async function POST(request: NextRequest) {
     const batch = db.batch()
     batch.set(requestRef, confirmed, { merge: true })
     batch.set(reservationRef, confirmed, { merge: true })
-    batch.delete(db.collection('bookingAvailabilityCache').doc(payload.date))
+    if (notificationOutboxRecord) {
+      batch.set(db.collection(BOOKING_NOTIFICATION_COLLECTION).doc(idempotencyHash), notificationOutboxRecord)
+    }
+    for (const weekDate of weekDates) {
+      batch.delete(db.collection('bookingAvailabilityCache').doc(weekDate))
+    }
     await batch.commit()
+
+    if (notificationOutboxRecord) {
+      let notificationComplete = false
+      try {
+        const delivery = await dispatchBookingNotification(db, idempotencyHash, { allowFallback: false })
+        notificationComplete = delivery.complete
+      } catch (error) {
+        console.error(JSON.stringify({
+          event: 'booking_notification_initial_failed',
+          reservationId,
+          requestId: idempotencyHash.slice(0, 12),
+          errorCode: notificationErrorCode(error),
+        }))
+      }
+      if (!notificationComplete) scheduleNotificationRetry(db, idempotencyHash)
+    }
 
     console.info(JSON.stringify({ event: 'booking_created', reservationId, requestId: idempotencyHash.slice(0, 12) }))
     return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } })

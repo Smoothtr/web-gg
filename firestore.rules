@@ -47,5 +47,9 @@ service cloud.firestore {
     match /bookingAvailabilityCache/{documentId} {
       allow read, write: if false;
     }
+
+    match /bookingNotificationOutbox/{documentId} {
+      allow read, write: if false;
+    }
   }
 }

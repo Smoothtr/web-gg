@@ -3,6 +3,11 @@ import { useRef } from 'react'
 import { type Lang } from '../i18n'
 import type { CmsLocalizedSiteSettings } from '../cms/types'
 import {
+  TIME_FRAMES as SCHEDULE_TIME_FRAMES,
+  earliestBookingDate,
+  type TimeFrameId,
+} from '../booking/schedulePolicy'
+import {
   captureAcquisitionAttribution,
   emitBookingAnalytics,
   getAcquisitionAttribution,
@@ -178,21 +183,21 @@ const STR = {
 type Str = (typeof STR)[Lang]
 
 /* ─── Constants ─────────────────────────────────────── */
-const TIME_FRAMES = [
-  { id: 'slot_08_10', label: '8-10',   range: '08:00 – 10:00', icon: '🕗' },
-  { id: 'slot_10_12', label: '10-12',  range: '10:00 – 12:00', icon: '🕙' },
-  { id: 'slot_14_16', label: '14-16',  range: '14:00 – 16:00', icon: '🕑' },
-  { id: 'slot_16_18', label: '16-18',  range: '16:00 – 18:00', icon: '🕓' },
-  { id: 'slot_20_22', label: '20-22',  range: '20:00 – 22:00', icon: '🕗' },
-  { id: 'slot_22_24', label: '22-24',  range: '22:00 – 24:00', icon: '🕙' },
-]
+const TIME_FRAME_PRESENTATION: Record<TimeFrameId, { range: string; icon: string }> = {
+  slot_08_10: { range: '08:00 – 10:00', icon: '🕗' },
+  slot_10_12: { range: '10:00 – 12:00', icon: '🕙' },
+  slot_14_16: { range: '14:00 – 16:00', icon: '🕑' },
+  slot_16_18: { range: '16:00 – 18:00', icon: '🕓' },
+  slot_20_22: { range: '20:00 – 22:00', icon: '🕗' },
+  slot_22_24: { range: '22:00 – 24:00', icon: '🕙' },
+}
+const TIME_FRAMES = SCHEDULE_TIME_FRAMES.map((frame) => ({
+  ...frame,
+  ...TIME_FRAME_PRESENTATION[frame.id],
+}))
 /* ─── Helpers ───────────────────────────────────────── */
 function toDateStr(d: Date) {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
-}
-function isPast(d: Date) {
-  const today = new Date(); today.setHours(0,0,0,0)
-  return d < today
 }
 function isSunday(d: Date) { return d.getDay() === 0 }
 
@@ -248,6 +253,7 @@ function CalendarPicker({ selected, onSelect, locale, days }: { selected: string
   const daysInMonth = new Date(year, month + 1, 0).getDate()
   const atMinMonth  = year === today.getFullYear() && month === today.getMonth()
   const monthLabel = new Date(year, month, 1).toLocaleDateString(locale, { month: 'long', year: 'numeric' })
+  const minBookingDate = earliestBookingDate()
 
   const cells: (Date | null)[] = Array(firstDay).fill(null)
   for (let i = 1; i <= daysInMonth; i++) cells.push(new Date(year, month, i))
@@ -281,7 +287,7 @@ function CalendarPicker({ selected, onSelect, locale, days }: { selected: string
         {cells.map((date, i) => {
           if (!date) return <div key={i} aria-hidden="true" />
           const ds = toDateStr(date)
-          const disabled = isPast(date) || isSunday(date)
+          const disabled = ds < minBookingDate || isSunday(date)
           const isSelected = ds === selected
           const isToday = toDateStr(date) === toDateStr(today)
           return (
@@ -519,6 +525,7 @@ export function BookingModal({ isOpen, onClose, lang = 'en', copy }: BookingModa
           idempotencyKey,
           challengeToken: '',
           attribution: getAcquisitionAttribution(),
+          locale: lang,
         }),
       })
       const data = await res.json()

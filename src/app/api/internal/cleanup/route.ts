@@ -11,6 +11,7 @@ const COLLECTIONS = [
   'bookingReservations',
   'bookingRequests',
   'bookingAvailabilityCache',
+  'bookingNotificationOutbox',
 ] as const
 const BATCH_SIZE = 200
 const MAX_BATCHES_PER_COLLECTION = 10
