@@ -3,6 +3,7 @@ import {
   buildPackageComparisonGroups,
   getPackageFeaturePresentation,
   groupPackageFeatures,
+  isSinglePackageMetricValue,
   normalizePackagePrice,
   resolvePackageModule,
   resolvePackageTone,
@@ -104,9 +105,221 @@ test.describe('package information architecture', () => {
     expect(resolvePackageValueKind('On-site')).toBe('onsite')
     expect(resolvePackageValueKind('No access', 'excluded')).toBe('none')
   })
+
+  test('classifies only truly atomic metric values as single-line chips', () => {
+    for (const value of ['45', '60', 'Unlimited', 'On-site']) {
+      expect(isSinglePackageMetricValue(value), value).toBe(true)
+    }
+    for (const value of ['Up to 10 pages', 'Full access', 'No access']) {
+      expect(isSinglePackageMetricValue(value), value).toBe(false)
+    }
+  })
 })
 
 test.describe('homepage package cards', () => {
+  test('keeps every metric value intact at all Round 4 acceptance widths', async ({ page }) => {
+    test.setTimeout(120_000)
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.goto('/#packages', { waitUntil: 'domcontentloaded' })
+    await page.waitForLoadState('networkidle')
+
+    const inspectVisibleMetrics = async (width: number, tone = 'all') => {
+      const result = await page.locator('.package-metric:visible').evaluateAll((metrics) => metrics.map((metric) => {
+        const value = metric.querySelector<HTMLElement>('.package-metric-value')
+        if (!value) return { brokenTokens: ['missing .package-metric-value'], css: null, single: false, text: '' }
+
+        const brokenTokens: string[] = []
+        const walker = document.createTreeWalker(value, NodeFilter.SHOW_TEXT)
+        let node = walker.nextNode() as Text | null
+        while (node) {
+          for (const match of node.data.matchAll(/\S+/g)) {
+            const range = document.createRange()
+            range.setStart(node, match.index ?? 0)
+            range.setEnd(node, (match.index ?? 0) + match[0].length)
+            const lineTops = new Set(
+              Array.from(range.getClientRects())
+                .filter((rect) => rect.width > 0 && rect.height > 0)
+                .map((rect) => Math.round(rect.top * 10) / 10),
+            )
+            if (lineTops.size > 1) brokenTokens.push(match[0])
+          }
+          node = walker.nextNode() as Text | null
+        }
+
+        const style = getComputedStyle(value)
+        return {
+          brokenTokens,
+          css: {
+            hyphens: style.hyphens,
+            overflowWrap: style.overflowWrap,
+            wordBreak: style.wordBreak,
+            whiteSpace: style.whiteSpace,
+          },
+          single: value.classList.contains('package-metric-value--single'),
+          text: (value.textContent ?? '').trim(),
+        }
+      }))
+
+      expect(result.length, `visible metric count at ${width}px (${tone})`).toBeGreaterThan(0)
+      expect(
+        result.flatMap(({ brokenTokens, text }) => brokenTokens.map((token) => `${text}: ${token}`)),
+        `mid-word wrapping at ${width}px (${tone})`,
+      ).toEqual([])
+
+      for (const metric of result) {
+        expect(metric.css, `${metric.text} CSS at ${width}px`).not.toBeNull()
+        expect(metric.css!.overflowWrap, `${metric.text} overflow-wrap at ${width}px`).toBe('normal')
+        expect(metric.css!.wordBreak, `${metric.text} word-break at ${width}px`).toBe('keep-all')
+        expect(metric.css!.hyphens, `${metric.text} hyphens at ${width}px`).toBe('none')
+        if (['45', '60', 'Unlimited', 'On-site'].includes(metric.text)) {
+          expect(metric.single, `${metric.text} single-line class at ${width}px`).toBe(true)
+          expect(metric.css!.whiteSpace, `${metric.text} white-space at ${width}px`).toBe('nowrap')
+        }
+      }
+
+      // Production CMS data is allowed to replace the checked-in metric values.
+      // Exercise every audited value inside a real chip so the original
+      // Unlimited regression remains covered even when a local fixture uses ∞.
+      const probes = await page.locator('.package-metric:visible').first().evaluate(async (metric) => {
+        const value = metric.querySelector<HTMLElement>('.package-metric-value')!
+        const originalText = value.textContent
+        const originalClass = value.className
+        const samples = ['45', '60', 'Up to 10 pages', 'Unlimited', 'Full access', 'No access', 'On-site']
+        const singleValues = new Set(['45', '60', 'Unlimited', 'On-site'])
+        const output = []
+
+        for (const sample of samples) {
+          value.textContent = sample
+          value.classList.toggle('package-metric-value--single', singleValues.has(sample))
+          await new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve())))
+
+          const brokenTokens: string[] = []
+          const textNode = value.firstChild as Text
+          for (const match of textNode.data.matchAll(/\S+/g)) {
+            const tokenRange = document.createRange()
+            tokenRange.setStart(textNode, match.index ?? 0)
+            tokenRange.setEnd(textNode, (match.index ?? 0) + match[0].length)
+            const tokenLines = new Set(Array.from(tokenRange.getClientRects()).map((rect) => Math.round(rect.top * 10) / 10))
+            if (tokenLines.size > 1) brokenTokens.push(match[0])
+          }
+
+          const wholeRange = document.createRange()
+          wholeRange.selectNodeContents(value)
+          output.push({
+            brokenTokens,
+            lineCount: new Set(Array.from(wholeRange.getClientRects()).map((rect) => Math.round(rect.top * 10) / 10)).size,
+            sample,
+            single: singleValues.has(sample),
+          })
+        }
+
+        value.textContent = originalText
+        value.className = originalClass
+        return output
+      })
+      expect(
+        probes.flatMap(({ brokenTokens, sample }) => brokenTokens.map((token) => `${sample}: ${token}`)),
+        `audited chip probes at ${width}px (${tone})`,
+      ).toEqual([])
+      expect(
+        probes.filter(({ single }) => single).every(({ lineCount }) => lineCount === 1),
+        `single-value chip probes at ${width}px (${tone})`,
+      ).toBe(true)
+    }
+
+    for (const width of [1920, 1440, 1280, 1024, 768, 390]) {
+      await page.setViewportSize({ width, height: width <= 768 ? 844 : 1000 })
+      await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => requestAnimationFrame(() => resolve()))))
+
+      if (width === 768) {
+        const selector = page.getByTestId('package-tier-selector')
+        for (const tone of ['start', 'system', 'scale']) {
+          await selector.getByRole('button', { name: new RegExp(tone, 'i') }).click()
+          await inspectVisibleMetrics(width, tone)
+        }
+      } else {
+        await inspectVisibleMetrics(width)
+        if (width === 390) {
+          const visibleTones = await page.locator('[data-testid="package-card"]:visible').evaluateAll((cards) => (
+            cards.map((card) => card.getAttribute('data-package-tone'))
+          ))
+          expect(visibleTones).toEqual(['start', 'system', 'scale'])
+        }
+      }
+    }
+  })
+
+  test('renders the three-tier highlight language without changing accessible copy', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.setViewportSize({ width: 1280, height: 1000 })
+    await page.goto('/#packages', { waitUntil: 'domcontentloaded' })
+    await page.waitForLoadState('networkidle')
+
+    const card = (tone: string) => page.locator(`[data-testid="package-card"][data-package-tone="${tone}"]`)
+    const feature = (tone: string, text: RegExp) => card(tone).getByTestId('package-feature-row').filter({ hasText: text })
+
+    await expect(feature('start', /45 content units/i).locator('.hl-num')).toHaveText(['45', '15 reels'])
+    const startSeparators = feature('start', /content strategy/i).locator('.sep')
+    await expect(startSeparators).toHaveCount(3)
+    await expect(startSeparators.first()).not.toHaveAttribute('aria-hidden', 'true')
+    await expect(feature('start', /content strategy/i).locator('.package-feature-text')).toContainText('Content strategy, calendar · production · posting · optimization')
+    await expect(feature('start', /basic booking website/i).locator('.hl-num')).toHaveText('10 landing pages')
+    await expect(feature('start', /performance marketing/i).locator('.hl-mark--gold')).toHaveText('% of actual ad spend')
+    await expect(card('start').getByTestId('package-alignment-microcopy').locator('b, strong')).toHaveText('live in weeks')
+
+    await expect(feature('system', /60 content units/i).locator('.hl-num')).toHaveText(['60', '20 reels'])
+    await expect(feature('system', /content strategy/i).locator('.sep')).toHaveCount(3)
+    await expect(feature('system', /content strategy/i).locator('.package-feature-text')).toContainText('Content strategy, calendar · production · posting · optimization')
+    await expect(feature('system', /e-commerce management/i).locator('.hl-mark--web')).toHaveText('Shopee · TikTok Shop · Lazada')
+    await expect(feature('system', /booking\/sales website/i).locator('.hl-num')).toHaveText('unlimited')
+    await expect(feature('system', /performance marketing/i).locator('.hl-mark--gold')).toHaveText('% of actual ad spend')
+    await expect(card('system').getByTestId('package-alignment-microcopy').locator('b, strong')).toHaveText('content + web + ads')
+
+    const systemBase = feature('scale', /everything included/i)
+    await expect(systemBase.locator('b, strong').first()).toHaveText('Everything')
+    await expect(systemBase.locator('.hl-mark--system')).toHaveText('The One System')
+    const onsite = feature('scale', /on-site event planning/i).locator('strong span, b span').first()
+    await expect(onsite).toHaveText('On-site')
+    expect(await onsite.evaluate((element) => getComputedStyle(element).color)).toBe('rgb(255, 194, 75)')
+    await expect(feature('scale', /campaign strategy/i).locator('.sep')).toHaveCount(2)
+    const savings = page.getByTestId('package-scale-savings').locator('.package-savings-value')
+    await expect(savings).toHaveText('cheaper')
+    await expect(savings).not.toHaveClass(/hl-num/)
+    expect(await savings.evaluate((element) => getComputedStyle(element).color)).toBe('rgb(255, 194, 75)')
+    await expect(card('scale').getByTestId('package-alignment-microcopy').locator('b, strong')).toHaveText('your target')
+
+    const compareHighlights = page.getByTestId('package-compare-all').locator('.hl-num')
+    expect(await compareHighlights.count()).toBeGreaterThan(0)
+    await expect(compareHighlights.filter({ hasText: /unlimited/i }).first()).toBeAttached()
+    await expect(compareHighlights.filter({ hasText: /10/ }).first()).toBeAttached()
+
+    const process = page.getByTestId('package-process')
+    const firstProcessStep = process.locator('.package-process-step').first()
+    await expect(firstProcessStep.locator('strong').filter({ hasText: /^goals$/i })).toHaveCount(1)
+    await expect(firstProcessStep.locator('.hl-mark--system')).toContainText('right package')
+    await expect(page.getByTestId('package-recommendation').locator('.hl-mark--system')).toContainText('recommend the right package')
+
+    const terms = page.getByTestId('package-terms-block')
+    const unhighlightedTermNumbers = await terms.evaluate((root) => {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+      const misses: string[] = []
+      let node = walker.nextNode() as Text | null
+      while (node) {
+        if (/\d+(?:[.,]\d+)?%?/.test(node.data) && !node.parentElement?.closest('.hl-num')) {
+          misses.push(node.data.trim())
+        }
+        node = walker.nextNode() as Text | null
+      }
+      return misses.filter(Boolean)
+    })
+    expect(unhighlightedTermNumbers).toEqual([])
+
+    for (const mark of await page.locator('#packages .hl-mark').all()) {
+      await expect(mark).not.toHaveAttribute('aria-hidden', 'true')
+      expect((await mark.textContent())?.trim().length).toBeGreaterThan(0)
+    }
+  })
+
   test('shares all eight pricing rows at 1440, 1280 and 1024px', async ({ page }) => {
     test.setTimeout(60_000)
     await page.emulateMedia({ reducedMotion: 'reduce' })
@@ -154,6 +367,15 @@ test.describe('homepage package cards', () => {
       expect(geometry.every(({ microHeight }) => microHeight >= 23 && microHeight <= 25)).toBe(true)
       expect(geometry.every(({ ctaHeight }) => ctaHeight >= 51 && ctaHeight <= 53)).toBe(true)
       expect(geometry.every(({ iconWidth, iconHeight }) => iconWidth >= 39 && iconWidth <= 41 && iconHeight >= 39 && iconHeight <= 41)).toBe(true)
+
+      const overflowingMarks = await page.locator('[data-testid="package-card"] .hl-mark').evaluateAll((marks) => marks.flatMap((mark) => {
+        const markRect = mark.getBoundingClientRect()
+        const cardRect = mark.closest('.package-card')?.getBoundingClientRect()
+        return cardRect && (markRect.left < cardRect.left - 1 || markRect.right > cardRect.right + 1)
+          ? [(mark.textContent ?? '').trim()]
+          : []
+      }))
+      expect(overflowingMarks, `highlight mark overflow at ${width}px`).toEqual([])
     }
 
     await expect(page.locator('[data-package-tone="system"] .package-card-description').last()).toHaveText('Content, website and paid media running as one stable system.')
@@ -269,7 +491,9 @@ test.describe('homepage package cards', () => {
     await expect(process).toBeVisible()
     await expect(process).toHaveAttribute('data-highlight-tone', 'magenta')
     await expect(process.locator('.package-process-step')).toHaveCount(3)
-    await expect(process.locator('.package-process-highlight')).toHaveCount(3)
+    await expect(process.locator('.package-process-emphasis')).toHaveCount(3)
+    await expect(process.locator('.package-process-package-mark')).toHaveCount(1)
+    await expect(process.locator('.package-process-cadence')).toHaveCount(1)
     expect(await process.locator('.package-process-number').first().evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize))).toBeGreaterThanOrEqual(20)
     await expect(process).toContainText('Align on goals')
     const recommendation = page.getByTestId('package-recommendation')

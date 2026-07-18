@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useId, useMemo, useState, type CSSProperties } from 'react'
+import { useEffect, useId, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
 import { ArrowRight, Check, Megaphone, Rocket, Workflow, X } from 'lucide-react'
 import { localizedPath, type BrandLang } from '../brandContent'
 import type {
@@ -177,6 +177,10 @@ export function resolvePackageValueKind(
   return 'neutral'
 }
 
+export function isSinglePackageMetricValue(value: string) {
+  return /^(?:\d+[+]?|∞|unlimited|không giới hạn|on-site|tại sự kiện)$/i.test(value.trim())
+}
+
 function getPackageContent(item: CmsBlockItem, tone: PackageTone, lang: BrandLang) {
   const parsed = parsePackageBody(item.body)
   const savingsNotePattern = /might be cheaper than|có thể rẻ hơn/i
@@ -291,6 +295,24 @@ function packageAlignmentMicrocopy(
   return lang === 'vi' ? 'Thiết kế theo đúng mục tiêu của bạn' : 'Scoped around your target'
 }
 
+function renderPackageAlignmentMicrocopy(text: string, tone: PackageTone, lang: BrandLang) {
+  const phrases = tone === 'start'
+    ? lang === 'vi' ? ['sẵn sàng trong vài tuần'] : ['live in weeks']
+    : tone === 'system'
+      ? [text.split(':').slice(1).join(':').trim()]
+      : lang === 'vi' ? ['mục tiêu của bạn'] : ['your target']
+  const phrase = phrases.find(Boolean) ?? ''
+  const parts = splitExactPhrase(text, phrase)
+  if (!parts) return text
+  return (
+    <>
+      {parts.before}
+      <b>{parts.emphasis}</b>
+      {parts.after}
+    </>
+  )
+}
+
 function rowGroupName(row: PackageFeatureRow) {
   const source = row.group?.trim() || row.label?.trim() || ''
   if (!source) return 'Deliverables'
@@ -385,6 +407,126 @@ function splitLeadingMeaningfulClause(text: string): PackageFeatureTextParts | n
   }
 }
 
+function renderInlinePackageHighlights(text: string, keyPrefix: string): ReactNode[] {
+  const matcher = /(\b(?:45|60)\b|\b(?:15|20)\s+reels?\b|\b10\s+landing pages\b|\bunlimited\b|không giới hạn)/gi
+  return text.split(matcher).filter(Boolean).map((part, index) => (
+    /^(?:45|60|(?:15|20)\s+reels?|10\s+landing pages|unlimited|không giới hạn)$/i.test(part)
+      ? <span className="hl-num" key={`${keyPrefix}-num-${index}`}>{part}</span>
+      : part
+  ))
+}
+
+function renderSeparatedFeatureTail(text: string, keyPrefix: string, leadingAsSeparator = false) {
+  const hasLeadingSeparator = /^\s*[,;]\s*/.test(text)
+  const hasTrailingPeriod = /\.\s*$/.test(text)
+  const normalized = text
+    .replace(/^\s*[,;]\s*/, '')
+    .replace(/\.\s*$/, '')
+    .trim()
+  const parts = normalized.split(/\s*,\s*|\s+and\s+/i).filter(Boolean)
+
+  return (
+    <>
+      {hasLeadingSeparator && (leadingAsSeparator
+        ? <span className="sep"> · </span>
+        : ', ')}
+      {parts.map((part, index) => (
+        <span key={`${keyPrefix}-part-${index}`}>
+          {index > 0 && <span className="sep"> · </span>}
+          {part}
+        </span>
+      ))}
+      {hasTrailingPeriod ? '.' : ''}
+    </>
+  )
+}
+
+function renderPackageFeatureText(
+  row: PackageFeatureRow,
+  tone: PackageTone,
+  lang: BrandLang,
+  presentation: PackageFeaturePresentation,
+) {
+  const normalized = row.text.trim().toLocaleLowerCase()
+  const isVi = lang === 'vi'
+
+  if (/content units?\/month/i.test(row.text)) {
+    return renderInlinePackageHighlights(row.text, `${tone}-capacity`)
+  }
+
+  if (tone === 'scale' && /everything included in the one system/i.test(normalized)) {
+    return (
+      <>
+        <strong className="package-feature-emphasis">Everything</strong>
+        {' included in '}
+        <span className="hl-mark hl-mark--system">The One System</span>
+        {/[.]$/.test(row.text.trim()) ? '.' : ''}
+      </>
+    )
+  }
+
+  if (/e-?commerce management/i.test(normalized) && /shopee|tiktok shop|lazada/i.test(normalized)) {
+    return (
+      <>
+        <strong className="package-feature-emphasis">E-commerce management</strong>
+        {' '}
+        <span className="hl-mark hl-mark--web">Shopee · TikTok Shop · Lazada</span>
+      </>
+    )
+  }
+
+  if (/performance marketing/i.test(normalized) && /ad spend/i.test(normalized)) {
+    return (
+      <>
+        <strong className="package-feature-emphasis">Performance marketing</strong>
+        {' '}
+        <span className="hl-mark hl-mark--gold">
+          {isVi ? '% trên ad spend thực tế' : '% of actual ad spend'}
+        </span>
+      </>
+    )
+  }
+
+  if (tone === 'scale' && /on-site event planning/i.test(normalized)) {
+    return (
+      <>
+        <strong className="package-feature-emphasis">
+          <span className="package-feature-onsite">On-site</span> event planning
+        </strong>
+        {' and execution'}
+        {/[.]$/.test(row.text.trim()) ? '.' : ''}
+      </>
+    )
+  }
+
+  if (/^unlimited landing pages/i.test(normalized)) {
+    return renderInlinePackageHighlights(row.text, `${tone}-unlimited`)
+  }
+
+  const listTail = /content strategy|campaign strategy/i.test(presentation.parts.emphasis)
+  const campaignList = /campaign strategy/i.test(presentation.parts.emphasis)
+  const listTailText = /content strategy/i.test(presentation.parts.emphasis)
+    ? presentation.parts.after.replace(/content calendar\b/i, 'calendar')
+    : presentation.parts.after
+  return (
+    <>
+      {presentation.parts.before}
+      {presentation.parts.emphasis && (
+        <strong
+          data-testid="package-feature-emphasis"
+          data-emphasis-source={presentation.emphasisSource}
+          className="package-feature-emphasis"
+        >
+          {presentation.parts.emphasis}
+        </strong>
+      )}
+      {listTail
+        ? renderSeparatedFeatureTail(listTailText, `${tone}-list`, campaignList)
+        : renderInlinePackageHighlights(presentation.parts.after || row.text, `${tone}-detail`)}
+    </>
+  )
+}
+
 export function getPackageFeaturePresentation(
   row: PackageFeatureRow,
   important = row.featured === true,
@@ -433,15 +575,17 @@ function PackageFeatureRowView({
   tone,
   lang,
   module,
-  style,
+  revealOrder,
+  revealDelay,
 }: {
   row: PackageFeatureRow
   tone: PackageTone
   lang: BrandLang
   module: CmsPackageModuleId
-  style?: CSSProperties
+  revealOrder: number
+  revealDelay: number
 }) {
-  const presentation = getPackageFeaturePresentation(row)
+  const presentation = getPackageFeaturePresentation(row, true)
   const availability = row.availability ?? 'included'
   const included = availability === 'included'
   const systemBase = tone === 'scale' && /everything included in the one system|bao gồm toàn bộ the one system/i.test(row.text)
@@ -453,8 +597,9 @@ function PackageFeatureRowView({
 
   return (
     <li
-      className={`package-feature-row pkg-rv${systemBase ? ' package-feature-row--system-base' : ''}`}
-      style={style}
+      className={`package-feature-row rv-item${systemBase ? ' package-feature-row--system-base' : ''}`}
+      data-rv-order={revealOrder}
+      data-rv-delay-ms={revealDelay}
       data-testid="package-feature-row"
       data-package-module={module}
       data-feature-group={presentation.group}
@@ -474,19 +619,7 @@ function PackageFeatureRowView({
       <span className="package-feature-copy">
         {detailLabel && <span className="package-feature-group">{detailLabel}</span>}
         <span className="package-feature-text">
-          {presentation.parts.emphasis ? (
-            <>
-              {presentation.parts.before}
-              <strong
-                data-testid="package-feature-emphasis"
-                data-emphasis-source={presentation.emphasisSource}
-                className="package-feature-emphasis"
-              >
-                {presentation.parts.emphasis}
-              </strong>
-              {presentation.parts.after}
-            </>
-          ) : row.text}
+          {renderPackageFeatureText(row, tone, lang, presentation)}
         </span>
       </span>
       <span className="package-feature-value" aria-hidden="true">{statusLabel}</span>
@@ -503,7 +636,7 @@ function PackageSavingsNote({ text }: { text: string }) {
   return (
     <p className="package-scale-savings" data-testid="package-scale-savings">
       {text.slice(0, match.index)}
-      <strong>{match[0]}</strong>
+      <strong className="package-savings-value">{match[0]}</strong>
       {text.slice(match.index + match[0].length)}
     </p>
   )
@@ -521,30 +654,48 @@ function PackageServiceModules({
   lang: BrandLang
 }) {
   const groups = groupPackageFeatures(features)
+  let revealCursor = 8
+  const revealGroups = groups.map((group) => {
+    const headerOrder = revealCursor
+    revealCursor += 1
+    const rows = group.rows.map((row) => {
+      const revealOrder = revealCursor
+      revealCursor += 1
+      return { row, revealOrder }
+    })
+    return { ...group, headerOrder, rows }
+  })
   const moduleComponentId = useId().replace(/:/g, '')
   const [openModule, setOpenModule] = useState<CmsPackageModuleId>('output')
   const activeModule = groups.some((group) => group.module === openModule) ? openModule : groups[0]?.module ?? 'output'
 
+  const moduleDelay = (order: number) => Math.min(480, 340 + Math.max(0, order - 8) * 60)
+
   return (
     <div className="package-service-modules" data-testid="package-service-modules">
-      {groups.map(({ module, rows }, moduleIndex) => (
+      {revealGroups.map(({ module, rows, headerOrder }) => (
         (() => {
           const panelId = `${moduleComponentId}-${module}-panel`
           const expanded = activeModule === module
           return (
             <section
               key={module}
-              className="package-service-module pkg-rv"
+              className="package-service-module"
               data-package-module={module}
-              style={{ '--pi': 6 + moduleIndex } as CSSProperties}
             >
-              <h4 className="package-service-module-heading package-service-module-heading--desktop">
+              <h4
+                className="package-service-module-heading package-service-module-heading--desktop rv-item"
+                data-rv-order={headerOrder}
+                data-rv-delay-ms={moduleDelay(headerOrder)}
+              >
                 <span aria-hidden="true" />
                 {packageModuleCopy[lang][module]}
               </h4>
               <button
                 type="button"
-                className="package-service-module-toggle"
+                className="package-service-module-toggle rv-item"
+                data-rv-order={headerOrder}
+                data-rv-delay-ms={moduleDelay(headerOrder)}
                 aria-expanded={expanded}
                 aria-controls={panelId}
                 onClick={() => setOpenModule(module)}
@@ -558,14 +709,15 @@ function PackageServiceModules({
                 data-expanded={expanded ? 'true' : 'false'}
               >
                 <ul className="package-card-features package-service-module-list">
-                  {rows.map((feature, featureIndex) => (
+                  {rows.map(({ row: feature, revealOrder }, featureIndex) => (
                     <PackageFeatureRowView
                       key={`${module}-${featureIndex}-${feature.label ?? feature.group ?? ''}`}
                       row={feature}
                       tone={tone}
                       lang={lang}
                       module={module}
-                      style={{ '--pi': 7 + moduleIndex + featureIndex } as CSSProperties}
+                      revealOrder={revealOrder}
+                      revealDelay={moduleDelay(revealOrder)}
                     />
                   ))}
                 </ul>
@@ -574,7 +726,11 @@ function PackageServiceModules({
           )
         })()
       ))}
-      {tone === 'scale' && <PackageSavingsNote text={savingsNote} />}
+      {tone === 'scale' && (
+        <div className="rv-item" data-rv-order={99} data-rv-delay-ms={480}>
+          <PackageSavingsNote text={savingsNote} />
+        </div>
+      )}
     </div>
   )
 }
@@ -644,20 +800,23 @@ function packageComparisonRows(item: CmsBlockItem, tone: PackageTone, lang: Bran
 function PackageMetricRail({ metrics, lang }: { metrics: CmsPackageMetric[]; lang: BrandLang }) {
   return (
     <dl
-      className="package-metric-rail pkg-rv"
+      className="package-metric-rail"
       data-testid="package-metric-rail"
       aria-label={lang === 'vi' ? 'Chỉ số chính của gói' : 'Package highlights'}
-      style={{ '--pi': 4 } as CSSProperties}
     >
       {metrics.slice(0, 3).map((metric, index) => (
         <div
-          className="package-metric"
+          className="package-metric rv-item"
           data-testid="package-metric"
           data-metric-kind={resolvePackageValueKind(metric.value)}
+          data-rv-order={5 + index}
+          data-rv-delay-ms={220 + index * 40}
           key={`${metric.value}-${metric.label}-${index}`}
         >
           <dt>{metric.label || (lang === 'vi' ? 'Quy mô gói' : 'Package capacity')}</dt>
-          <dd>{metric.value}</dd>
+          <dd className={`package-metric-value${isSinglePackageMetricValue(metric.value) ? ' package-metric-value--single' : ''}`}>
+            {metric.value}
+          </dd>
         </div>
       ))}
     </dl>
@@ -667,6 +826,17 @@ function PackageMetricRail({ metrics, lang }: { metrics: CmsPackageMetric[]; lan
 type PackageComparisonValue = {
   value: string
   availability: 'included' | 'excluded'
+}
+
+function renderPackageComparisonValue(value: string, kind: PackageValueKind, keyPrefix: string) {
+  if (kind === 'unlimited') return <span className="hl-num">{value}</span>
+  if (kind !== 'quantity') return value
+
+  return value.split(/(\d+(?:[.,]\d+)?[+]?)/g).filter(Boolean).map((part, index) => (
+    /^\d/.test(part)
+      ? <span className="hl-num" key={`${keyPrefix}-quantity-${index}`}>{part}</span>
+      : part
+  ))
 }
 
 export type PackageComparisonGroup = {
@@ -738,6 +908,24 @@ function PackageCompareAll({
 }) {
   const groups = buildPackageComparisonGroups(cards, lang)
   if (!groups.length) return null
+  let compareRevealCursor = 4
+  const revealGroups = groups.map((group) => {
+    const revealOrder = compareRevealCursor
+    compareRevealCursor += 1
+    const rows = group.rows.map((row) => {
+      const rowRevealOrder = compareRevealCursor
+      compareRevealCursor += 1
+      return { ...row, revealOrder: rowRevealOrder }
+    })
+    return { ...group, revealOrder, rows }
+  })
+  const compareDelay = (order: number) => (
+    order === 0 ? 0
+      : order === 1 ? 60
+        : order === 2 ? 120
+          : order === 3 ? 180
+            : Math.min(480, 240 + (order - 4) * 60)
+  )
   const copy = lang === 'vi'
     ? {
         eyebrow: 'ĐẶT CẠNH NHAU',
@@ -755,12 +943,17 @@ function PackageCompareAll({
       }
 
   return (
-    <section className="package-compare-all pkg-rv" data-testid="package-compare-all" aria-labelledby={headingId}>
+    <section
+      className="package-compare-all"
+      data-testid="package-compare-all"
+      data-rv-group="compare"
+      aria-labelledby={headingId}
+    >
       <header className="package-compare-header">
         <div>
-          <p>{copy.eyebrow}</p>
-          <h3 id={headingId}>{copy.heading}</h3>
-          <span>{copy.body}</span>
+          <p className="rv-item" data-rv-order={0} data-rv-delay-ms={compareDelay(0)}>{copy.eyebrow}</p>
+          <h3 className="rv-item" data-rv-order={1} data-rv-delay-ms={compareDelay(1)} id={headingId}>{copy.heading}</h3>
+          <span className="rv-item" data-rv-order={2} data-rv-delay-ms={compareDelay(2)}>{copy.body}</span>
         </div>
       </header>
       <div className="package-compare-table-wrap">
@@ -772,7 +965,7 @@ function PackageCompareAll({
             ))}
           </colgroup>
           <thead>
-            <tr>
+            <tr className="rv-item rv-item--table-row" data-rv-order={3} data-rv-delay-ms={compareDelay(3)}>
               <th scope="col">{copy.service}</th>
               {cards.map(({ item, tone, id }) => (
                 <th
@@ -786,22 +979,30 @@ function PackageCompareAll({
               ))}
             </tr>
           </thead>
-          {groups.map((group) => (
+          {revealGroups.map((group) => (
             <tbody key={group.module} data-package-module={group.module}>
-                <tr className="package-compare-group-row" data-package-module={group.module}>
+                <tr
+                  className="package-compare-group-row rv-item rv-item--table-row"
+                  data-package-module={group.module}
+                  data-rv-order={group.revealOrder}
+                  data-rv-delay-ms={compareDelay(group.revealOrder)}
+                >
                   <th scope="rowgroup" colSpan={cards.length + 1}>{group.title}</th>
                 </tr>
                 {group.rows.map((row) => (
                   <tr
-                    className="package-compare-service-row"
+                    className="package-compare-service-row rv-item rv-item--table-row"
                     data-testid="package-comparison-row"
                     data-package-module={group.module}
+                    data-rv-order={row.revealOrder}
+                    data-rv-delay-ms={compareDelay(row.revealOrder)}
                     key={`${group.module}-${row.key}`}
                   >
                     <th scope="row">{row.label}</th>
                     {cards.map(({ item, tone, id }) => {
                       const cell = row.values[tone]
                       const included = cell?.availability !== 'excluded'
+                      const valueKind = resolvePackageValueKind(cell?.value ?? '—', cell?.availability ?? 'unlisted')
                       return (
                         <td
                           key={`${id}-${row.key}`}
@@ -809,7 +1010,7 @@ function PackageCompareAll({
                           data-package-label={item.title}
                           data-mobile-active={activeTone === tone ? 'true' : 'false'}
                           data-availability={cell?.availability ?? 'unlisted'}
-                          data-value-kind={resolvePackageValueKind(cell?.value ?? '—', cell?.availability ?? 'unlisted')}
+                          data-value-kind={valueKind}
                         >
                           {cell ? (
                             <>
@@ -821,7 +1022,7 @@ function PackageCompareAll({
                                   ? lang === 'vi' ? 'Bao gồm: ' : 'Included: '
                                   : lang === 'vi' ? 'Không bao gồm: ' : 'Not included: '}
                               </span>
-                              <span>{cell.value}</span>
+                              <span>{renderPackageComparisonValue(cell.value, valueKind, `${id}-${row.key}`)}</span>
                             </>
                           ) : <span className="package-compare-unlisted" aria-label={copy.notListed}>—</span>}
                         </td>
@@ -834,7 +1035,7 @@ function PackageCompareAll({
         </table>
       </div>
       <div className="package-compare-mobile" data-testid="package-comparison-stack">
-        {groups.map((group) => {
+        {revealGroups.map((group) => {
           const groupId = `${headingId}-${group.module}`
           return (
             <section
@@ -843,13 +1044,22 @@ function PackageCompareAll({
               key={`${group.module}-mobile`}
               aria-labelledby={groupId}
             >
-              <h4 id={groupId}>{group.title}</h4>
+              <h4
+                className="rv-item"
+                data-rv-order={group.revealOrder}
+                data-rv-delay-ms={compareDelay(group.revealOrder)}
+                id={groupId}
+              >
+                {group.title}
+              </h4>
               <div className="package-compare-mobile-services">
                 {group.rows.map((row) => (
                   <article
-                    className="package-compare-mobile-service"
+                    className="package-compare-mobile-service rv-item"
                     data-testid="package-comparison-service-card"
                     data-package-module={group.module}
+                    data-rv-order={row.revealOrder}
+                    data-rv-delay-ms={compareDelay(row.revealOrder)}
                     key={`${group.module}-${row.key}-mobile`}
                   >
                     <h5>{row.label}</h5>
@@ -857,13 +1067,14 @@ function PackageCompareAll({
                       {cards.map(({ item, tone, id }) => {
                         const cell = row.values[tone]
                         const included = cell?.availability !== 'excluded'
+                        const valueKind = resolvePackageValueKind(cell?.value ?? '—', cell?.availability ?? 'unlisted')
                         return (
                           <div
                             className="package-compare-mobile-plan"
                             data-testid="package-comparison-plan-row"
                             data-package-tone={tone}
                             data-availability={cell?.availability ?? 'unlisted'}
-                            data-value-kind={resolvePackageValueKind(cell?.value ?? '—', cell?.availability ?? 'unlisted')}
+                            data-value-kind={valueKind}
                             key={`${id}-${row.key}-mobile`}
                           >
                             <dt>{item.title}</dt>
@@ -878,7 +1089,7 @@ function PackageCompareAll({
                                       ? lang === 'vi' ? 'Bao gồm: ' : 'Included: '
                                       : lang === 'vi' ? 'Không bao gồm: ' : 'Not included: '}
                                   </span>
-                                  <span>{cell.value}</span>
+                                  <span>{renderPackageComparisonValue(cell.value, valueKind, `${id}-${row.key}-mobile`)}</span>
                                 </>
                               ) : <span className="package-compare-unlisted" aria-label={copy.notListed}>—</span>}
                             </dd>
@@ -1025,9 +1236,11 @@ export function PackageCards({
           return (
             <div
               key={`${id}-${sourceIndex}`}
-              className={`package-card-shell${featured ? ' package-card-shell--featured pkg-card-spring' : ''}${highlight ? ' is-anchor-highlighted' : ''}`}
-              data-reveal="pkg-card"
-              data-reveal-phase="2"
+              className={`package-card-shell rv-item${featured ? ' package-card-shell--featured' : ''}${highlight ? ' is-anchor-highlighted' : ''}`}
+              data-rv-group={`card-${tone}`}
+              data-rv-order={0}
+              data-rv-delay-ms={0}
+              data-rv-base-ms={visualIndex * 90}
               data-testid="package-card"
               data-package-id={id}
               data-package-tone={tone}
@@ -1043,13 +1256,13 @@ export function PackageCards({
                 aria-labelledby={headingId}
               >
                 {badgeLabel && (
-                  <span className="package-card-badge pkg-rv" style={{ '--pi': 0 } as CSSProperties}>
+                  <span className="package-card-badge rv-item" data-rv-order={0} data-rv-delay-ms={0}>
                     {badgeLabel}
                   </span>
                 )}
 
                 <div className="package-card-summary">
-                  <div className="package-card-heading pkg-rv" style={{ '--pi': 1 } as CSSProperties}>
+                  <div className="package-card-heading rv-item" data-rv-order={0} data-rv-delay-ms={0}>
                     <span className="package-tone-icon" aria-hidden="true">
                       {item.imageUrl ? (
                         <img src={item.imageUrl} alt="" className="package-tone-image" />
@@ -1063,17 +1276,19 @@ export function PackageCards({
                   </div>
 
                   <p
-                    className="package-card-description pkg-rv"
-                    style={{ '--pi': 2 } as CSSProperties}
+                    className="package-card-description rv-item"
+                    data-rv-order={1}
+                    data-rv-delay-ms={50}
                     aria-hidden={subtitle ? undefined : 'true'}
                   >
                     {subtitle || '\u00a0'}
                   </p>
 
                   <div
-                    className="package-card-price pkg-rv"
+                    className="package-card-price rv-item"
                     data-testid="package-price"
-                    style={{ '--pi': 3 } as CSSProperties}
+                    data-rv-order={2}
+                    data-rv-delay-ms={100}
                   >
                     {normalizedPrice.priceLabel && <p className="package-price-label">{normalizedPrice.priceLabel}</p>}
                     {normalizedPrice.priceValue && (
@@ -1090,14 +1305,17 @@ export function PackageCards({
                   </div>
 
                   <p
-                    className="package-price-supporting pkg-rv"
+                    className="package-price-supporting rv-item"
                     data-testid="package-alignment-microcopy"
-                    style={{ '--pi': 4 } as CSSProperties}
+                    data-rv-order={3}
+                    data-rv-delay-ms={140}
                   >
-                    {alignmentMicrocopy || '\u00a0'}
+                    {alignmentMicrocopy
+                      ? renderPackageAlignmentMicrocopy(alignmentMicrocopy, tone, lang)
+                      : '\u00a0'}
                   </p>
 
-                  <div className="package-card-cta-block pkg-rv" style={{ '--pi': 5 } as CSSProperties}>
+                  <div className="package-card-cta-block rv-item" data-rv-order={4} data-rv-delay-ms={180}>
                     {ctaHref ? (
                       <a className="package-cta" data-testid="package-cta" href={ctaHref}>{ctaLabel}</a>
                     ) : (
@@ -1118,7 +1336,7 @@ export function PackageCards({
 
                 <PackageServiceModules features={features} savingsNote={savingsNote} tone={tone} lang={lang} />
 
-                <div className="package-stories-row pkg-rv" style={{ '--pi': 12 } as CSSProperties}>
+                <div className="package-stories-row rv-item" data-rv-order={99} data-rv-delay-ms={480}>
                   <a className="package-stories-link" href={caseStudyLink}>
                     {normalizePackageStoryLabel(item.caseStudyLabel, caseStudyLabel)}
                     <ArrowRight size={15} aria-hidden="true" />

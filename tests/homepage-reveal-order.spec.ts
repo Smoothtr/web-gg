@@ -49,119 +49,427 @@ async function sceneSnapshot(sceneLocator: Locator): Promise<SceneSnapshot> {
   })
 }
 
-function expectValidSequence(snapshot: SceneSnapshot) {
-  expect(snapshot.steps.length).toBeGreaterThan(5)
-  expect(snapshot.stepMs).toBeGreaterThanOrEqual(40)
-  expect(snapshot.stepMs).toBeLessThanOrEqual(60)
-
-  const byOrder = [...snapshot.steps].sort((left, right) => left.order - right.order)
-  expect(byOrder.map((step) => step.order)).toEqual(
-    Array.from({ length: snapshot.steps.length }, (_, index) => index),
-  )
-  expect(byOrder.map((step) => step.phase)).toEqual(
-    [...byOrder]
-      .map((step) => step.phase)
-      .sort((left, right) => left - right),
-  )
-
-  for (const step of snapshot.steps) {
-    expect(step.direction).toBe('down')
-    expect(step.delayMs).toBeCloseTo(step.order * snapshot.stepMs, 5)
-  }
+async function packageGroupDocumentBox(page: Page, name: string) {
+  return page.locator(`[data-rv-group="${name}"]`).evaluate((group) => {
+    const rect = group.getBoundingClientRect()
+    return { height: rect.height, top: rect.top + window.scrollY, viewportHeight: window.innerHeight }
+  })
 }
 
-test.describe('Homepage one-shot package reveal', () => {
-  test('stays armed offscreen, staggers once, and does not replay after leaving the section', async ({ page }) => {
+async function scrollPackageGroupIntoView(page: Page, name: string, direction: 'down' | 'up') {
+  const box = await packageGroupDocumentBox(page, name)
+  const y = direction === 'down'
+    ? box.top - box.viewportHeight * 0.52
+    : box.top + box.height - box.viewportHeight * 0.52
+  await page.evaluate((scrollY) => window.scrollTo(0, Math.max(0, scrollY)), y)
+  await waitForTwoFrames(page)
+}
+
+async function resetPackageGroupAboveViewport(page: Page, name: string) {
+  const box = await packageGroupDocumentBox(page, name)
+  const resetState = await page.locator(`[data-rv-group="${name}"]`).evaluate((group, scrollY) => (
+    new Promise<{ durations: string[]; sawReset: boolean }>((resolve) => {
+      const finish = (sawReset: boolean) => {
+        observer.disconnect()
+        window.clearTimeout(timeout)
+        const items = [
+          ...(group.classList.contains('rv-item') ? [group as HTMLElement] : []),
+          ...Array.from(group.querySelectorAll<HTMLElement>('.rv-item')),
+        ].filter((item) => item.closest('[data-rv-group]') === group)
+        resolve({
+          durations: items.map((item) => getComputedStyle(item).transitionDuration),
+          sawReset,
+        })
+      }
+      const observer = new MutationObserver(() => {
+        if (group.classList.contains('rv-reset')) finish(true)
+      })
+      const timeout = window.setTimeout(() => finish(false), 2_000)
+      observer.observe(group, { attributeFilter: ['class'], attributes: true })
+      window.scrollTo(0, Math.max(0, scrollY))
+    })
+  ), box.top + box.height + box.viewportHeight * 0.2)
+  await waitForTwoFrames(page)
+  return resetState
+}
+
+test.describe('Homepage grouped bidirectional package reveal', () => {
+  test('owns an independent, sequential timeline for every Round 4 group', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.setViewportSize({ width: 1280, height: 900 })
+    await page.goto('/#packages', { waitUntil: 'domcontentloaded' })
+
+    const packages = page.locator('#packages')
+    expect(await packages.getAttribute('data-reveal-once')).toBeNull()
+    expect(await packages.getAttribute('data-reveal-scene')).toBeNull()
+    expect(await packages.getAttribute('data-reveal-step-ms')).toBeNull()
+    await expect(page.getByTestId('package-card')).toHaveCount(3)
+    await expect(packages).toHaveAttribute('data-rv-ready', 'true')
+
+    const expectedMinimumItems: Record<string, number> = {
+      header: 4,
+      'card-start': 10,
+      'card-system': 10,
+      'card-scale': 10,
+      compare: 8,
+      process: 7,
+      confidence: 5,
+      terms: 7,
+    }
+    const groupNames = await packages.locator('[data-rv-group]').evaluateAll((groups) => (
+      groups.map((group) => group.getAttribute('data-rv-group'))
+    ))
+    expect(groupNames).toEqual(Object.keys(expectedMinimumItems))
+
+    for (const [name, minimumItems] of Object.entries(expectedMinimumItems)) {
+      const group = packages.locator(`[data-rv-group="${name}"]`)
+      const snapshot = await group.evaluate((root) => {
+        const items = [
+          ...(root.classList.contains('rv-item') ? [root as HTMLElement] : []),
+          ...Array.from(root.querySelectorAll<HTMLElement>('.rv-item')),
+        ].filter((item) => item.closest('[data-rv-group]') === root)
+        return items.map((item) => ({
+          delay: Number.parseInt(item.dataset.rvDelayMs ?? '', 10),
+          index: Number.parseInt(item.style.getPropertyValue('--rv-i'), 10),
+          legacyIndex: item.style.getPropertyValue('--pi'),
+          order: Number.parseInt(item.dataset.rvOrder ?? '', 10),
+        }))
+      })
+      expect(snapshot.length, `${name} item count`).toBeGreaterThanOrEqual(minimumItems)
+      expect(Math.min(...snapshot.map(({ order }) => order)), `${name} local order starts at zero`).toBe(0)
+      expect(snapshot.every(({ index, order }) => index === Math.min(order, 7)), `${name} capped local indices`).toBe(true)
+      const maximumLocalIndex = Math.min(Math.max(...snapshot.map(({ order }) => order)), 7)
+      expect(new Set(snapshot.map(({ index }) => index)), `${name} local index range`).toEqual(
+        new Set(Array.from({ length: maximumLocalIndex + 1 }, (_, index) => index)),
+      )
+      expect(snapshot.every(({ legacyIndex }) => legacyIndex === ''), `${name} legacy delays`).toBe(true)
+      expect(snapshot.every(({ delay }) => Number.isFinite(delay)), `${name} explicit delays`).toBe(true)
+      expect(Math.min(...snapshot.map(({ delay }) => delay)), `${name} starts immediately`).toBe(0)
+      expect(snapshot.map(({ delay, order }) => ({ delay, order })).sort((left, right) => left.order - right.order), `${name} delays follow local order`).toEqual(
+        [...snapshot]
+          .map(({ delay, order }) => ({ delay, order }))
+          .sort((left, right) => left.delay - right.delay || left.order - right.order),
+      )
+      expect(Math.max(...snapshot.map(({ delay }) => delay)), `${name} delay cap`).toBeLessThanOrEqual(480)
+    }
+
+    const groupDelays = async (name: string) => packages.locator(`[data-rv-group="${name}"]`).evaluate((root) => {
+      const items = [
+        ...(root.classList.contains('rv-item') ? [root as HTMLElement] : []),
+        ...Array.from(root.querySelectorAll<HTMLElement>('.rv-item')),
+      ].filter((item) => item.closest('[data-rv-group]') === root)
+      return items
+        .map((item) => ({
+          delay: Number.parseInt(item.dataset.rvDelayMs ?? '', 10),
+          order: Number.parseInt(item.dataset.rvOrder ?? '', 10),
+        }))
+        .sort((left, right) => left.order - right.order)
+        .map(({ delay }) => delay)
+    })
+    expect(await groupDelays('header')).toEqual([0, 80, 160, 240])
+    expect(await groupDelays('process')).toEqual([0, 60, 140, 200, 260, 320, 380])
+    expect(await groupDelays('confidence')).toEqual([0, 60, 120, 180, 240])
+    expect(await groupDelays('terms')).toEqual([0, 60, 120, 180, 240, 300, 360])
+    for (const [tone, baseMs] of [['start', 0], ['system', 90], ['scale', 180]] as const) {
+      const delays = await groupDelays(`card-${tone}`)
+      const uniqueDelays = [...new Set(delays)]
+      expect(uniqueDelays.slice(0, 9), `${tone} card opening sequence`).toEqual([0, 50, 100, 140, 180, 220, 260, 300, 340])
+      expect(uniqueDelays.slice(9).every((delay) => delay >= 400 && delay <= 480), `${tone} card row sequence`).toBe(true)
+      await expect(packages.locator(`[data-rv-group="card-${tone}"]`)).toHaveAttribute('data-rv-base-ms', String(baseMs))
+    }
+
+    await expect(packages.locator('.packages-section-header .rv-item').nth(0)).toContainText('PRICING')
+    await expect(packages.locator('.packages-section-header .rv-item').nth(1)).toContainText('The One Packages')
+    await expect(packages.locator('.packages-section-header .home-gradient-underline.rv-item')).toHaveCount(1)
+    await expect(packages.locator('[data-rv-group="process"] .package-process-connector')).toHaveCount(2)
+    await expect(packages.locator('[data-rv-group="terms"] .package-terms-highlights > li.rv-item')).toHaveCount(4)
+  })
+
+  test('re-arms after a full exit and enters from the current scroll direction', async ({ page }) => {
     test.setTimeout(60_000)
     await page.emulateMedia({ reducedMotion: 'no-preference' })
     await page.setViewportSize({ width: 1280, height: 800 })
     await page.goto('/', { waitUntil: 'domcontentloaded' })
     await waitForIntroToFinish(page)
+    await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; } #packages { --rv-dur: 10000ms !important; }' })
 
-    const packages = page.locator('#packages[data-reveal-scene][data-reveal-once]')
-    await expect(packages).toBeAttached()
-    await expect(page.getByTestId('package-card')).toHaveCount(3)
-    expect(await page.evaluate(() => window.scrollY)).toBeLessThan(10)
+    const name = 'compare'
+    const group = page.locator(`[data-rv-group="${name}"]`)
+    const items = group.locator('.rv-item')
+    await expect(items.first()).toBeAttached()
+    // Keep one item pending long enough to deterministically reverse direction
+    // while the scheduler is still running.
+    await items.last().evaluate((item) => { item.dataset.rvDelayMs = '3000' })
 
-    // The old global rescue timer revealed the whole page after 4.2 seconds.
-    // Staying at the hero must leave this distant scene fully armed instead.
-    await page.waitForTimeout(4_500)
-    await expect(packages).not.toHaveAttribute('data-reveal-played', 'true')
-    await expect(packages.locator('[data-reveal][data-revealed]')).toHaveCount(0)
-
-    await packages.scrollIntoViewIfNeeded()
-    await expect(packages).toHaveAttribute('data-reveal-played', 'true')
-    await expect(packages).toHaveAttribute('data-reveal-direction', 'down')
-
-    const down = await sceneSnapshot(packages)
-    expectValidSequence(down)
-
-    const downCards = down.steps.filter((step) => step.testId === 'package-card')
-    expect(downCards).toHaveLength(3)
-    expect(downCards.map((step) => step.tone).sort()).toEqual(['scale', 'start', 'system'])
-    const orderedCards = [...downCards].sort((left, right) => left.order - right.order)
-    expect(orderedCards[1].delayMs - orderedCards[0].delayMs).toBe(down.stepMs)
-    expect(orderedCards[2].delayMs - orderedCards[1].delayMs).toBe(down.stepMs)
-    const downTitle = down.steps.find((step) => step.reveal === 'words' && step.text.includes('The One Packages'))
-    expect(downTitle).toBeDefined()
-    expect(downTitle!.order).toBeLessThan(Math.min(...downCards.map((step) => step.order)))
-
-    // Once played, leaving the section must preserve the completed state. The
-    // previous bidirectional behavior removed these attributes and replayed it.
-    await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight))
+    const box = await packageGroupDocumentBox(page, name)
+    await page.evaluate(
+      (scrollY) => window.scrollTo(0, Math.max(0, scrollY)),
+      box.top - box.viewportHeight * 1.25,
+    )
     await waitForTwoFrames(page)
-    await expect(packages).not.toBeInViewport()
-    await expect(packages).toHaveAttribute('data-reveal-played', 'true')
-    await expect(packages).toHaveAttribute('data-reveal-direction', 'down')
-    expect(await sceneSnapshot(packages)).toEqual(down)
+    await expect(group.locator('.rv-item.rv-in')).toHaveCount(0)
 
-    await packages.scrollIntoViewIfNeeded()
-    await expect(packages).toHaveAttribute('data-reveal-played', 'true')
-    await expect(packages).toHaveAttribute('data-reveal-direction', 'down')
-    expect(await sceneSnapshot(packages)).toEqual(down)
+    await scrollPackageGroupIntoView(page, name, 'down')
+    await expect(items.first()).toHaveClass(/rv-in/)
+    await expect(group).not.toHaveClass(/rv-reset/)
+    expect(await group.evaluate((element) => getComputedStyle(element).getPropertyValue('--rv-dir').trim())).toBe('24px')
+    expect(await items.first().evaluate((element) => {
+      const translate = getComputedStyle(element).translate
+      if (translate === 'none') return 0
+      const parts = translate.split(/\s+/)
+      return Number.parseFloat(parts[1] ?? parts[0])
+    })).toBeGreaterThan(0)
+
+    // Interrupt an in-flight stagger: revealed items keep their frozen entry
+    // direction, while items whose due time has not arrived use the new one.
+    await page.evaluate(() => window.scrollBy(0, -32))
+    await waitForTwoFrames(page)
+    await expect(group).toHaveAttribute('data-rv-direction', 'up')
+    await expect(items.last()).toHaveClass(/rv-in/)
+    await expect(items.first()).toHaveAttribute('data-rv-reveal-direction', 'down')
+    await expect(items.last()).toHaveAttribute('data-rv-reveal-direction', 'up')
+
+    const resetState = await resetPackageGroupAboveViewport(page, name)
+    expect(resetState.sawReset).toBe(true)
+    expect(resetState.durations.every((duration) => /^0s(?:, 0s)*$/.test(duration))).toBe(true)
+    await expect(group).toHaveAttribute('data-rv-state', 'armed')
+    await expect(group.locator('.rv-item.rv-in')).toHaveCount(0)
+
+    await scrollPackageGroupIntoView(page, name, 'up')
+    await expect(items.first()).toHaveClass(/rv-in/)
+    await expect(group).not.toHaveClass(/rv-reset/)
+    expect(await group.evaluate((element) => getComputedStyle(element).getPropertyValue('--rv-dir').trim())).toBe('-24px')
+    expect(await items.first().evaluate((element) => {
+      const translate = getComputedStyle(element).translate
+      if (translate === 'none') return 0
+      const parts = translate.split(/\s+/)
+      return Number.parseFloat(parts[1] ?? parts[0])
+    })).toBeLessThan(0)
+
+    // A second full cycle proves this is a re-armed group, not a one-off replay.
+    const secondBox = await packageGroupDocumentBox(page, name)
+    await page.evaluate(
+      (scrollY) => window.scrollTo(0, Math.max(0, scrollY)),
+      secondBox.top - secondBox.viewportHeight * 1.25,
+    )
+    await waitForTwoFrames(page)
+    await expect(group).toHaveAttribute('data-rv-state', 'armed')
+    await scrollPackageGroupIntoView(page, name, 'down')
+    await expect(items.last()).toHaveClass(/rv-in/)
+    expect(await group.evaluate((element) => getComputedStyle(element).getPropertyValue('--rv-dir').trim())).toBe('24px')
   })
 
-  test('keeps every reveal step static and readable for reduced motion', async ({ page }) => {
-    await page.emulateMedia({ reducedMotion: 'reduce' })
-    await page.setViewportSize({ width: 390, height: 844 })
+  test('shows groups already in view immediately when the page reloads mid-section', async ({ page }) => {
+    test.setTimeout(60_000)
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.addInitScript(() => {
+      ;(window as Window & { __round4RevealTransitions?: string[] }).__round4RevealTransitions = []
+      const recordRevealMotion = (event: Event) => {
+        const target = event.target
+        if (!(target instanceof HTMLElement) || !target.classList.contains('rv-item')) return
+        const group = target.closest<HTMLElement>('[data-rv-group]')?.dataset.rvGroup
+        if (group) (window as Window & { __round4RevealTransitions?: string[] }).__round4RevealTransitions?.push(group)
+      }
+      document.addEventListener('transitionrun', recordRevealMotion, true)
+      document.addEventListener('animationstart', recordRevealMotion, true)
+    })
     await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await waitForIntroToFinish(page)
 
-    const packages = page.locator('#packages[data-reveal-scene][data-reveal-once]')
-    await expect(packages).toBeAttached()
-    await expect(packages.locator('[data-reveal]').first()).toHaveAttribute('data-revealed', 'true')
+    const process = page.locator('[data-rv-group="process"]')
+    await process.scrollIntoViewIfNeeded()
+    await waitForTwoFrames(page)
+    const scrollBeforeReload = await page.evaluate(() => window.scrollY)
+    expect(scrollBeforeReload).toBeGreaterThan(1_000)
 
-    const state = await packages.evaluate((root) => {
-      const scene = root as HTMLElement
-      const steps = Array.from(scene.querySelectorAll<HTMLElement>('[data-reveal]'))
-        .filter((element) => element.closest('[data-reveal-scene]') === scene)
-      const words = Array.from(scene.querySelectorAll<HTMLElement>('.rw-word'))
-      const cards = Array.from(scene.querySelectorAll<HTMLElement>('[data-testid="package-card"]'))
+    await page.reload({ waitUntil: 'domcontentloaded' })
+    await expect(process).toBeAttached()
+    expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(1_000)
+    await page.waitForTimeout(550)
 
+    const state = await page.locator('#packages').evaluate((root) => {
+      const groups = Array.from(root.querySelectorAll<HTMLElement>('[data-rv-group]'))
+        .filter((group) => {
+          const rect = group.getBoundingClientRect()
+          return rect.top < window.innerHeight && rect.bottom > 0
+        })
       return {
-        cardsStatic: cards.length === 3 && cards.every((card) => {
-          const style = window.getComputedStyle(card)
-          return style.animationName === 'none'
-            && style.transform === 'none'
-            && Number.parseFloat(style.opacity) > 0.99
+        groups: groups.map((group) => group.dataset.rvGroup),
+        immediatelyVisible: groups.every((group) => {
+          const items = [
+            ...(group.classList.contains('rv-item') ? [group] : []),
+            ...Array.from(group.querySelectorAll<HTMLElement>('.rv-item')),
+          ].filter((item) => item.closest('[data-rv-group]') === group)
+          return items.every((item) => (
+            item.classList.contains('rv-in')
+            && Number.parseFloat(getComputedStyle(item).opacity) > 0.99
+            && ['none', '0px', '0px 0px'].includes(getComputedStyle(item).translate)
+          ))
         }),
-        stepCount: steps.length,
-        stepsVisible: steps.every((element) => {
-          const style = window.getComputedStyle(element)
-          return element.classList.contains('is-visible')
-            && element.dataset.revealed === 'true'
-            && Number.parseFloat(style.opacity) > 0.99
-            && style.visibility === 'visible'
-        }),
-        wordsVisible: words.length > 0 && words.every((word) => Number.parseFloat(window.getComputedStyle(word).opacity) > 0.99),
+        transitions: (window as Window & { __round4RevealTransitions?: string[] }).__round4RevealTransitions ?? [],
       }
     })
+    expect(state.groups.length).toBeGreaterThan(0)
+    expect(state.groups).toContain('process')
+    expect(state.immediatelyVisible).toBe(true)
+    expect(state.transitions.filter((name) => state.groups.includes(name))).toEqual([])
+  })
 
-    expect(state.stepCount).toBeGreaterThan(5)
-    expect(state.cardsStatic).toBe(true)
-    expect(state.stepsVisible).toBe(true)
-    expect(state.wordsVisible).toBe(true)
-    await expect(packages.getByRole('heading', { name: 'The One Packages' })).toBeVisible()
-    await expect(page.getByTestId('package-card')).toHaveCount(3)
+  test('re-arms a hidden tablet card after the packages section fully exits', async ({ page }) => {
+    test.setTimeout(60_000)
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.setViewportSize({ width: 900, height: 800 })
+    await page.goto('/#packages', { waitUntil: 'domcontentloaded' })
+    await waitForIntroToFinish(page)
+    await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' })
+
+    const packages = page.locator('#packages')
+    const selector = page.getByTestId('package-tier-selector')
+    const system = page.locator('[data-rv-group="card-system"]')
+    await expect(system).toBeVisible()
+    await expect(system.locator('.rv-item').last()).toHaveClass(/rv-in/)
+
+    await selector.getByRole('button', { name: /start/i }).click()
+    await expect(system).toBeHidden()
+
+    const sectionBox = await packages.evaluate((element) => ({
+      bottom: element.offsetTop + element.offsetHeight,
+      viewportHeight: window.innerHeight,
+    }))
+    await page.evaluate(
+      ({ bottom, viewportHeight }) => window.scrollTo(0, bottom + viewportHeight * 0.2),
+      sectionBox,
+    )
+    await expect(system).toHaveAttribute('data-rv-state', 'armed')
+    await expect(system.locator('.rv-item.rv-in')).toHaveCount(0)
+
+    await packages.scrollIntoViewIfNeeded()
+    await selector.getByRole('button', { name: /system/i }).click()
+    await expect(system).toBeVisible()
+    await expect(system.locator('.rv-item').first()).toHaveClass(/rv-in/)
+    await expect(system).toHaveAttribute('data-rv-state', /running|complete/)
+  })
+
+  test('does not flicker while crossing one entry boundary five times', async ({ page }) => {
+    test.setTimeout(60_000)
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await waitForIntroToFinish(page)
+    await page.addStyleTag({ content: 'html { scroll-behavior: auto !important; }' })
+
+    const group = page.locator('[data-rv-group="process"]')
+    const box = await packageGroupDocumentBox(page, 'process')
+    const outsideY = box.top - box.viewportHeight * 0.886
+    const insideY = box.top - box.viewportHeight * 0.876
+    await page.evaluate((scrollY) => window.scrollTo(0, Math.max(0, scrollY)), outsideY)
+    await waitForTwoFrames(page)
+    await expect(group).toHaveAttribute('data-rv-state', 'armed')
+
+    const revealedCounts: number[] = []
+    for (let cycle = 0; cycle < 5; cycle += 1) {
+      await page.evaluate((scrollY) => window.scrollTo(0, Math.max(0, scrollY)), insideY)
+      await waitForTwoFrames(page)
+      revealedCounts.push(await group.locator('.rv-item.rv-in').count())
+      await expect(group).not.toHaveClass(/rv-reset/)
+
+      await page.evaluate((scrollY) => window.scrollTo(0, Math.max(0, scrollY)), outsideY)
+      await waitForTwoFrames(page)
+      revealedCounts.push(await group.locator('.rv-item.rv-in').count())
+      await expect(group).not.toHaveClass(/rv-reset/)
+    }
+
+    expect(revealedCounts.some((count) => count > 0)).toBe(true)
+    expect(revealedCounts.every((count, index) => index === 0 || count >= revealedCounts[index - 1])).toBe(true)
+    await expect(group.locator('.rv-item').last()).toHaveClass(/rv-in/)
+    await expect(group).toHaveAttribute('data-rv-state', 'complete')
+    await expect(group).toHaveAttribute('data-rv-direction', 'down')
+  })
+
+  test('uses a short opacity-only fallback for reduced motion', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'reduce' })
+    await page.setViewportSize({ width: 1280, height: 800 })
+    await page.goto('/#packages', { waitUntil: 'domcontentloaded' })
+
+    const groups = page.locator('#packages [data-rv-group]')
+    expect(await groups.count()).toBe(8)
+    let sawOpacityFade = false
+    for (const group of await groups.all()) {
+      await group.scrollIntoViewIfNeeded()
+      await expect.poll(() => group.evaluate((root) => {
+        const items = [
+          ...(root.classList.contains('rv-item') ? [root as HTMLElement] : []),
+          ...Array.from(root.querySelectorAll<HTMLElement>('.rv-item')),
+        ].filter((item) => item.closest('[data-rv-group]') === root)
+        return items.length > 0 && items.every((item) => item.classList.contains('rv-in'))
+      })).toBe(true)
+      const motion = await group.evaluate((root) => {
+        const items = [
+          ...(root.classList.contains('rv-item') ? [root as HTMLElement] : []),
+          ...Array.from(root.querySelectorAll<HTMLElement>('.rv-item')),
+        ].filter((item) => item.closest('[data-rv-group]') === root)
+        return items.map((item) => {
+          const style = getComputedStyle(item)
+          return {
+            animationDuration: style.animationDuration.split(',').map((value) => Number.parseFloat(value) * (value.includes('ms') ? 1 : 1000)),
+            animationName: style.animationName,
+            translate: style.translate,
+          }
+        })
+      })
+      expect(motion.every(({ translate }) => ['none', '0px', '0px 0px'].includes(translate))).toBe(true)
+      expect(motion.every(({ animationName }) => animationName === 'none' || animationName.split(', ').every((name) => name === 'packageRvFade'))).toBe(true)
+      expect(motion.every(({ animationDuration }) => animationDuration.every((value) => value <= 150))).toBe(true)
+      sawOpacityFade ||= motion.some(({ animationName }) => animationName.includes('packageRvFade'))
+    }
+    expect(sawOpacityFade).toBe(true)
+  })
+})
+
+test.describe('Homepage grouped package reveal on touch', () => {
+  test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true })
+
+  test('uses 16px travel, keeps local stagger indices and does not replay on tap', async ({ page }) => {
+    await page.emulateMedia({ reducedMotion: 'no-preference' })
+    await page.goto('/', { waitUntil: 'domcontentloaded' })
+    await waitForIntroToFinish(page)
+
+    const name = 'card-system'
+    const group = page.locator(`[data-rv-group="${name}"]`)
+    const box = await packageGroupDocumentBox(page, name)
+    await page.evaluate(
+      (scrollY) => window.scrollTo(0, Math.max(0, scrollY)),
+      box.top - box.viewportHeight * 1.2,
+    )
+    await waitForTwoFrames(page)
+    await scrollPackageGroupIntoView(page, name, 'down')
+    await expect(group.locator('.rv-item').last()).toHaveClass(/rv-in/)
+    expect(await group.evaluate((element) => getComputedStyle(element).getPropertyValue('--rv-dir').trim())).toBe('16px')
+
+    const indices = await group.evaluate((root) => {
+      const items = [
+        ...(root.classList.contains('rv-item') ? [root as HTMLElement] : []),
+        ...Array.from(root.querySelectorAll<HTMLElement>('.rv-item')),
+      ].filter((item) => item.closest('[data-rv-group]') === root)
+      return items.map((item) => ({
+        index: Number.parseInt(item.style.getPropertyValue('--rv-i'), 10),
+        order: Number.parseInt(item.dataset.rvOrder ?? '', 10),
+      }))
+    })
+    expect(indices.every(({ index, order }) => index === Math.min(order, 7))).toBe(true)
+
+    const before = await group.evaluate((element) => ({
+      direction: getComputedStyle(element).getPropertyValue('--rv-dir').trim(),
+      revealed: (element.matches('.rv-item.rv-in') ? 1 : 0) + element.querySelectorAll('.rv-item.rv-in').length,
+    }))
+    await group.locator('.package-metric').first().tap()
+    await waitForTwoFrames(page)
+    const after = await group.evaluate((element) => ({
+      direction: getComputedStyle(element).getPropertyValue('--rv-dir').trim(),
+      revealed: (element.matches('.rv-item.rv-in') ? 1 : 0) + element.querySelectorAll('.rv-item.rv-in').length,
+    }))
+    expect(after).toEqual(before)
   })
 })
 

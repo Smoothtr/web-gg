@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import {
   ArrowUpRight,
   ChevronDown,
@@ -27,6 +27,7 @@ import { cldResponsiveSrcSet, cldSrcSet, cldWidth } from '../lib/cloudinaryImage
 import { getHomepageVideoDeliveryWidth, retargetCloudinaryVideoWidth } from '../lib/cloudinaryVideo'
 import { buildHomeFaqSchema, getHomeClosingFaqItems } from '../cms/homeFaqSchema'
 import { useReducedMotionPreference } from '../hooks/useReducedMotionPreference'
+import { usePackageReveal } from '../hooks/usePackageReveal'
 import type { CmsBlock, CmsBlockItem, CmsPageContent, CmsSiteSettings } from '../cms/types'
 import { getOrderedCaseStudies } from '../data/caseStudyStories'
 import type { CaseStudy } from '../data/caseStudies'
@@ -93,7 +94,7 @@ function highlightPackageTermQuantities(text: string, keyPrefix: string): ReactN
   const quantityMatcher = /(\b\d+(?:[.,]\d+)?%?(?:\s+(?:hours?|days?|weeks?|months?|quarters?|giờ|ngày|tuần|tháng|quý))?)/gi
   return text.split(quantityMatcher).filter(Boolean).map((part, index) => (
     /^\d/.test(part)
-      ? <span key={`${keyPrefix}-quantity-${index}`} className="package-terms-quantity">{part}</span>
+      ? <span key={`${keyPrefix}-quantity-${index}`} className="package-terms-quantity hl-num">{part}</span>
       : part
   ))
 }
@@ -112,45 +113,80 @@ function highlightPackageTerms(text: string): ReactNode[] {
   })
 }
 
-function highlightFirstPhrase(text: string, phrases: string[], className: string): ReactNode {
-  const normalized = text.toLocaleLowerCase()
-  const match = phrases
-    .map((phrase) => ({ phrase, index: normalized.indexOf(phrase.toLocaleLowerCase()) }))
-    .filter(({ index }) => index >= 0)
-    .sort((left, right) => left.index - right.index)[0]
+type InlineHighlightRule = {
+  pattern: RegExp
+  className: string
+  element: 'strong' | 'span'
+}
 
-  if (!match) return text
-  const matchedText = text.slice(match.index, match.index + match.phrase.length)
-  return (
-    <>
-      {text.slice(0, match.index)}
-      <mark className={className}>{matchedText}</mark>
-      {text.slice(match.index + match.phrase.length)}
-    </>
-  )
+function highlightInlineText(text: string, rules: InlineHighlightRule[]): ReactNode[] {
+  const matches = rules
+    .map((rule, ruleIndex) => {
+      const match = new RegExp(rule.pattern.source, rule.pattern.flags.replace('g', '')).exec(text)
+      return match?.index === undefined
+        ? null
+        : { rule, ruleIndex, index: match.index, value: match[0] }
+    })
+    .filter((match): match is NonNullable<typeof match> => match !== null)
+    .sort((left, right) => left.index - right.index || left.ruleIndex - right.ruleIndex)
+    .filter((match, index, all) => !all.slice(0, index).some((prior) => (
+      match.index < prior.index + prior.value.length
+    )))
+
+  if (!matches.length) return [text]
+  const nodes: ReactNode[] = []
+  let cursor = 0
+  matches.forEach(({ rule, index, value }, matchIndex) => {
+    if (index > cursor) nodes.push(text.slice(cursor, index))
+    nodes.push(rule.element === 'strong'
+      ? <strong className={rule.className} key={`highlight-${matchIndex}-${index}`}>{value}</strong>
+      : <span className={rule.className} key={`highlight-${matchIndex}-${index}`}>{value}</span>)
+    cursor = index + value.length
+  })
+  if (cursor < text.length) nodes.push(text.slice(cursor))
+  return nodes
 }
 
 function highlightPackageProcessBody(text: string, index: number, lang: BrandLang) {
-  const phrases = lang === 'vi'
-    ? [
-        ['mục tiêu', 'gói phù hợp'],
-        ['workflow', 'nhịp phối hợp'],
-        ['hàng tháng', 'tối ưu'],
-      ]
-    : [
-        ['goals', 'right package'],
-        ['workflows', 'working cadence'],
-        ['monthly rhythm', 'optimize'],
-      ]
-  return highlightFirstPhrase(text, phrases[index] ?? phrases[phrases.length - 1], 'package-process-highlight')
+  const rulesByStep: Record<number, InlineHighlightRule[]> = lang === 'vi'
+    ? {
+        0: [
+          { pattern: /mục tiêu/i, className: 'package-process-emphasis', element: 'strong' },
+          { pattern: /gói phù hợp/i, className: 'hl-mark hl-mark--system package-process-package-mark', element: 'span' },
+        ],
+        1: [
+          { pattern: /workflow|quyền truy cập/i, className: 'package-process-emphasis', element: 'strong' },
+        ],
+        2: [
+          { pattern: /vận hành, đo lường và tối ưu/i, className: 'package-process-emphasis', element: 'strong' },
+          { pattern: /hàng tháng/i, className: 'hl-num package-process-cadence', element: 'span' },
+        ],
+      }
+    : {
+        0: [
+          { pattern: /goals/i, className: 'package-process-emphasis', element: 'strong' },
+          { pattern: /the right package|right package/i, className: 'hl-mark hl-mark--system package-process-package-mark', element: 'span' },
+        ],
+        1: [
+          { pattern: /workflows?|access/i, className: 'package-process-emphasis', element: 'strong' },
+        ],
+        2: [
+          { pattern: /operate, measure and optimize|execute, measure and optimize/i, className: 'package-process-emphasis', element: 'strong' },
+          { pattern: /monthly(?: operating)? (?:loop|rhythm)|monthly/i, className: 'hl-num package-process-cadence', element: 'span' },
+        ],
+      }
+  return highlightInlineText(text, rulesByStep[index] ?? rulesByStep[2])
 }
 
 function highlightPackageRecommendation(text: string, lang: BrandLang) {
-  return highlightFirstPhrase(
-    text,
-    lang === 'vi' ? ['đề xuất gói phù hợp', 'đề xuất gói'] : ['recommend a package', 'right package'],
-    'package-recommendation-highlight',
-  )
+  const normalized = lang === 'en'
+    ? text.replace(/recommend a package/i, 'recommend the right package')
+    : text
+  return highlightInlineText(normalized, [{
+    pattern: lang === 'vi' ? /đề xuất gói(?: phù hợp)?/i : /recommend (?:the right|a) package/i,
+    className: 'hl-mark hl-mark--system package-recommendation-highlight',
+    element: 'span',
+  }])
 }
 
 function ZoneBridge({
@@ -272,6 +308,7 @@ function SectionHeader({
   perWord = false,
   className = '',
   titleClassName = '',
+  rvGroup,
 }: {
   eyebrow?: string
   title: string
@@ -282,33 +319,53 @@ function SectionHeader({
   perWord?: boolean
   className?: string
   titleClassName?: string
+  rvGroup?: string
 }) {
   const centered = align === 'center'
   const titleWordCount = countStaggerWords(title)
   const followDelayMs = perWord ? titleWordCount * 70 + 240 : 130
   return (
-    <div className={`mb-8 max-w-3xl ${centered ? 'mx-auto text-center' : ''} ${className}`}>
+    <div
+      className={`mb-8 max-w-3xl ${centered ? 'mx-auto text-center' : ''} ${className}`}
+      data-rv-group={rvGroup}
+    >
       {eyebrow && (
-        <p data-reveal="soft" data-reveal-phase="0" className="packages-eyebrow">
+        <p
+          data-reveal={rvGroup ? undefined : 'soft'}
+          data-reveal-phase={rvGroup ? undefined : '0'}
+          data-rv-order={rvGroup ? 0 : undefined}
+          data-rv-delay-ms={rvGroup ? 0 : undefined}
+          className={`packages-eyebrow${rvGroup ? ' rv-item' : ''}`}
+        >
           {eyebrow}
         </p>
       )}
-      <h2 data-reveal={perWord ? 'words' : 'true'} data-reveal-phase="0" className={`text-[28px] md:text-[36px] font-extrabold leading-tight ${dark ? 'text-white' : 'text-on-surface'} ${titleClassName}`}>
+      <h2
+        data-reveal={rvGroup ? undefined : perWord ? 'words' : 'true'}
+        data-reveal-phase={rvGroup ? undefined : '0'}
+        data-rv-order={rvGroup ? 1 : undefined}
+        data-rv-delay-ms={rvGroup ? 80 : undefined}
+        className={`text-[28px] md:text-[36px] font-extrabold leading-tight ${dark ? 'text-white' : 'text-on-surface'} ${titleClassName}${rvGroup ? ' rv-item rv-item--heading' : ''}`}
+      >
         {perWord ? <RevealWords text={title} /> : title}
       </h2>
       <div
-        data-reveal="line"
-        data-reveal-phase="1"
-        style={{ '--rd': `${followDelayMs}ms` } as CSSProperties}
-        className={`home-gradient-underline mt-3 ${centered ? 'mx-auto' : ''}`}
+        data-reveal={rvGroup ? undefined : 'line'}
+        data-reveal-phase={rvGroup ? undefined : '1'}
+        data-rv-order={rvGroup ? 3 : undefined}
+        data-rv-delay-ms={rvGroup ? 240 : undefined}
+        style={rvGroup ? undefined : { '--rd': `${followDelayMs}ms` } as CSSProperties}
+        className={`home-gradient-underline mt-3 ${centered ? 'mx-auto' : ''}${rvGroup ? ' rv-item rv-item--line' : ''}`}
         aria-hidden="true"
       />
       {intro && (
         <p
-          data-reveal="soft"
-          data-reveal-phase="1"
-          style={{ '--rd': `${followDelayMs}ms` } as CSSProperties}
-          className={`mt-4 text-[15px] md:text-base leading-relaxed ${dark ? 'text-white/75' : 'text-on-surface-variant'}`}
+          data-reveal={rvGroup ? undefined : 'soft'}
+          data-reveal-phase={rvGroup ? undefined : '1'}
+          data-rv-order={rvGroup ? 2 : undefined}
+          data-rv-delay-ms={rvGroup ? 160 : undefined}
+          style={rvGroup ? undefined : { '--rd': `${followDelayMs}ms` } as CSSProperties}
+          className={`mt-4 text-[15px] md:text-base leading-relaxed ${dark ? 'text-white/75' : 'text-on-surface-variant'}${rvGroup ? ' rv-item' : ''}`}
         >
           {intro}
         </p>
@@ -2056,6 +2113,7 @@ export default function BrandHomePage({
   const [heroReady, setHeroReady] = useState(false)
   const [heroCueHidden, setHeroCueHidden] = useState(false)
   const reducedMotion = useReducedMotionPreference()
+  usePackageReveal()
 
   const c = compactHomeByLang[lang]
   const homeBackground = mergeHomepageBackground(siteSettings?.homepageBackground)
@@ -2128,7 +2186,7 @@ export default function BrandHomePage({
       || (lang === 'vi' ? 'Chưa chắc gói nào phù hợp?' : 'Not sure which package fits?'),
     body: (lang === 'vi' ? packagesBlock?.packageRecommendationBody : packagesLocaleExtras?.packageRecommendationBody)?.trim() || (lang === 'vi'
       ? 'Chia sẻ mục tiêu và hiện trạng; The One sẽ đề xuất gói theo đúng phạm vi thực tế.'
-      : 'Share your goals and current setup; The One will recommend a package based on the real scope.'),
+      : 'Share your goals and current setup; The One will recommend the right package based on the real scope.'),
     cta: (lang === 'vi' ? packagesBlock?.packageRecommendationCta : packagesLocaleExtras?.packageRecommendationCta)?.trim()
       || (lang === 'vi' ? 'Nhận đề xuất gói' : 'Get a package recommendation'),
     proof: lang === 'vi' ? 'Chốt phạm vi trước, chọn gói sau.' : 'Scope first. Package second.',
@@ -2335,9 +2393,6 @@ export default function BrandHomePage({
 
       <section
         id="packages"
-        data-reveal-scene
-        data-reveal-once
-        data-reveal-step-ms="50"
         data-home-tone="mid"
         className="packages-section home-tone-zone"
       >
@@ -2351,64 +2406,96 @@ export default function BrandHomePage({
             perWord
             className="packages-section-header"
             titleClassName="packages-section-title"
+            rvGroup="header"
           />
           <div>
             <PackageCards items={packageItems} lang={lang} layout={packagesBlock?.layout === 'cards' ? 'cards' : 'horizontal'} />
           </div>
           {packageProcessSteps.length > 0 && (
             <section
-              className="package-process pkg-rv"
+              className="package-process"
               data-testid="package-process"
-              data-reveal="soft"
-              data-reveal-phase="3"
+              data-rv-group="process"
               data-highlight-tone="magenta"
               aria-labelledby="package-process-title"
             >
               <header className="package-process-header">
-                <p>{lang === 'vi' ? 'CÁCH CHÚNG TA BẮT ĐẦU' : 'HOW WE START'}</p>
-                <h3 id="package-process-title">{lang === 'vi' ? 'Một nhịp vận hành rõ ràng' : 'A clear operating rhythm'}</h3>
+                <p className="rv-item" data-rv-order={0} data-rv-delay-ms={0}>
+                  {lang === 'vi' ? 'CÁCH CHÚNG TA BẮT ĐẦU' : 'HOW WE START'}
+                </p>
+                <h3 className="rv-item" data-rv-order={1} data-rv-delay-ms={60} id="package-process-title">
+                  {lang === 'vi' ? 'Một nhịp vận hành rõ ràng' : 'A clear operating rhythm'}
+                </h3>
               </header>
               <ol className="package-process-list">
-                {packageProcessSteps.slice(0, 4).map((step, index) => (
-                  <li
-                    key={`${step.title}-${index}`}
-                    className="package-process-step"
-                    data-package-step={index + 1}
-                  >
-                    <span className="package-process-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
-                    <span className="package-process-copy">
-                      <strong>{step.title}</strong>
-                      {step.body && <span>{highlightPackageProcessBody(step.body, index, lang)}</span>}
-                    </span>
-                  </li>
-                ))}
+                {packageProcessSteps.slice(0, 3).map((step, index) => {
+                  const stepOrder = 2 + index * 2
+                  const stepDelay = Math.min(480, 140 + index * 120)
+                  return (
+                    <Fragment key={`${step.title}-${index}`}>
+                      {index > 0 && (
+                        <li
+                          className="package-process-connector rv-item rv-item--connector"
+                          data-process-connector={index}
+                          data-rv-order={stepOrder - 1}
+                          data-rv-delay-ms={Math.min(480, 200 + (index - 1) * 120)}
+                          aria-hidden="true"
+                        />
+                      )}
+                      <li
+                        className="package-process-step rv-item"
+                        data-package-step={index + 1}
+                        data-rv-order={stepOrder}
+                        data-rv-delay-ms={stepDelay}
+                      >
+                        <span className="package-process-number" aria-hidden="true">{String(index + 1).padStart(2, '0')}</span>
+                        <span className="package-process-copy">
+                          <strong>{step.title}</strong>
+                          {step.body && <span>{highlightPackageProcessBody(step.body, index, lang)}</span>}
+                        </span>
+                      </li>
+                    </Fragment>
+                  )
+                })}
               </ol>
             </section>
           )}
           <aside
-            className="package-recommendation pkg-rv"
+            className="package-recommendation rv-item"
             data-testid="package-recommendation"
-            data-reveal="soft"
-            data-reveal-phase="3"
+            data-rv-group="confidence"
+            data-rv-order={0}
+            data-rv-delay-ms={0}
             data-highlight-tone="magenta"
             aria-labelledby="package-recommendation-title"
           >
             <div className="package-recommendation-copy">
-              <p className="package-recommendation-eyebrow">{packageRecommendation.eyebrow}</p>
-              <h3 id="package-recommendation-title">{packageRecommendation.title}</h3>
-              <p>{highlightPackageRecommendation(packageRecommendation.body, lang)}</p>
-              <span className="package-recommendation-proof">{packageRecommendation.proof}</span>
+              <div className="package-recommendation-heading rv-item" data-rv-order={1} data-rv-delay-ms={60}>
+                <p className="package-recommendation-eyebrow">{packageRecommendation.eyebrow}</p>
+                <h3 id="package-recommendation-title">{packageRecommendation.title}</h3>
+              </div>
+              <div className="package-recommendation-detail rv-item" data-rv-order={2} data-rv-delay-ms={120}>
+                <p>{highlightPackageRecommendation(packageRecommendation.body, lang)}</p>
+                <span className="package-recommendation-proof">{packageRecommendation.proof}</span>
+              </div>
             </div>
             <div className="package-recommendation-actions">
               <button
                 type="button"
-                className="package-recommendation-cta"
+                className="package-recommendation-cta rv-item rv-item--glow"
+                data-rv-order={3}
+                data-rv-delay-ms={180}
                 onClick={() => openBookingModal('package-recommendation')}
               >
                 {packageRecommendation.cta}
                 <ArrowUpRight size={17} aria-hidden="true" />
               </button>
-              <a className="package-recommendation-link" href={localizedPath(lang, '/the-one')}>
+              <a
+                className="package-recommendation-link rv-item"
+                data-rv-order={4}
+                data-rv-delay-ms={240}
+                href={localizedPath(lang, '/the-one')}
+              >
                 {packageRecommendation.stories}
                 <ArrowUpRight size={15} aria-hidden="true" />
               </a>
@@ -2416,14 +2503,15 @@ export default function BrandHomePage({
           </aside>
           {(packagesBlock?.packagesNote?.trim() || packagesBlock?.pricingNote?.trim() || packagesBlock?.disclaimer?.trim()) && (
             <aside
-              data-reveal="soft"
-              data-reveal-phase="3"
               data-testid="package-terms-block"
+              data-rv-group="terms"
+              data-rv-order={0}
+              data-rv-delay-ms={0}
               data-highlight-tone="gold"
-              className="package-terms-note quiet-zone mx-auto mt-8 max-w-[900px] rounded-[18px]"
+              className="package-terms-note rv-item quiet-zone mx-auto mt-8 max-w-[900px] rounded-[18px]"
               aria-labelledby="package-terms-title"
             >
-              <header className="package-terms-overview">
+              <header className="package-terms-overview rv-item" data-rv-order={1} data-rv-delay-ms={60}>
                 <span className="package-terms-icon" aria-hidden="true">
                   <ClipboardList size={18} strokeWidth={2.4} />
                 </span>
@@ -2434,15 +2522,20 @@ export default function BrandHomePage({
                 </span>
               </header>
               <ul className="package-terms-highlights">
-                {packageTermSummariesByLang[lang].map((item) => (
-                  <li key={item.label}>
+                {packageTermSummariesByLang[lang].map((item, index) => (
+                  <li
+                    className="rv-item"
+                    data-rv-order={2 + index}
+                    data-rv-delay-ms={120 + index * 60}
+                    key={item.label}
+                  >
                     <span className="package-term-key-pill">{item.label}</span>
-                    <span>{item.text}</span>
+                    <span>{highlightPackageTermQuantities(item.text, `summary-${index}`)}</span>
                   </li>
                 ))}
               </ul>
               <details className="package-terms-details" data-testid="package-terms-disclosure">
-                <summary className="package-terms-summary">
+                <summary className="package-terms-summary rv-item" data-rv-order={6} data-rv-delay-ms={360}>
                   <span>{lang === 'vi' ? 'Đọc đầy đủ điều khoản' : 'Read full terms'}</span>
                   <ChevronDown className="package-terms-chevron" size={18} strokeWidth={2.5} aria-hidden="true" />
                 </summary>

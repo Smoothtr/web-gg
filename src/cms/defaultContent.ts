@@ -860,7 +860,7 @@ export const defaultCmsPages: CmsPageContent[] = [
               { title: 'Monthly operating loop', body: 'Operate, measure and optimize on a monthly rhythm.' },
             ],
             packageRecommendationTitle: 'Not sure which package fits?',
-            packageRecommendationBody: 'Share your goals and current setup; The One will recommend a package based on the real scope.',
+            packageRecommendationBody: 'Share your goals and current setup; The One will recommend the right package based on the real scope.',
             packageRecommendationCta: 'Get a package recommendation',
           },
         },
