@@ -197,18 +197,28 @@ test.describe('Homepage grouped bidirectional package reveal', () => {
     const group = page.locator(`[data-rv-group="${name}"]`)
     const items = group.locator('.rv-item')
     await expect(items.first()).toBeAttached()
+    await items.last().evaluate((item) => { item.dataset.rvDelayMs = '10000' })
 
     const box = await packageGroupDocumentBox(page, name)
     await page.evaluate(
       (scrollY) => window.scrollTo(0, Math.max(0, scrollY)),
-      box.top - box.viewportHeight * 1.25,
+      box.top - box.viewportHeight * 0.9,
     )
     await waitForTwoFrames(page)
     await expect(group.locator('.rv-item.rv-in')).toHaveCount(0)
 
+    // Move the direction anchor to just outside the 88% entry band. The final
+    // 8px down-step is below the 10px hysteresis threshold, so the observer's
+    // immediate 32px reversal is unambiguously an upward interrupt.
+    await page.evaluate(
+      (scrollY) => window.scrollTo(0, Math.max(0, scrollY)),
+      box.top - box.viewportHeight * 0.885,
+    )
+    await waitForTwoFrames(page)
+
     // Reverse from inside the first class mutation. This runs before the next
     // animation frame even on a loaded CI runner, so later stagger items are
-    // guaranteed to still be pending without altering the production delays.
+    // guaranteed to still be pending on loaded CI runners.
     await group.evaluate((root) => {
       const first = root.querySelector<HTMLElement>('.rv-item')
       if (!first) throw new Error('Missing first reveal item')
@@ -220,7 +230,11 @@ test.describe('Homepage grouped bidirectional package reveal', () => {
       })
       observer.observe(first, { attributes: true, attributeFilter: ['class'] })
     })
-    await scrollPackageGroupIntoView(page, name, 'down')
+    await page.evaluate(
+      (scrollY) => window.scrollTo(0, Math.max(0, scrollY)),
+      box.top - box.viewportHeight * 0.875,
+    )
+    await waitForTwoFrames(page)
     await expect(items.first()).toHaveClass(/rv-in/)
     await expect(group).not.toHaveClass(/rv-reset/)
     await expect(group).toHaveAttribute('data-test-interrupt-origin', 'down')
@@ -235,9 +249,10 @@ test.describe('Homepage grouped bidirectional package reveal', () => {
     // Interrupt an in-flight stagger: revealed items keep their frozen entry
     // direction, while items whose due time has not arrived use the new one.
     await expect(group).toHaveAttribute('data-rv-direction', 'up')
-    await expect(items.last()).toHaveClass(/rv-in/)
+    await expect(items.last()).toHaveClass(/rv-in/, { timeout: 15_000 })
     await expect(items.first()).toHaveAttribute('data-rv-reveal-direction', 'down')
     await expect(items.last()).toHaveAttribute('data-rv-reveal-direction', 'up')
+    await items.last().evaluate((item) => { item.dataset.rvDelayMs = '480' })
 
     const resetState = await resetPackageGroupAboveViewport(page, name)
     expect(resetState.sawReset).toBe(true)
