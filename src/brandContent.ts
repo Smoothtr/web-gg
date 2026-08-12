@@ -41,12 +41,10 @@ export const navItems = [
 
 export const homeMeta: PageMeta = {
   title: 'The One - GG99 | Growth Partner for Startups & SMEs',
-  description:
-    'The One - GG99 is a growth partner for startups and SMEs, providing brand, website, CRM, automation and performance marketing solutions.',
+  description: 'The One marketing agency u lookin for',
   path: '/',
   ogTitle: 'The One',
-  ogDescription:
-    'The One is a growth partner for brand, website, CRM, automation and performance marketing.',
+  ogDescription: 'The One marketing agency u lookin for',
   ogImage: ogTheOneImagePath,
 }
 
